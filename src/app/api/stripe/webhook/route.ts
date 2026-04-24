@@ -33,19 +33,32 @@ export async function POST(req: NextRequest) {
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session
 
-    const userId = session.metadata?.user_id
-    const customerId = typeof session.customer === 'string' ? session.customer : null
     const subscriptionId =
       typeof session.subscription === 'string' ? session.subscription : null
 
-    if (!userId || !subscriptionId) {
+    if (!subscriptionId) {
       return NextResponse.json(
-        { error: 'Dados incompletos no webhook.' },
+        { error: 'Subscription ausente.' },
         { status: 400 }
       )
     }
 
     const subscription: any = await stripe.subscriptions.retrieve(subscriptionId)
+
+    const userId =
+      session.metadata?.user_id ||
+      session.client_reference_id ||
+      subscription.metadata?.user_id
+
+    const customerId =
+      typeof session.customer === 'string' ? session.customer : null
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'user_id ausente.' },
+        { status: 400 }
+      )
+    }
 
     const { error } = await supabase.from('subscriptions').insert({
       user_id: userId,
