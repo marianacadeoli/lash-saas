@@ -59,10 +59,17 @@ export async function POST(req: NextRequest) {
         )
       }
 
-      const subscription: any = await stripe.subscriptions.retrieve(subscriptionId)
+      const subscription: any = await stripe.subscriptions.retrieve(subscriptionId, {
+        expand: ['items.data.price'],
+      })
 
-      const currentPeriodEnd = subscription.current_period_end
-        ? new Date(subscription.current_period_end * 1000).toISOString()
+      const periodEndTimestamp =
+        subscription.current_period_end ||
+        subscription.items?.data?.[0]?.current_period_end ||
+        null
+
+      const currentPeriodEnd = periodEndTimestamp
+        ? new Date(periodEndTimestamp * 1000).toISOString()
         : null
 
       const payload = {
