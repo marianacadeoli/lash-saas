@@ -2,15 +2,32 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 export async function POST(req: NextRequest) {
   try {
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY
+    const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (!stripeSecretKey) {
+      return NextResponse.json({ error: 'STRIPE_SECRET_KEY não configurada.' }, { status: 500 })
+    }
+
+    if (!stripeWebhookSecret) {
+      return NextResponse.json({ error: 'STRIPE_WEBHOOK_SECRET não configurada.' }, { status: 500 })
+    }
+
+    if (!supabaseUrl) {
+      return NextResponse.json({ error: 'NEXT_PUBLIC_SUPABASE_URL não configurada.' }, { status: 500 })
+    }
+
+    if (!supabaseServiceKey) {
+      return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY não configurada.' }, { status: 500 })
+    }
+
+    const stripe = new Stripe(stripeSecretKey)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+
     const body = await req.text()
     const signature = req.headers.get('stripe-signature')
 
@@ -21,11 +38,7 @@ export async function POST(req: NextRequest) {
     let event: Stripe.Event
 
     try {
-      event = stripe.webhooks.constructEvent(
-        body,
-        signature,
-        process.env.STRIPE_WEBHOOK_SECRET!
-      )
+      event = stripe.webhooks.constructEvent(body, signature, stripeWebhookSecret)
     } catch (error) {
       console.error('ERRO WEBHOOK SIGNATURE:', error)
       return NextResponse.json({ error: 'Webhook inválido.' }, { status: 400 })
@@ -48,10 +61,9 @@ export async function POST(req: NextRequest) {
 
       const subscription: any = await stripe.subscriptions.retrieve(subscriptionId)
 
-      const periodEnd =
-        subscription.current_period_end
-          ? new Date(subscription.current_period_end * 1000).toISOString()
-          : null
+      const currentPeriodEnd = subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000).toISOString()
+        : null
 
       const payload = {
         user_id: userId,
@@ -59,7 +71,7 @@ export async function POST(req: NextRequest) {
         plan: 'basic',
         stripe_customer_id: customerId,
         stripe_subscription_id: subscriptionId,
-        current_period_end: periodEnd,
+        current_period_end: currentPeriodEnd,
       }
 
       const { data: existingSubscription, error: selectError } = await supabase
@@ -98,8 +110,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true })
   } catch (error) {
     console.error('ERRO GERAL WEBHOOK:', error)
+
     return NextResponse.json(
-      { error: 'Erro interno no webhook.' },
+      {
+        error: error instanceof Error ? error.message : 'Erro interno no webhook.',
+      },
       { status: 500 }
     )
   }
