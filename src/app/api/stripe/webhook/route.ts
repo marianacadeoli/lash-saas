@@ -1,59 +1,71 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
 
-export async function POST() {
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
+export async function POST(req: NextRequest) {
+  const body = await req.text()
+  const signature = req.headers.get('stripe-signature')
+
+  if (!signature) {
+    return NextResponse.json({ error: 'Assinatura ausente.' }, { status: 400 })
+  }
+
+  let event: Stripe.Event
+
   try {
-    const supabase = await createClient()
+    event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    )
+  } catch (error) {
+    console.error('ERRO WEBHOOK:', error)
+    return NextResponse.json({ error: 'Webhook inválido.' }, { status: 400 })
+  }
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser()
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object as Stripe.Checkout.Session
 
-    if (userError || !user) {
+    const userId = session.metadata?.user_id
+    const customerId = typeof session.customer === 'string' ? session.customer : null
+    const subscriptionId =
+      typeof session.subscription === 'string' ? session.subscription : null
+
+    if (!userId || !subscriptionId) {
       return NextResponse.json(
-        { error: 'Usuária não autenticada.' },
-        { status: 401 }
+        { error: 'Dados incompletos no webhook.' },
+        { status: 400 }
       )
     }
 
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',
-      payment_method_types: ['card'],
+    const subscription: any = await stripe.subscriptions.retrieve(subscriptionId)
 
-      customer_email: user.email,
-
-      line_items: [
-        {
-          price: process.env.STRIPE_PRICE_ID!,
-          quantity: 1,
-        },
-      ],
-
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscribe`,
-
-      metadata: {
-        user_id: user.id,
-      },
-
-      subscription_data: {
-        metadata: {
-          user_id: user.id,
-        },
-      },
+    const { error } = await supabase.from('subscriptions').insert({
+      user_id: userId,
+      status: subscription.status,
+      plan: 'basic',
+      stripe_customer_id: customerId,
+      stripe_subscription_id: subscriptionId,
+      current_period_end: new Date(
+        subscription.current_period_end * 1000
+      ).toISOString(),
     })
 
-    return NextResponse.json({ url: session.url })
-  } catch (error) {
-    console.error('ERRO CHECKOUT:', error)
-
-    return NextResponse.json(
-      { error: 'Erro ao criar checkout.' },
-      { status: 500 }
-    )
+    if (error) {
+      console.error('ERRO SUPABASE:', error)
+      return NextResponse.json(
+        { error: 'Erro ao salvar assinatura.' },
+        { status: 500 }
+      )
+    }
   }
+
+  return NextResponse.json({ received: true })
 }
