@@ -1,10 +1,44 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
 export default function SubscribePage() {
+  const router = useRouter()
+  const supabase = createClient()
+
+  const [carregandoPagina, setCarregandoPagina] = useState(true)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
+
+  useEffect(() => {
+    async function verificarAssinatura() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+
+      if (!session?.user) {
+        router.replace('/login')
+        return
+      }
+
+      const { data: assinatura } = await supabase
+        .from('subscriptions')
+        .select('status')
+        .eq('user_id', session.user.id)
+        .maybeSingle()
+
+      if (assinatura?.status === 'active') {
+        router.replace('/dashboard')
+        return
+      }
+
+      setCarregandoPagina(false)
+    }
+
+    verificarAssinatura()
+  }, [router, supabase])
 
   async function handleCheckout() {
     try {
@@ -28,6 +62,23 @@ export default function SubscribePage() {
     } finally {
       setCarregando(false)
     }
+  }
+
+  if (carregandoPagina) {
+    return (
+      <main
+        style={{
+          minHeight: '100vh',
+          background: '#050816',
+          color: '#fff',
+          display: 'grid',
+          placeItems: 'center',
+          fontFamily: 'Arial, sans-serif',
+        }}
+      >
+        Carregando...
+      </main>
+    )
   }
 
   return (
