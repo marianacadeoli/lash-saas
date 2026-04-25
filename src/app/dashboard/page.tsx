@@ -13,6 +13,8 @@ export default function DashboardPage() {
   const [carregandoPagina, setCarregandoPagina] = useState(true)
   const [assinatura, setAssinatura] = useState<any>(null)
   const [abaAtual, setAbaAtual] = useState<Aba>('visao')
+  const [sidebarAberta, setSidebarAberta] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   function formatarDataAssinatura(data?: string) {
     if (!data) return '-'
