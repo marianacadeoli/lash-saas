@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import ClientesSection from '../componentes/clientessection'
+import ServicosSection from '../componentes/servicossection'
 
 type Aba = 'visao' | 'agenda' | 'clientes' | 'servicos' | 'ganhos' | 'configuracoes' | 'ajuda'
 
@@ -85,6 +86,10 @@ export default function DashboardPage() {
   function renderConteudo() {
     if (abaAtual === 'clientes') {
   return <ClientesSection />
+}
+
+if (abaAtual === 'servicos') {
+  return <ServicosSection />
 }
     const titulo = menu.find((item) => item.id === abaAtual)?.label
 
