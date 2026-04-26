@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import ClientesSection from '../componentes/clientessection'
 import ServicosSection from '../componentes/servicossection'
+import AgendaSection from '../componentes/agendasection'
 
 type Aba = 'visao' | 'agenda' | 'clientes' | 'servicos' | 'ganhos' | 'configuracoes' | 'ajuda'
 
@@ -90,6 +91,10 @@ export default function DashboardPage() {
 
 if (abaAtual === 'servicos') {
   return <ServicosSection />
+}
+
+if (abaAtual === 'agenda') {
+  return <AgendaSection />
 }
     const titulo = menu.find((item) => item.id === abaAtual)?.label
 
