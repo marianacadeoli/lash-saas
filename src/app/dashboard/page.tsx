@@ -83,6 +83,9 @@ export default function DashboardPage() {
   }
 
   function renderConteudo() {
+    if (abaAtual === 'clientes') {
+  return <ClientesSection />
+}
     const titulo = menu.find((item) => item.id === abaAtual)?.label
 
     const textos: Record<Aba, string> = {
