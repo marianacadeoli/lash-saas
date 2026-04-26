@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 type Configuracao = {
-  id?: number
+  id: number
   user_id: string
   nome_negocio: string | null
   hora_inicio: string | null
@@ -13,8 +14,18 @@ type Configuracao = {
   dias_aviso: number | null
 }
 
+type Assinatura = {
+  plan: string | null
+  status: string | null
+  current_period_end: string | null
+}
+
 export default function ConfiguracoesSection() {
   const supabase = createClient()
+  const router = useRouter()
+
+  const [configId, setConfigId] = useState<number | null>(null)
+  const [assinatura, setAssinatura] = useState<Assinatura | null>(null)
 
   const [nomeNegocio, setNomeNegocio] = useState('')
   const [horaInicio, setHoraInicio] = useState('')
@@ -26,7 +37,7 @@ export default function ConfiguracoesSection() {
   const [salvando, setSalvando] = useState(false)
 
   useEffect(() => {
-    carregarConfiguracoes()
+    carregarDados()
   }, [])
 
   async function pegarUserId() {
@@ -37,7 +48,12 @@ export default function ConfiguracoesSection() {
     return session?.user.id
   }
 
-  async function carregarConfiguracoes() {
+  function formatarData(data?: string | null) {
+    if (!data) return '-'
+    return new Date(data).toLocaleDateString('pt-BR')
+  }
+
+  async function carregarDados() {
     const userId = await pegarUserId()
 
     if (!userId) {
@@ -45,26 +61,31 @@ export default function ConfiguracoesSection() {
       return
     }
 
-    const { data, error } = await supabase
+    const { data: configData } = await supabase
       .from('Configuracoes')
       .select('*')
       .eq('user_id', userId)
       .maybeSingle()
 
-    if (error) {
-      console.log('ERRO AO CARREGAR CONFIGURAÇÕES:', error)
-      setCarregando(false)
-      return
-    }
+    if (configData) {
+      const config = configData as Configuracao
 
-    if (data) {
-      const config = data as Configuracao
-
+      setConfigId(config.id)
       setNomeNegocio(config.nome_negocio || '')
       setHoraInicio(config.hora_inicio || '')
       setHoraFim(config.hora_fim || '')
       setDescontoAniversario(String(config.desconto_aniversario ?? 10))
       setDiasAviso(String(config.dias_aviso ?? 5))
+    }
+
+    const { data: assinaturaData } = await supabase
+      .from('subscriptions')
+      .select('plan, status, current_period_end')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    if (assinaturaData) {
+      setAssinatura(assinaturaData as Assinatura)
     }
 
     setCarregando(false)
@@ -99,9 +120,29 @@ export default function ConfiguracoesSection() {
       dias_aviso: Number(diasAviso),
     }
 
-    const { error } = await supabase
-      .from('Configuracoes')
-      .upsert(payload, { onConflict: 'user_id' })
+    let error = null
+
+    if (configId) {
+      const resultado = await supabase
+        .from('Configuracoes')
+        .update(payload)
+        .eq('id', configId)
+        .eq('user_id', userId)
+
+      error = resultado.error
+    } else {
+      const resultado = await supabase
+        .from('Configuracoes')
+        .insert(payload)
+        .select('id')
+        .single()
+
+      error = resultado.error
+
+      if (resultado.data?.id) {
+        setConfigId(resultado.data.id)
+      }
+    }
 
     if (error) {
       console.log('ERRO AO SALVAR CONFIGURAÇÕES:', error)
@@ -112,6 +153,17 @@ export default function ConfiguracoesSection() {
 
     setSalvando(false)
     alert('Configurações salvas com sucesso!')
+  }
+
+  async function sair() {
+    await supabase.auth.signOut()
+    router.replace('/login')
+  }
+
+  function excluirConta() {
+    alert(
+      'Para excluir sua conta com segurança, primeiro será necessário cancelar a assinatura ativa. Vamos conectar essa função depois.'
+    )
   }
 
   if (carregando) {
@@ -128,7 +180,7 @@ export default function ConfiguracoesSection() {
       <h1 style={{ margin: 0 }}>⚙️ Configurações</h1>
 
       <p style={subtitleStyle}>
-        Ajuste informações do negócio, agenda, cupons e assinatura.
+        Ajuste os dados do negócio, horários, cupom e informações do plano.
       </p>
 
       <div style={cardStyle}>
@@ -139,7 +191,7 @@ export default function ConfiguracoesSection() {
             <label style={labelStyle}>Nome do negócio</label>
             <input
               style={inputStyle}
-              placeholder="Ex: Mari Lash Designer"
+              placeholder="Ex: Mariana Lash Designer"
               value={nomeNegocio}
               onChange={(e) => setNomeNegocio(e.target.value)}
             />
@@ -165,6 +217,10 @@ export default function ConfiguracoesSection() {
             />
           </div>
         </div>
+
+        <p style={mutedStyle}>
+          Esse nome pode aparecer no topo do sistema no lugar de “Lash SaaS”.
+        </p>
       </div>
 
       <div style={cardStyle}>
@@ -178,7 +234,6 @@ export default function ConfiguracoesSection() {
               type="number"
               min="0"
               max="100"
-              placeholder="10"
               value={descontoAniversario}
               onChange={(e) => setDescontoAniversario(e.target.value)}
             />
@@ -191,24 +246,27 @@ export default function ConfiguracoesSection() {
               type="number"
               min="1"
               max="30"
-              placeholder="5"
               value={diasAviso}
               onChange={(e) => setDiasAviso(e.target.value)}
             />
           </div>
         </div>
-
-        <p style={mutedStyle}>
-          Esse desconto será usado para montar a mensagem de aniversário no WhatsApp.
-        </p>
       </div>
 
       <div style={cardStyle}>
         <h2 style={{ marginTop: 0 }}>💳 Plano e assinatura</h2>
 
-        <p style={mutedStyle}>
-          Gerenciamento de assinatura será conectado ao Stripe depois.
-        </p>
+        <div style={infoGridStyle}>
+          <p><strong>Plano:</strong> {assinatura?.plan || 'basic'}</p>
+          <p>
+            <strong>Status:</strong>{' '}
+            {assinatura?.status === 'active' ? 'Ativo' : assinatura?.status || '-'}
+          </p>
+          <p>
+            <strong>Vence em:</strong>{' '}
+            {formatarData(assinatura?.current_period_end)}
+          </p>
+        </div>
       </div>
 
       <button
@@ -219,21 +277,18 @@ export default function ConfiguracoesSection() {
         {salvando ? 'Salvando...' : 'Salvar configurações'}
       </button>
 
-      <div style={dangerCardStyle}>
-        <h2 style={{ marginTop: 0 }}>🚨 Zona de perigo</h2>
+      <div style={cardStyle}>
+        <h2 style={{ marginTop: 0 }}>Conta</h2>
 
-        <p style={mutedStyle}>
-          Para excluir a conta, primeiro será necessário cancelar a assinatura ativa.
-        </p>
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <button onClick={sair} style={secondaryButtonStyle}>
+            Sair da conta
+          </button>
 
-        <button
-          style={dangerButtonStyle}
-          onClick={() =>
-            alert('Em breve vamos conectar a exclusão segura da conta.')
-          }
-        >
-          Excluir conta
-        </button>
+          <button onClick={excluirConta} style={dangerButtonStyle}>
+            Excluir conta
+          </button>
+        </div>
       </div>
     </div>
   )
@@ -252,16 +307,17 @@ const cardStyle: React.CSSProperties = {
   padding: '18px',
 }
 
-const dangerCardStyle: React.CSSProperties = {
-  ...cardStyle,
-  border: '1px solid #7f1d1d',
-}
-
 const gridStyle: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
   gap: '14px',
   marginTop: '12px',
+}
+
+const infoGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gap: '8px',
+  color: '#d4d4d4',
 }
 
 const labelStyle: React.CSSProperties = {
@@ -299,8 +355,17 @@ const buttonStyle: React.CSSProperties = {
   fontSize: '15px',
 }
 
+const secondaryButtonStyle: React.CSSProperties = {
+  padding: '12px 14px',
+  borderRadius: '12px',
+  border: '1px solid #333',
+  background: '#27272a',
+  color: 'white',
+  cursor: 'pointer',
+  fontWeight: 800,
+}
+
 const dangerButtonStyle: React.CSSProperties = {
-  marginTop: '12px',
   padding: '12px 14px',
   borderRadius: '12px',
   border: 'none',
