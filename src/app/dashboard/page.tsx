@@ -9,6 +9,7 @@ import ServicosSection from '../componentes/servicossection'
 import AgendaSection from '../componentes/agendasection'
 import GanhosSection from '../componentes/ganhossection'
 import VisaoGeralSection from '../componentes/visaogeralsection'
+import ConfiguracoesSection from '../componentes/configuracoessection'
 
 type Aba =
   | 'visao'
@@ -100,6 +101,7 @@ export default function DashboardPage() {
     if (abaAtual === 'clientes') return <ClientesSection />
     if (abaAtual === 'servicos') return <ServicosSection />
     if (abaAtual === 'ganhos') return <GanhosSection />
+    if (abaAtual === 'configuracoes') return <ConfiguracoesSection />
 
     const titulo = menu.find((item) => item.id === abaAtual)?.label
 
