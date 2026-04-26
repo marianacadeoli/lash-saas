@@ -12,6 +12,7 @@ type Configuracao = {
   hora_fim: string | null
   desconto_aniversario: number | null
   dias_aviso: number | null
+  logo_url: string | null
 }
 
 type Assinatura = {
@@ -32,9 +33,11 @@ export default function ConfiguracoesSection() {
   const [horaFim, setHoraFim] = useState('')
   const [descontoAniversario, setDescontoAniversario] = useState('10')
   const [diasAviso, setDiasAviso] = useState('5')
+  const [logoUrl, setLogoUrl] = useState('')
 
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
+  const [enviandoLogo, setEnviandoLogo] = useState(false)
 
   useEffect(() => {
     carregarDados()
@@ -76,6 +79,7 @@ export default function ConfiguracoesSection() {
       setHoraFim(config.hora_fim || '')
       setDescontoAniversario(String(config.desconto_aniversario ?? 10))
       setDiasAviso(String(config.dias_aviso ?? 5))
+      setLogoUrl(config.logo_url || '')
     }
 
     const { data: assinaturaData } = await supabase
@@ -118,6 +122,7 @@ export default function ConfiguracoesSection() {
       hora_fim: horaFim,
       desconto_aniversario: Number(descontoAniversario),
       dias_aviso: Number(diasAviso),
+      logo_url: logoUrl || null,
     }
 
     let error = null
@@ -155,6 +160,38 @@ export default function ConfiguracoesSection() {
     alert('Configurações salvas com sucesso!')
   }
 
+  async function enviarLogo(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    const userId = await pegarUserId()
+    if (!userId) return
+
+    setEnviandoLogo(true)
+
+    const extensao = file.name.split('.').pop()
+    const nomeArquivo = `${userId}/logo-${Date.now()}.${extensao}`
+
+    const { error: uploadError } = await supabase.storage
+      .from('logos')
+      .upload(nomeArquivo, file, {
+        cacheControl: '3600',
+        upsert: true,
+      })
+
+    if (uploadError) {
+      console.log('ERRO AO ENVIAR LOGO:', uploadError)
+      alert('Erro ao enviar logo.')
+      setEnviandoLogo(false)
+      return
+    }
+
+    const { data } = supabase.storage.from('logos').getPublicUrl(nomeArquivo)
+
+    setLogoUrl(data.publicUrl)
+    setEnviandoLogo(false)
+  }
+
   async function sair() {
     await supabase.auth.signOut()
     router.replace('/login')
@@ -162,7 +199,7 @@ export default function ConfiguracoesSection() {
 
   function excluirConta() {
     alert(
-      'Para excluir sua conta com segurança, primeiro será necessário cancelar a assinatura ativa. Vamos conectar essa função depois.'
+      'Para excluir sua conta com segurança, primeiro será necessário cancelar a assinatura ativa.'
     )
   }
 
@@ -180,7 +217,7 @@ export default function ConfiguracoesSection() {
       <h1 style={{ margin: 0 }}>⚙️ Configurações</h1>
 
       <p style={subtitleStyle}>
-        Ajuste os dados do negócio, horários, cupom e informações do plano.
+        Ajuste os dados do negócio, horários, logo e cupom de aniversário.
       </p>
 
       <div style={cardStyle}>
@@ -218,9 +255,25 @@ export default function ConfiguracoesSection() {
           </div>
         </div>
 
-        <p style={mutedStyle}>
-          Esse nome pode aparecer no topo do sistema no lugar de “Lash SaaS”.
-        </p>
+        <div style={{ marginTop: '18px' }}>
+          <label style={labelStyle}>Logo do negócio</label>
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={enviarLogo}
+            style={fileInputStyle}
+          />
+
+          {enviandoLogo && <p style={mutedStyle}>Enviando logo...</p>}
+
+          {logoUrl && (
+            <div style={logoPreviewBoxStyle}>
+              <img src={logoUrl} alt="Logo do negócio" style={logoPreviewStyle} />
+              <p style={mutedStyle}>Logo carregada com sucesso.</p>
+            </div>
+          )}
+        </div>
       </div>
 
       <div style={cardStyle}>
@@ -253,18 +306,33 @@ export default function ConfiguracoesSection() {
         </div>
       </div>
 
-      <div style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>💳 Plano e assinatura</h2>
+      <div style={resumoGridStyle}>
+        <div style={resumoCardStyle}>
+          <h3 style={{ marginTop: 0 }}>💅 Resumo do negócio</h3>
 
-        <div style={infoGridStyle}>
-          <p><strong>Plano:</strong> {assinatura?.plan || 'basic'}</p>
-          <p>
-            <strong>Status:</strong>{' '}
-            {assinatura?.status === 'active' ? 'Ativo' : assinatura?.status || '-'}
+          <p style={resumoTextStyle}>
+            <strong>Nome:</strong> {nomeNegocio || '-'}
           </p>
-          <p>
-            <strong>Vence em:</strong>{' '}
-            {formatarData(assinatura?.current_period_end)}
+
+          <p style={resumoTextStyle}>
+            <strong>Atendimento:</strong>{' '}
+            {horaInicio && horaFim ? `${horaInicio} às ${horaFim}` : '-'}
+          </p>
+
+          <p style={resumoTextStyle}>
+            <strong>Logo:</strong> {logoUrl ? 'Adicionada' : 'Não adicionada'}
+          </p>
+        </div>
+
+        <div style={resumoCardStyle}>
+          <h3 style={{ marginTop: 0 }}>🎂 Resumo do cupom</h3>
+
+          <p style={resumoTextStyle}>
+            <strong>Desconto:</strong> {descontoAniversario || '-'}%
+          </p>
+
+          <p style={resumoTextStyle}>
+            <strong>Aviso:</strong> {diasAviso || '-'} dias antes
           </p>
         </div>
       </div>
@@ -276,6 +344,26 @@ export default function ConfiguracoesSection() {
       >
         {salvando ? 'Salvando...' : 'Salvar configurações'}
       </button>
+
+      <div style={cardStyle}>
+        <h2 style={{ marginTop: 0 }}>💳 Plano e assinatura</h2>
+
+        <div style={infoGridStyle}>
+          <p>
+            <strong>Plano:</strong> {assinatura?.plan || 'basic'}
+          </p>
+
+          <p>
+            <strong>Status:</strong>{' '}
+            {assinatura?.status === 'active' ? 'Ativo' : assinatura?.status || '-'}
+          </p>
+
+          <p>
+            <strong>Vence em:</strong>{' '}
+            {formatarData(assinatura?.current_period_end)}
+          </p>
+        </div>
+      </div>
 
       <div style={cardStyle}>
         <h2 style={{ marginTop: 0 }}>Conta</h2>
@@ -338,9 +426,53 @@ const inputStyle: React.CSSProperties = {
   fontSize: '15px',
 }
 
+const fileInputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '13px 14px',
+  borderRadius: '14px',
+  border: '1px solid #333',
+  background: '#0f0f0f',
+  color: 'white',
+  fontSize: '15px',
+}
+
 const mutedStyle: React.CSSProperties = {
   color: '#b4b4b4',
   lineHeight: 1.6,
+}
+
+const logoPreviewBoxStyle: React.CSSProperties = {
+  marginTop: '12px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '12px',
+}
+
+const logoPreviewStyle: React.CSSProperties = {
+  width: '64px',
+  height: '64px',
+  objectFit: 'cover',
+  borderRadius: '14px',
+  border: '1px solid #333',
+}
+
+const resumoGridStyle: React.CSSProperties = {
+  marginTop: '24px',
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+  gap: '14px',
+}
+
+const resumoCardStyle: React.CSSProperties = {
+  background: '#151515',
+  border: '1px solid #2a2a2a',
+  borderRadius: '18px',
+  padding: '18px',
+}
+
+const resumoTextStyle: React.CSSProperties = {
+  color: '#d4d4d4',
+  margin: '8px 0',
 }
 
 const buttonStyle: React.CSSProperties = {
