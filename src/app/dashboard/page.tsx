@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import ClientesSection from '../componentes/clientessection'
 import ServicosSection from '../componentes/servicossection'
 import AgendaSection from '../componentes/agendasection'
+import GanhosSection from '../componentes/ganhossection'
 
 type Aba = 'visao' | 'agenda' | 'clientes' | 'servicos' | 'ganhos' | 'configuracoes' | 'ajuda'
 
@@ -91,6 +92,10 @@ export default function DashboardPage() {
 
 if (abaAtual === 'servicos') {
   return <ServicosSection />
+}
+
+if (abaAtual === 'ganhos') {
+  return <GanhosSection />
 }
 
 if (abaAtual === 'agenda') {
