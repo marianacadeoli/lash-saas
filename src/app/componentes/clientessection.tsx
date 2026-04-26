@@ -19,6 +19,7 @@ export default function ClientesSection() {
 
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [busca, setBusca] = useState('')
+  const [mostrarFormulario, setMostrarFormulario] = useState(false)
 
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
@@ -65,6 +66,7 @@ export default function ClientesSection() {
     setDataNascimento('')
     setObservacoes('')
     setEditandoId(null)
+    setMostrarFormulario(false)
   }
 
   async function salvarCliente() {
@@ -112,7 +114,6 @@ export default function ClientesSection() {
         .eq('user_id', userId)
 
       if (error) {
-        console.log('ERRO AO EDITAR:', error)
         alert('Erro ao editar cliente.')
         setCarregando(false)
         return
@@ -121,7 +122,6 @@ export default function ClientesSection() {
       const { error } = await supabase.from('Clientes').insert(payload)
 
       if (error) {
-        console.log('ERRO AO SALVAR:', error)
         alert('Erro ao salvar cliente.')
         setCarregando(false)
         return
@@ -139,6 +139,7 @@ export default function ClientesSection() {
     setTelefone(cliente.telefone)
     setDataNascimento(cliente.data_nascimento || '')
     setObservacoes(cliente.observacoes || '')
+    setMostrarFormulario(true)
   }
 
   async function excluirCliente(id: number) {
@@ -200,6 +201,11 @@ export default function ClientesSection() {
     return Math.ceil(diferenca / (1000 * 60 * 60 * 24))
   }
 
+  function formatarData(data: string | null) {
+    if (!data) return '-'
+    return new Date(data + 'T00:00:00').toLocaleDateString('pt-BR')
+  }
+
   const clientesFiltradas = useMemo(() => {
     return clientes.filter((cliente) =>
       cliente.nome.toLowerCase().includes(busca.toLowerCase())
@@ -223,67 +229,118 @@ Válido até o dia do seu aniversário.`
 
   return (
     <div>
-      <h1 style={{ margin: '0 0 12px' }}>👩‍🦰 Clientes</h1>
-
-      <p style={{ color: '#b4b4b4' }}>
-        Cadastre clientes, acompanhe aniversários e envie mensagens pelo WhatsApp.
-      </p>
-
-      <div style={cardStyle}>
-        <h2>Nova cliente</h2>
-
-        <div style={gridStyle}>
-          <input style={inputStyle} placeholder="Nome" value={nome} onChange={(e) => setNome(e.target.value)} />
-          <input style={inputStyle} placeholder="WhatsApp" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
-          <input style={inputStyle} type="date" value={dataNascimento} onChange={(e) => setDataNascimento(e.target.value)} />
-          <input style={inputStyle} placeholder="Observações" value={observacoes} onChange={(e) => setObservacoes(e.target.value)} />
+      <div style={topBarStyle}>
+        <div>
+          <h1 style={{ margin: 0 }}>👩‍🦰 Clientes</h1>
+          <p style={subtitleStyle}>
+            Cadastre, edite e acompanhe aniversários das suas clientes.
+          </p>
         </div>
 
-        <button style={buttonStyle} onClick={salvarCliente} disabled={carregando}>
-          {carregando ? 'Salvando...' : editandoId ? 'Salvar alterações' : 'Cadastrar cliente'}
+        <button
+          style={buttonStyle}
+          onClick={() => {
+            limparFormulario()
+            setMostrarFormulario(true)
+          }}
+        >
+          + Cadastrar cliente
         </button>
-
-        {editandoId && (
-          <button style={secondaryButtonStyle} onClick={limparFormulario}>
-            Cancelar edição
-          </button>
-        )}
-
-        <p style={{ color: '#a1a1aa' }}>
-          {clientes.length}/{LIMITE_CLIENTES} clientes cadastradas
-        </p>
       </div>
 
-      <div style={cardStyle}>
-        <h2>🎂 Aniversários nos próximos 5 dias</h2>
-
-        <label style={{ display: 'block', marginBottom: '8px' }}>
-          Desconto do cupom (%)
-        </label>
-
+      <div style={searchCardStyle}>
         <input
-          style={{ ...inputStyle, maxWidth: '160px' }}
-          type="number"
-          value={desconto}
-          onChange={(e) => setDesconto(e.target.value)}
+          style={inputStyle}
+          placeholder="Buscar cliente..."
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
         />
 
+        <span style={{ color: '#a1a1aa', fontSize: '14px' }}>
+          {clientes.length}/{LIMITE_CLIENTES} clientes cadastradas
+        </span>
+      </div>
+
+      {mostrarFormulario && (
+        <div style={cardStyle}>
+          <h2 style={{ marginTop: 0 }}>
+            {editandoId ? 'Editar cliente' : 'Nova cliente'}
+          </h2>
+
+          <div style={gridStyle}>
+            <input
+              style={inputStyle}
+              placeholder="Nome"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+            />
+
+            <input
+              style={inputStyle}
+              placeholder="WhatsApp"
+              value={telefone}
+              onChange={(e) => setTelefone(e.target.value)}
+            />
+
+            <input
+              style={inputStyle}
+              type="date"
+              value={dataNascimento}
+              onChange={(e) => setDataNascimento(e.target.value)}
+            />
+
+            <input
+              style={inputStyle}
+              placeholder="Observações"
+              value={observacoes}
+              onChange={(e) => setObservacoes(e.target.value)}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '14px' }}>
+            <button style={buttonStyle} onClick={salvarCliente} disabled={carregando}>
+              {carregando ? 'Salvando...' : editandoId ? 'Salvar alterações' : 'Cadastrar'}
+            </button>
+
+            <button style={secondaryButtonStyle} onClick={limparFormulario}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div style={cardStyle}>
+        <h2 style={{ marginTop: 0 }}>🎂 Aniversários nos próximos 5 dias</h2>
+
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <label>Desconto do cupom (%)</label>
+
+          <input
+            style={{ ...inputStyle, maxWidth: '120px' }}
+            type="number"
+            value={desconto}
+            onChange={(e) => setDesconto(e.target.value)}
+          />
+        </div>
+
         {aniversariantes.length === 0 ? (
-          <p style={{ color: '#a1a1aa' }}>Nenhum aniversário nos próximos dias.</p>
+          <p style={subtitleStyle}>Nenhum aniversário nos próximos dias.</p>
         ) : (
           <div style={{ display: 'grid', gap: '12px', marginTop: '16px' }}>
             {aniversariantes.map((cliente) => (
               <div key={cliente.id} style={clientCardStyle}>
-                <strong>{cliente.nome}</strong>
-                <p style={{ color: '#b4b4b4' }}>
-                  Faz aniversário em {diasAteAniversario(cliente.data_nascimento)} dia(s)
-                </p>
+                <div>
+                  <strong>{cliente.nome}</strong>
+                  <p style={mutedTextStyle}>
+                    Faz aniversário em {diasAteAniversario(cliente.data_nascimento)} dia(s)
+                  </p>
+                </div>
 
                 <button
                   style={whatsButtonStyle}
                   onClick={() => abrirWhatsApp(cliente, mensagemAniversario(cliente))}
                 >
-                  Enviar cupom pelo WhatsApp
+                  Enviar cupom
                 </button>
               </div>
             ))}
@@ -292,53 +349,70 @@ Válido até o dia do seu aniversário.`
       </div>
 
       <div style={cardStyle}>
-        <h2>Lista de clientes</h2>
+        <h2 style={{ marginTop: 0 }}>Lista de clientes</h2>
 
-        <input
-          style={inputStyle}
-          placeholder="Buscar cliente..."
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-        />
+        {clientesFiltradas.length === 0 ? (
+          <p style={subtitleStyle}>Nenhuma cliente encontrada.</p>
+        ) : (
+          <div style={{ display: 'grid', gap: '12px' }}>
+            {clientesFiltradas.map((cliente) => (
+              <div key={cliente.id} style={clientCardStyle}>
+                <div>
+                  <strong style={{ fontSize: '18px' }}>👤 {cliente.nome}</strong>
 
-        <div style={{ display: 'grid', gap: '12px', marginTop: '16px' }}>
-          {clientesFiltradas.map((cliente) => (
-            <div key={cliente.id} style={clientCardStyle}>
-              <strong>{cliente.nome}</strong>
+                  <p style={mutedTextStyle}>📲 {cliente.telefone}</p>
 
-              <p style={{ color: '#b4b4b4' }}>WhatsApp: {cliente.telefone}</p>
+                  <p style={mutedTextStyle}>
+                    🎂 {formatarData(cliente.data_nascimento)}
+                  </p>
 
-              <p style={{ color: '#b4b4b4' }}>
-                Nascimento: {cliente.data_nascimento || '-'}
-              </p>
+                  {cliente.observacoes && (
+                    <p style={mutedTextStyle}>📝 {cliente.observacoes}</p>
+                  )}
+                </div>
 
-              {cliente.observacoes && (
-                <p style={{ color: '#b4b4b4' }}>Obs: {cliente.observacoes}</p>
-              )}
+                <div style={actionsStyle}>
+                  <button style={whatsButtonStyle} onClick={() => abrirWhatsApp(cliente)}>
+                    WhatsApp
+                  </button>
 
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button style={whatsButtonStyle} onClick={() => abrirWhatsApp(cliente)}>
-                  WhatsApp
-                </button>
+                  <button style={secondaryButtonStyle} onClick={() => editarCliente(cliente)}>
+                    Editar
+                  </button>
 
-                <button style={secondaryButtonStyle} onClick={() => editarCliente(cliente)}>
-                  Editar
-                </button>
-
-                <button style={dangerButtonStyle} onClick={() => excluirCliente(cliente.id)}>
-                  Excluir
-                </button>
+                  <button style={dangerButtonStyle} onClick={() => excluirCliente(cliente.id)}>
+                    Excluir
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-
-          {clientesFiltradas.length === 0 && (
-            <p style={{ color: '#a1a1aa' }}>Nenhuma cliente encontrada.</p>
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
+}
+
+const topBarStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  gap: '16px',
+  alignItems: 'flex-start',
+  flexWrap: 'wrap',
+}
+
+const subtitleStyle: React.CSSProperties = {
+  color: '#b4b4b4',
+  lineHeight: 1.6,
+}
+
+const searchCardStyle: React.CSSProperties = {
+  marginTop: '22px',
+  display: 'flex',
+  gap: '12px',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  flexWrap: 'wrap',
 }
 
 const cardStyle: React.CSSProperties = {
@@ -366,7 +440,6 @@ const inputStyle: React.CSSProperties = {
 }
 
 const buttonStyle: React.CSSProperties = {
-  marginTop: '14px',
   padding: '13px 16px',
   borderRadius: '14px',
   border: 'none',
@@ -411,4 +484,20 @@ const clientCardStyle: React.CSSProperties = {
   border: '1px solid #2a2a2a',
   borderRadius: '16px',
   padding: '16px',
+  display: 'flex',
+  justifyContent: 'space-between',
+  gap: '16px',
+  flexWrap: 'wrap',
+}
+
+const mutedTextStyle: React.CSSProperties = {
+  color: '#b4b4b4',
+  margin: '6px 0',
+}
+
+const actionsStyle: React.CSSProperties = {
+  display: 'flex',
+  gap: '8px',
+  flexWrap: 'wrap',
+  alignItems: 'center',
 }
