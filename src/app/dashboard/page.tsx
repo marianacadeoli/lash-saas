@@ -168,7 +168,6 @@ export default function DashboardPage() {
               <strong style={brandNameStyle}>
                 {configuracao?.nome_negocio || 'Lash SaaS'}
               </strong>
-              <p style={brandSubStyle}>Painel profissional</p>
             </div>
           </div>
 
