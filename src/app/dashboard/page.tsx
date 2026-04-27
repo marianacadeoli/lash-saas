@@ -10,6 +10,7 @@ import AgendaSection from '../componentes/agendasection'
 import GanhosSection from '../componentes/ganhossection'
 import VisaoGeralSection from '../componentes/visaogeralsection'
 import ConfiguracoesSection from '../componentes/configuracoessection'
+import AjudaSection from '../componentes/ajudasection'
 
 type Aba =
   | 'visao'
@@ -124,6 +125,7 @@ export default function DashboardPage() {
     if (abaAtual === 'servicos') return <ServicosSection />
     if (abaAtual === 'ganhos') return <GanhosSection />
     if (abaAtual === 'configuracoes') return <ConfiguracoesSection />
+    if (abaAtual === 'ajuda') return <AjudaSection />
 
     return (
       <div>
