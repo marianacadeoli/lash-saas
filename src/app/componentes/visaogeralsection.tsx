@@ -121,7 +121,7 @@ export default function VisaoGeralSection() {
       <h1 style={{ margin: 0, marginBottom: '8px' }}>Visão geral</h1>
 
       <p style={subtitleStyle}>
-        Resumo rápido do seu dia — {formatarDataHoje()}.
+        Resumo rápido do seu dia {formatarDataHoje()}.
       </p>
 
       <div style={cardsGridStyle}>
