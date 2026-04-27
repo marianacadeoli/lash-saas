@@ -136,6 +136,16 @@ export default function AgendaSection() {
     return agora >= fim
   }
 
+  function temMesmoHorario(agendamento: Agendamento) {
+    return agendamentos.some(
+      (item) =>
+        item.id !== agendamento.id &&
+        item.data === agendamento.data &&
+        item.hora_inicio === agendamento.hora_inicio &&
+        item.status !== 'cancelado'
+    )
+  }
+
   const horaFim = calcularHoraFim(horaInicio, servicoSelecionado?.duracao)
 
   async function salvarAgendamento() {
@@ -150,6 +160,21 @@ export default function AgendaSection() {
     if (!servicoSelecionado) {
       alert('Serviço inválido.')
       return
+    }
+
+    const horarioDuplicado = agendamentos.some(
+      (item) =>
+        item.data === data &&
+        item.hora_inicio === horaInicio &&
+        item.status !== 'cancelado'
+    )
+
+    if (horarioDuplicado) {
+      const confirmou = confirm(
+        'Já existe um agendamento nesse mesmo dia e horário. Deseja cadastrar mesmo assim?'
+      )
+
+      if (!confirmou) return
     }
 
     setCarregando(true)
@@ -193,11 +218,26 @@ export default function AgendaSection() {
       .eq('user_id', userId)
 
     if (error) {
+      console.log('ERRO AO ALTERAR STATUS:', error)
       alert('Erro ao alterar status.')
       return
     }
 
     await carregarDados()
+  }
+
+  async function marcarComoFeito(agendamento: Agendamento) {
+    if (agendamento.status === 'feito') {
+      alert('Esse atendimento já está marcado como feito.')
+      return
+    }
+
+    if (!podeMarcarFeito(agendamento)) {
+      alert('Você só pode marcar como feito depois que o horário do atendimento terminar.')
+      return
+    }
+
+    await alterarStatus(agendamento.id, 'feito')
   }
 
   async function excluirAgendamento(id: number) {
@@ -224,6 +264,18 @@ export default function AgendaSection() {
   function formatarData(dataIso: string) {
     return new Date(dataIso + 'T00:00:00').toLocaleDateString('pt-BR')
   }
+
+  function formatarStatus(status: string) {
+  return status.charAt(0).toUpperCase() + status.slice(1)
+}
+
+function corStatus(status: string) {
+  if (status === 'feito') return '#22c55e'      // verde
+  if (status === 'cancelado') return '#ef4444'  // vermelho
+  if (status === 'agendado') return '#eab308'   // amarelo bonito
+
+  return '#b4b4b4'
+}
 
   return (
     <div>
@@ -308,6 +360,7 @@ export default function AgendaSection() {
           <div style={{ display: 'grid', gap: '12px' }}>
             {agendamentos.map((agendamento) => {
               const podeFeito = podeMarcarFeito(agendamento)
+              const mesmoHorario = temMesmoHorario(agendamento)
 
               return (
                 <div key={agendamento.id} style={appointmentCardStyle}>
@@ -318,6 +371,10 @@ export default function AgendaSection() {
                       {agendamento.hora_fim.slice(0, 5)}
                     </strong>
 
+                    {mesmoHorario && (
+                      <span style={sameTimeBadgeStyle}>Mesmo horário</span>
+                    )}
+
                     <p style={mutedTextStyle}>
                       {agendamento.Clientes?.nome || 'Cliente'}
                     </p>
@@ -327,18 +384,25 @@ export default function AgendaSection() {
                       {Number(agendamento.valor).toFixed(2)}
                     </p>
 
-                    <p style={mutedTextStyle}>Status: {agendamento.status}</p>
+                    <p
+  style={{
+    ...mutedTextStyle,
+    color: corStatus(agendamento.status),
+    fontWeight: 600,
+  }}
+>
+  Status: {formatarStatus(agendamento.status)}
+</p>
                   </div>
 
                   <div style={actionsStyle}>
                     <button
                       style={{
                         ...secondaryButtonStyle,
-                        opacity: podeFeito ? 1 : 0.45,
-                        cursor: podeFeito ? 'pointer' : 'not-allowed',
+                        opacity: agendamento.status === 'feito' ? 0.45 : podeFeito ? 1 : 0.65,
+                        cursor: agendamento.status === 'feito' ? 'not-allowed' : 'pointer',
                       }}
-                      disabled={!podeFeito}
-                      onClick={() => alterarStatus(agendamento.id, 'feito')}
+                      onClick={() => marcarComoFeito(agendamento)}
                     >
                       Feito
                     </button>
@@ -416,6 +480,18 @@ const appointmentCardStyle: React.CSSProperties = {
   justifyContent: 'space-between',
   gap: '16px',
   flexWrap: 'wrap',
+}
+
+const sameTimeBadgeStyle: React.CSSProperties = {
+  display: 'inline-block',
+  marginLeft: '10px',
+  padding: '5px 9px',
+  borderRadius: '999px',
+  background: 'linear-gradient(135deg, rgba(217,70,239,0.18), rgba(88,28,135,0.18))',
+  border: '1px solid rgba(217,70,239,0.35)',
+  color: '#fff',
+  fontSize: '12px',
+  fontWeight: 700,
 }
 
 const mutedTextStyle: React.CSSProperties = {

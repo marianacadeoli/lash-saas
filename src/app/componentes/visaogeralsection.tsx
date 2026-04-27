@@ -61,8 +61,8 @@ export default function VisaoGeralSection() {
   }
 
   const feitos = agendamentos.filter((item) => item.status === 'feito')
-  const agendados = agendamentos.filter((item) => item.status === 'agendado')
-  const cancelados = agendamentos.filter((item) => item.status === 'cancelado')
+  const agendados = agendamentos.filter((item) => item.status === 'Agendado')
+  const cancelados = agendamentos.filter((item) => item.status === 'Cancelado')
 
   const ganhoPrevisto = agendamentos
     .filter((item) => item.status !== 'cancelado')
