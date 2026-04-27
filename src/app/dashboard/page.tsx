@@ -386,3 +386,4 @@ const mobileButtonStyle: React.CSSProperties = {
   fontWeight: 800,
   fontSize: '16px',
 }
+
