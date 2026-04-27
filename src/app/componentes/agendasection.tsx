@@ -265,14 +265,17 @@ export default function AgendaSection() {
     return new Date(dataIso + 'T00:00:00').toLocaleDateString('pt-BR')
   }
 
-  function formatarStatus(status: string) {
-  return status.charAt(0).toUpperCase() + status.slice(1)
+function formatarStatus(status: string) {
+  const s = status?.trim().toLowerCase() || ''
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
 function corStatus(status: string) {
-  if (status === 'feito') return '#22c55e'      // verde
-  if (status === 'cancelado') return '#ef4444'  // vermelho
-  if (status === 'agendado') return '#eab308'   // amarelo bonito
+  const s = status?.trim().toLowerCase() || ''
+
+  if (s === 'feito') return '#22c55e'
+  if (s === 'cancelado') return '#ef4444'
+  if (s === 'agendado') return '#eab308'
 
   return '#b4b4b4'
 }

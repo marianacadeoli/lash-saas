@@ -61,8 +61,8 @@ export default function VisaoGeralSection() {
   }
 
   const feitos = agendamentos.filter((item) => item.status === 'feito')
-  const agendados = agendamentos.filter((item) => item.status === 'Agendado')
-  const cancelados = agendamentos.filter((item) => item.status === 'Cancelado')
+  const agendados = agendamentos.filter((item) => item.status === 'agendado')
+  const cancelados = agendamentos.filter((item) => item.status === 'cancelado')
 
   const ganhoPrevisto = agendamentos
     .filter((item) => item.status !== 'cancelado')
@@ -95,6 +95,21 @@ export default function VisaoGeralSection() {
     })
   }
 
+  function formatarStatus(status: string) {
+    const s = status?.trim().toLowerCase() || ''
+    return s.charAt(0).toUpperCase() + s.slice(1)
+  }
+
+  function corStatus(status: string) {
+    const s = status?.trim().toLowerCase() || ''
+
+    if (s === 'feito') return '#22c55e'
+    if (s === 'cancelado') return '#ef4444'
+    if (s === 'agendado') return '#eab308'
+
+    return '#b4b4b4'
+  }
+
   return (
     <div>
       <h1 style={{ margin: 0, marginBottom: '8px' }}>Visão geral</h1>
@@ -103,7 +118,6 @@ export default function VisaoGeralSection() {
         Resumo rápido do seu dia — {formatarDataHoje()}.
       </p>
 
-      {/* CARDS */}
       <div style={cardsGridStyle}>
         <div style={cardStyle}>
           <span style={labelStyle}>Atendimentos hoje</span>
@@ -131,19 +145,24 @@ export default function VisaoGeralSection() {
         </div>
       </div>
 
-      {/* PRÓXIMO */}
       <div style={sectionCardStyle}>
-        <h2 style={{ marginTop: 0 }}>Próximo atendimento</h2>
+        <h2 style={{ marginTop: 0, marginBottom: '16px' }}>
+          Próximo atendimento
+        </h2>
 
         {!proximoAtendimento ? (
           <p style={subtitleStyle}>Nenhum próximo atendimento para hoje.</p>
         ) : (
           <div style={itemStyle}>
             <div>
-              <strong>
-                {proximoAtendimento.hora_inicio.slice(0, 5)} às{' '}
-                {proximoAtendimento.hora_fim.slice(0, 5)}
-              </strong>
+              <div style={headerRowStyle}>
+                <span style={waitingIconStyle}>⏳</span>
+
+                <strong style={timeStyle}>
+                  {proximoAtendimento.hora_inicio.slice(0, 5)} às{' '}
+                  {proximoAtendimento.hora_fim.slice(0, 5)}
+                </strong>
+              </div>
 
               <div style={infoGroupStyle}>
                 <p style={primaryTextStyle}>
@@ -153,6 +172,15 @@ export default function VisaoGeralSection() {
                 <p style={secondaryTextStyle}>
                   {proximoAtendimento.Servicos?.nome || 'Serviço'}
                 </p>
+
+                <p
+                  style={{
+                    ...statusTextStyle,
+                    color: corStatus(proximoAtendimento.status),
+                  }}
+                >
+                  Status: {formatarStatus(proximoAtendimento.status)}
+                </p>
               </div>
             </div>
 
@@ -161,7 +189,6 @@ export default function VisaoGeralSection() {
         )}
       </div>
 
-      {/* LISTA */}
       <div style={sectionCardStyle}>
         <h2 style={{ marginTop: 0, marginBottom: '16px' }}>
           Atendimentos de hoje
@@ -174,8 +201,6 @@ export default function VisaoGeralSection() {
             {agendamentos.map((item, index) => (
               <div key={item.id} style={itemStyle}>
                 <div>
-
-                  {/* 🔥 LINHA DO NÚMERO + HORÁRIO */}
                   <div style={headerRowStyle}>
                     <span style={indexStyle}>{index + 1}</span>
 
@@ -194,8 +219,13 @@ export default function VisaoGeralSection() {
                       {item.Servicos?.nome || 'Serviço'}
                     </p>
 
-                    <p style={statusTextStyle}>
-                      Status: {item.status}
+                    <p
+                      style={{
+                        ...statusTextStyle,
+                        color: corStatus(item.status),
+                      }}
+                    >
+                      Status: {formatarStatus(item.status)}
                     </p>
                   </div>
                 </div>
@@ -209,8 +239,6 @@ export default function VisaoGeralSection() {
     </div>
   )
 }
-
-/* STYLES */
 
 const subtitleStyle: React.CSSProperties = {
   color: '#b4b4b4',
@@ -287,6 +315,19 @@ const indexStyle: React.CSSProperties = {
   fontWeight: 700,
 }
 
+const waitingIconStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '26px',
+  height: '26px',
+  borderRadius: '50%',
+  background: 'linear-gradient(135deg, rgba(234,179,8,0.18), rgba(217,70,239,0.12))',
+  border: '1px solid rgba(234,179,8,0.45)',
+  color: '#eab308',
+  fontSize: '13px',
+}
+
 const infoGroupStyle: React.CSSProperties = {
   marginTop: '4px',
   display: 'flex',
@@ -310,7 +351,6 @@ const secondaryTextStyle: React.CSSProperties = {
 
 const statusTextStyle: React.CSSProperties = {
   margin: 0,
-  color: '#22c55e',
   fontSize: '14px',
   fontWeight: 400,
 }
