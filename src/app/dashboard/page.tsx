@@ -103,13 +103,13 @@ export default function DashboardPage() {
   }
 
   const menu: { id: Aba; label: string }[] = [
-    { id: 'visao', label: '🏠 Visão geral' },
-    { id: 'agenda', label: '📅 Agenda' },
-    { id: 'clientes', label: '👩‍🦰 Clientes' },
-    { id: 'servicos', label: '💅 Serviços' },
-    { id: 'ganhos', label: '💰 Ganhos' },
-    { id: 'configuracoes', label: '⚙️ Configurações' },
-    { id: 'ajuda', label: '❓ Ajuda' },
+    { id: 'visao', label: 'Visão geral' },
+    { id: 'agenda', label: 'Agenda' },
+    { id: 'clientes', label: 'Clientes' },
+    { id: 'servicos', label: 'Serviços' },
+    { id: 'ganhos', label: 'Ganhos' },
+    { id: 'configuracoes', label: 'Configurações' },
+    { id: 'ajuda', label: 'Ajuda' },
   ]
 
   function trocarAba(id: Aba) {
@@ -127,7 +127,7 @@ export default function DashboardPage() {
 
     return (
       <div>
-        <h1>❓ Ajuda</h1>
+        <h1>Ajuda</h1>
         <p style={{ color: '#b4b4b4' }}>
           Central de ajuda, dúvidas frequentes e suporte.
         </p>
