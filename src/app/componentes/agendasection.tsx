@@ -213,7 +213,7 @@ export default function AgendaSection() {
 
   return (
     <div>
-      <h1 style={{ margin: 0 }}>📅 Agenda</h1>
+      <h1 style={{ margin: 0 }}>Agenda</h1>
 
       <p style={subtitleStyle}>
         Cadastre atendimentos usando cliente, serviço, valor e duração automática.
