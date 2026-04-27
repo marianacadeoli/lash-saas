@@ -73,11 +73,17 @@ export default function VisaoGeralSection() {
     0
   )
 
-  const proximoAtendimento = useMemo(() => {
+  const proximosAtendimentos = useMemo(() => {
     const agora = new Date()
     const horaAtual = agora.toTimeString().slice(0, 5)
 
-    return agendados.find((item) => item.hora_inicio >= horaAtual)
+    const primeiroHorario = agendados.find(
+      (item) => item.hora_inicio >= horaAtual
+    )?.hora_inicio
+
+    if (!primeiroHorario) return []
+
+    return agendados.filter((item) => item.hora_inicio === primeiroHorario)
   }, [agendados])
 
   function formatarMoeda(valor: number) {
@@ -150,41 +156,45 @@ export default function VisaoGeralSection() {
           Próximo atendimento
         </h2>
 
-        {!proximoAtendimento ? (
+        {proximosAtendimentos.length === 0 ? (
           <p style={subtitleStyle}>Nenhum próximo atendimento para hoje.</p>
         ) : (
-          <div style={itemStyle}>
-            <div>
-              <div style={headerRowStyle}>
-                <span style={waitingIconStyle}>⏳</span>
+          <div style={{ display: 'grid', gap: '12px' }}>
+            {proximosAtendimentos.map((proximoAtendimento) => (
+              <div key={proximoAtendimento.id} style={itemStyle}>
+                <div>
+                  <div style={headerRowStyle}>
+                    <span style={waitingIconStyle}>⏳</span>
 
-                <strong style={timeStyle}>
-                  {proximoAtendimento.hora_inicio.slice(0, 5)} às{' '}
-                  {proximoAtendimento.hora_fim.slice(0, 5)}
-                </strong>
+                    <strong style={timeStyle}>
+                      {proximoAtendimento.hora_inicio.slice(0, 5)} às{' '}
+                      {proximoAtendimento.hora_fim.slice(0, 5)}
+                    </strong>
+                  </div>
+
+                  <div style={infoGroupStyle}>
+                    <p style={primaryTextStyle}>
+                      {proximoAtendimento.Clientes?.nome || 'Cliente'}
+                    </p>
+
+                    <p style={secondaryTextStyle}>
+                      {proximoAtendimento.Servicos?.nome || 'Serviço'}
+                    </p>
+
+                    <p
+                      style={{
+                        ...statusTextStyle,
+                        color: corStatus(proximoAtendimento.status),
+                      }}
+                    >
+                      Status: {formatarStatus(proximoAtendimento.status)}
+                    </p>
+                  </div>
+                </div>
+
+                <strong>{formatarMoeda(Number(proximoAtendimento.valor))}</strong>
               </div>
-
-              <div style={infoGroupStyle}>
-                <p style={primaryTextStyle}>
-                  {proximoAtendimento.Clientes?.nome || 'Cliente'}
-                </p>
-
-                <p style={secondaryTextStyle}>
-                  {proximoAtendimento.Servicos?.nome || 'Serviço'}
-                </p>
-
-                <p
-                  style={{
-                    ...statusTextStyle,
-                    color: corStatus(proximoAtendimento.status),
-                  }}
-                >
-                  Status: {formatarStatus(proximoAtendimento.status)}
-                </p>
-              </div>
-            </div>
-
-            <strong>{formatarMoeda(Number(proximoAtendimento.valor))}</strong>
+            ))}
           </div>
         )}
       </div>
@@ -323,7 +333,7 @@ const waitingIconStyle: React.CSSProperties = {
   height: '26px',
   borderRadius: '50%',
   background: 'linear-gradient(135deg, rgba(234,179,8,0.18), rgba(217,70,239,0.12))',
-  border: '1px solid rgba(234,179,8,0.45)',
+  border: '1px solid rgba(250,187,0,0.45)',
   color: '#eab308',
   fontSize: '13px',
 }
