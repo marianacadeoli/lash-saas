@@ -11,7 +11,7 @@ export default function AjudaSection() {
 
   return (
     <div>
-      <h1 style={{ margin: 0 }}>❓ Suporte</h1>
+      <h1 style={{ margin: 0 }}>Suporte</h1>
 
       <p style={subtitleStyle}>
         Precisa de ajuda? Fale com a gente.
@@ -19,7 +19,7 @@ export default function AjudaSection() {
 
       {/* SUPORTE */}
       <div style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>💬 Fale conosco</h2>
+        <h2 style={{ marginTop: 0 }}>Fale conosco</h2>
 
         <div style={buttonsContainer}>
           <button style={whatsappButton} onClick={abrirWhatsapp}>
@@ -34,7 +34,7 @@ export default function AjudaSection() {
 
       {/* FAQ */}
       <div style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>📚 Dúvidas rápidas</h2>
+        <h2 style={{ marginTop: 0 }}>Dúvidas rápidas</h2>
 
         <div style={faqItem}>
           <strong>Como cadastrar cliente?</strong>
@@ -61,7 +61,7 @@ export default function AjudaSection() {
   )
 }
 
-/* 🎨 ESTILO */
+/* ESTILO */
 
 const subtitleStyle = {
   color: '#b4b4b4',
