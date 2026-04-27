@@ -145,13 +145,15 @@ export default function VisaoGeralSection() {
                 {proximoAtendimento.hora_fim.slice(0, 5)}
               </strong>
 
-              <p style={mutedStyle}>
-                {proximoAtendimento.Clientes?.nome || 'Cliente'}
-              </p>
+              <div style={infoGroupStyle}>
+                <p style={primaryTextStyle}>
+                  {proximoAtendimento.Clientes?.nome || 'Cliente'}
+                </p>
 
-              <p style={{ ...mutedStyle, margin: '2px 0' }}>
-                {proximoAtendimento.Servicos?.nome || 'Serviço'}
-              </p>
+                <p style={secondaryTextStyle}>
+                  {proximoAtendimento.Servicos?.nome || 'Serviço'}
+                </p>
+              </div>
             </div>
 
             <strong>{formatarMoeda(Number(proximoAtendimento.valor))}</strong>
@@ -172,7 +174,6 @@ export default function VisaoGeralSection() {
             {agendamentos.map((item, index) => (
               <div key={item.id} style={itemStyle}>
                 <div>
-                  {/* NUMERO */}
                   <strong style={indexStyle}>#{index + 1}</strong>
 
                   <strong>
@@ -180,16 +181,17 @@ export default function VisaoGeralSection() {
                     {item.hora_fim.slice(0, 5)}
                   </strong>
 
-                  <p style={mutedStyle}>
-                    {item.Clientes?.nome || 'Cliente'}
-                  </p>
-
-                  <div style={{ marginTop: '6px' }}>
-                    <p style={{ ...mutedStyle, margin: '2px 0' }}>
-                    {item.Servicos?.nome || 'Serviço'}
+                  {/* 👇 AQUI FOI AJUSTADO PERFEITO */}
+                  <div style={infoGroupStyle}>
+                    <p style={primaryTextStyle}>
+                      {item.Clientes?.nome || 'Cliente'}
                     </p>
 
-                    <p style={{ ...mutedStyle, margin: '2px 0' }}>
+                    <p style={secondaryTextStyle}>
+                      {item.Servicos?.nome || 'Serviço'}
+                    </p>
+
+                    <p style={statusTextStyle}>
                       Status: {item.status}
                     </p>
                   </div>
@@ -204,6 +206,8 @@ export default function VisaoGeralSection() {
     </div>
   )
 }
+
+/* STYLES */
 
 const subtitleStyle: React.CSSProperties = {
   color: '#b4b4b4',
@@ -222,7 +226,6 @@ const cardStyle: React.CSSProperties = {
   border: '1px solid rgba(217,70,239,0.35)',
   borderRadius: '18px',
   padding: '18px',
-  boxShadow: '0 12px 30px rgba(217,70,239,0.08)',
 }
 
 const labelStyle: React.CSSProperties = {
@@ -254,14 +257,38 @@ const itemStyle: React.CSSProperties = {
   flexWrap: 'wrap',
 }
 
-const mutedStyle: React.CSSProperties = {
-  color: '#b4b4b4',
-  margin: '6px 0',
-}
-
 const indexStyle: React.CSSProperties = {
   display: 'block',
   fontSize: '13px',
   color: '#a1a1aa',
   marginBottom: '4px',
+}
+
+/* 👇 ESSA PARTE RESOLVE SEU PROBLEMA */
+
+const infoGroupStyle: React.CSSProperties = {
+  marginTop: '6px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '2px',
+}
+
+const primaryTextStyle: React.CSSProperties = {
+  margin: 0,
+  color: '#fff',
+  fontWeight: 600,
+  fontSize: '14px',
+}
+
+const secondaryTextStyle: React.CSSProperties = {
+  margin: 0,
+  color: '#a1a1aa',
+  fontSize: '13px',
+}
+
+const statusTextStyle: React.CSSProperties = {
+  margin: 0,
+  color: '#22c55e',
+  fontSize: '12px',
+  fontWeight: 600,
 }
