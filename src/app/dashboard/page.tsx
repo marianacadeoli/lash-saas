@@ -126,15 +126,6 @@ export default function DashboardPage() {
     if (abaAtual === 'ganhos') return <GanhosSection />
     if (abaAtual === 'configuracoes') return <ConfiguracoesSection />
     if (abaAtual === 'ajuda') return <AjudaSection />
-
-    return (
-      <div>
-        <h1>Ajuda</h1>
-        <p style={{ color: '#b4b4b4' }}>
-          Central de ajuda, dúvidas frequentes e suporte.
-        </p>
-      </div>
-    )
   }
 
   if (carregandoPagina) {
@@ -154,7 +145,7 @@ export default function DashboardPage() {
           left: isMobile ? (sidebarAberta ? 0 : '-100%') : 0,
         }}
       >
-        <div>
+        <div style={sidebarTopStyle}>
           <div style={brandStyle}>
             {configuracao?.logo_url ? (
               <img
@@ -178,27 +169,30 @@ export default function DashboardPage() {
               const ativo = abaAtual === item.id
 
               return (
-<button
-  key={item.id}
-  onClick={() => trocarAba(item.id)}
-  onMouseEnter={(e) => {
-    e.currentTarget.style.background = 'rgba(217,70,239,0.12)'
-    e.currentTarget.style.transform = 'translateX(4px)'
-  }}
-  onMouseLeave={(e) => {
-    e.currentTarget.style.background =
-      ativo ? 'rgba(217,70,239,0.18)' : 'transparent'
-    e.currentTarget.style.transform = 'translateX(0)'
-  }}
-  style={{
-    ...menuButtonStyle,
-    background: ativo ? 'rgba(217,70,239,0.18)' : 'transparent',
-    border: ativo ? '1px solid #d946ef' : '1px solid transparent',
-    color: ativo ? '#fff' : '#d4d4d4',
-  }}
->
-  {item.label}
-</button>
+                <button
+                  key={item.id}
+                  onClick={() => trocarAba(item.id)}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(217,70,239,0.12)'
+                    e.currentTarget.style.transform = 'translateX(4px)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = ativo
+                      ? 'rgba(217,70,239,0.18)'
+                      : 'transparent'
+                    e.currentTarget.style.transform = 'translateX(0)'
+                  }}
+                  style={{
+                    ...menuButtonStyle,
+                    background: ativo ? 'rgba(217,70,239,0.18)' : 'transparent',
+                    border: ativo
+                      ? '1px solid rgba(217,70,239,0.75)'
+                      : '1px solid transparent',
+                    color: ativo ? '#fff' : '#d4d4d4',
+                  }}
+                >
+                  {item.label}
+                </button>
               )
             })}
           </nav>
@@ -266,38 +260,46 @@ const overlayStyle: React.CSSProperties = {
 const sidebarStyle: React.CSSProperties = {
   top: 0,
   height: '100vh',
-  width: '280px',
-  minWidth: '280px',
-  background: 'rgba(17,17,17,0.98)',
-  borderRight: '1px solid #242424',
-  padding: '22px',
+  width: '260px',
+  minWidth: '260px',
+  background:
+    'linear-gradient(180deg, rgba(18,18,22,0.98), rgba(10,10,12,0.98))',
+  borderRight: '1px solid rgba(217,70,239,0.16)',
+  padding: '18px',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'space-between',
+  gap: '16px',
   zIndex: 999,
-  overflow: 'hidden', // 👈 aqui muda
+  overflowY: 'auto',
+  scrollbarWidth: 'none',
   boxShadow: '12px 0 40px rgba(0,0,0,0.35)',
   transition: 'left 0.25s ease',
+}
+
+const sidebarTopStyle: React.CSSProperties = {
+  minHeight: 0,
 }
 
 const brandStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: '12px',
-  marginBottom: '28px',
+  gap: '10px',
+  marginBottom: '26px',
 }
 
 const brandLogoStyle: React.CSSProperties = {
-  width: '44px',
-  height: '44px',
+  width: '40px',
+  height: '40px',
   borderRadius: '50%',
   objectFit: 'cover',
-  border: '1px solid #333',
+  border: '1px solid rgba(217,70,239,0.25)',
+  boxShadow: '0 0 18px rgba(217,70,239,0.12)',
 }
 
 const brandFallbackStyle: React.CSSProperties = {
-  width: '44px',
-  height: '44px',
+  width: '40px',
+  height: '40px',
   borderRadius: '50%',
   background: '#27272a',
   display: 'grid',
@@ -306,28 +308,23 @@ const brandFallbackStyle: React.CSSProperties = {
 
 const brandNameStyle: React.CSSProperties = {
   display: 'block',
-  fontSize: '16px',
+  fontSize: '15px',
   lineHeight: 1.2,
-}
-
-const brandSubStyle: React.CSSProperties = {
-  margin: '4px 0 0',
-  color: '#a1a1aa',
-  fontSize: '12px',
+  fontWeight: 800,
 }
 
 const navStyle: React.CSSProperties = {
   display: 'grid',
-  gap: '8px',
+  gap: '6px',
 }
 
 const menuButtonStyle: React.CSSProperties = {
   width: '100%',
   textAlign: 'left',
-  padding: '14px 16px',
-  borderRadius: '16px',
+  padding: '11px 14px',
+  borderRadius: '14px',
   cursor: 'pointer',
-  fontSize: '16px',
+  fontSize: '14px',
   fontWeight: 700,
   letterSpacing: '-0.2px',
   fontFamily: 'Inter, Arial, sans-serif',
@@ -335,32 +332,34 @@ const menuButtonStyle: React.CSSProperties = {
 }
 
 const bottomBoxStyle: React.CSSProperties = {
-  marginTop: '24px',
+  marginTop: '16px',
 }
 
 const planCardStyle: React.CSSProperties = {
-  background: 'linear-gradient(180deg, #1b1b1b 0%, #151515 100%)',
-  padding: '16px',
+  background:
+    'linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))',
+  padding: '14px',
   borderRadius: '16px',
-  fontSize: '14px',
-  border: '1px solid #2f2f2f',
-  marginBottom: '12px',
+  fontSize: '12.5px',
+  border: '1px solid rgba(255,255,255,0.10)',
+  marginBottom: '10px',
 }
 
 const planTextStyle: React.CSSProperties = {
-  margin: '0 0 8px',
+  margin: '0 0 7px',
   lineHeight: 1.4,
 }
 
 const logoutButtonStyle: React.CSSProperties = {
   width: '100%',
-  padding: '13px',
+  padding: '12px',
   borderRadius: '14px',
-  border: 'none',
-  background: '#27272a',
+  border: '1px solid rgba(255,255,255,0.08)',
+  background: 'linear-gradient(135deg, #2a2a2f, #202024)',
   color: 'white',
   cursor: 'pointer',
   fontWeight: 800,
+  fontSize: '14px',
 }
 
 const contentStyle: React.CSSProperties = {
@@ -373,7 +372,7 @@ const contentStyle: React.CSSProperties = {
 const contentInnerStyle: React.CSSProperties = {
   maxWidth: '1100px',
   margin: '0 auto',
-  paddingTop: '8px', //
+  paddingTop: '8px',
 }
 
 const mobileButtonStyle: React.CSSProperties = {
