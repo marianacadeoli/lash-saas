@@ -20,17 +20,30 @@ type Aba =
   | 'configuracoes'
   | 'ajuda'
 
+type Assinatura = {
+  plan: string | null
+  status: string | null
+  current_period_end: string | null
+}
+
+type Configuracao = {
+  nome_negocio: string | null
+  logo_url: string | null
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const supabase = createClient()
 
   const [carregandoPagina, setCarregandoPagina] = useState(true)
-  const [assinatura, setAssinatura] = useState<any>(null)
+  const [assinatura, setAssinatura] = useState<Assinatura | null>(null)
+  const [configuracao, setConfiguracao] = useState<Configuracao | null>(null)
+
   const [abaAtual, setAbaAtual] = useState<Aba>('visao')
   const [sidebarAberta, setSidebarAberta] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
-  function formatarDataAssinatura(data?: string) {
+  function formatarDataAssinatura(data?: string | null) {
     if (!data) return '-'
     return new Date(data).toLocaleDateString('pt-BR')
   }
@@ -46,18 +59,27 @@ export default function DashboardPage() {
         return
       }
 
-      const { data: assinatura } = await supabase
+      const userId = session.user.id
+
+      const { data: assinaturaData } = await supabase
         .from('subscriptions')
-        .select('*')
-        .eq('user_id', session.user.id)
+        .select('plan, status, current_period_end')
+        .eq('user_id', userId)
         .maybeSingle()
 
-      if (!assinatura || assinatura.status !== 'active') {
+      if (!assinaturaData || assinaturaData.status !== 'active') {
         router.replace('/subscribe')
         return
       }
 
-      setAssinatura(assinatura)
+      const { data: configData } = await supabase
+        .from('Configuracoes')
+        .select('nome_negocio, logo_url')
+        .eq('user_id', userId)
+        .maybeSingle()
+
+      setAssinatura(assinaturaData as Assinatura)
+      setConfiguracao((configData as Configuracao) || null)
       setCarregandoPagina(false)
     }
 
@@ -103,22 +125,12 @@ export default function DashboardPage() {
     if (abaAtual === 'ganhos') return <GanhosSection />
     if (abaAtual === 'configuracoes') return <ConfiguracoesSection />
 
-    const titulo = menu.find((item) => item.id === abaAtual)?.label
-
-    const textos: Record<Aba, string> = {
-      visao: 'Resumo do seu negócio.',
-      agenda: 'Gerencie seus horários.',
-      clientes: 'Gerencie seus clientes.',
-      servicos: 'Gerencie seus serviços.',
-      ganhos: 'Controle financeiro.',
-      configuracoes: 'Configurações da conta.',
-      ajuda: 'Central de ajuda.',
-    }
-
     return (
       <div>
-        <h1>{titulo}</h1>
-        <p style={{ color: '#b4b4b4' }}>{textos[abaAtual]}</p>
+        <h1>❓ Ajuda</h1>
+        <p style={{ color: '#b4b4b4' }}>
+          Central de ajuda, dúvidas frequentes e suporte.
+        </p>
       </div>
     )
   }
@@ -130,77 +142,106 @@ export default function DashboardPage() {
   return (
     <main style={mainStyle}>
       {isMobile && sidebarAberta && (
-        <div
-          onClick={() => setSidebarAberta(false)}
-          style={overlayStyle}
-        />
+        <div onClick={() => setSidebarAberta(false)} style={overlayStyle} />
       )}
 
-      <aside style={sidebarStyle}>
+      <aside
+        style={{
+          ...sidebarStyle,
+          position: isMobile ? 'fixed' : 'sticky',
+          left: isMobile ? (sidebarAberta ? 0 : '-100%') : 0,
+        }}
+      >
         <div>
-          <h2>💅 Lash SaaS</h2>
+          <div style={brandStyle}>
+            {configuracao?.logo_url ? (
+              <img
+                src={configuracao.logo_url}
+                alt="Logo do negócio"
+                style={brandLogoStyle}
+              />
+            ) : (
+              <div style={brandFallbackStyle}>💅</div>
+            )}
 
-          <nav>
-            {menu.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => trocarAba(item.id)}
-                style={{
-                  ...menuButtonStyle,
-                  background:
-                    abaAtual === item.id ? '#2a1230' : 'transparent',
-                }}
-              >
-                {item.label}
-              </button>
-            ))}
+            <div>
+              <strong style={brandNameStyle}>
+                {configuracao?.nome_negocio || 'Lash SaaS'}
+              </strong>
+              <p style={brandSubStyle}>Painel profissional</p>
+            </div>
+          </div>
+
+          <nav style={navStyle}>
+            {menu.map((item) => {
+              const ativo = abaAtual === item.id
+
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => trocarAba(item.id)}
+                  style={{
+                    ...menuButtonStyle,
+                    background: ativo ? 'rgba(217,70,239,0.18)' : 'transparent',
+                    border: ativo ? '1px solid #d946ef' : '1px solid transparent',
+                    color: ativo ? '#fff' : '#d4d4d4',
+                  }}
+                >
+                  {item.label}
+                </button>
+              )
+            })}
           </nav>
         </div>
 
-        <div>
-          <p>Plano: {assinatura?.plan}</p>
-          <p>Status: {assinatura?.status}</p>
-          <p>Vence: {formatarDataAssinatura(assinatura?.current_period_end)}</p>
+        <div style={bottomBoxStyle}>
+          <div style={planCardStyle}>
+            <p style={planTextStyle}>
+              <strong>Plano:</strong> {assinatura?.plan || 'basic'}
+            </p>
 
-          <button onClick={sair}>Sair</button>
+            <p style={planTextStyle}>
+              <strong>Status:</strong>{' '}
+              {assinatura?.status === 'active' ? 'Ativo' : assinatura?.status || '-'}
+            </p>
+
+            <p style={planTextStyle}>
+              <strong>Vence:</strong>{' '}
+              {formatarDataAssinatura(assinatura?.current_period_end)}
+            </p>
+          </div>
+
+          <button onClick={sair} style={logoutButtonStyle}>
+            Sair
+          </button>
         </div>
       </aside>
 
       <section style={contentStyle}>
         {isMobile && (
-          <button onClick={() => setSidebarAberta(true)}>
+          <button onClick={() => setSidebarAberta(true)} style={mobileButtonStyle}>
             ☰ Menu
           </button>
         )}
 
-        {renderConteudo()}
+        <div style={contentInnerStyle}>{renderConteudo()}</div>
       </section>
     </main>
   )
 }
 
 const mainStyle: React.CSSProperties = {
-  display: 'flex',
   minHeight: '100vh',
-  background: '#0b0b0b',
+  display: 'flex',
+  background: 'linear-gradient(135deg, #080808 0%, #0d0d12 55%, #13051f 100%)',
   color: 'white',
-}
-
-const sidebarStyle: React.CSSProperties = {
-  width: '260px',
-  padding: '20px',
-  background: '#111',
-}
-
-const contentStyle: React.CSSProperties = {
-  flex: 1,
-  padding: '20px',
+  fontFamily: 'Arial, sans-serif',
 }
 
 const loadingStyle: React.CSSProperties = {
+  minHeight: '100vh',
   display: 'grid',
   placeItems: 'center',
-  height: '100vh',
   background: '#0b0b0b',
   color: 'white',
 }
@@ -208,16 +249,127 @@ const loadingStyle: React.CSSProperties = {
 const overlayStyle: React.CSSProperties = {
   position: 'fixed',
   inset: 0,
-  background: 'rgba(0,0,0,0.6)',
+  background: 'rgba(0,0,0,0.65)',
+  zIndex: 998,
+}
+
+const sidebarStyle: React.CSSProperties = {
+  top: 0,
+  height: '100vh',
+  width: '280px',
+  minWidth: '280px',
+  background: 'rgba(17,17,17,0.98)',
+  borderRight: '1px solid #242424',
+  padding: '22px',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-between',
+  zIndex: 999,
+  overflowY: 'auto',
+  boxShadow: '12px 0 40px rgba(0,0,0,0.35)',
+  transition: 'left 0.25s ease',
+}
+
+const brandStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '12px',
+  marginBottom: '28px',
+}
+
+const brandLogoStyle: React.CSSProperties = {
+  width: '44px',
+  height: '44px',
+  borderRadius: '50%',
+  objectFit: 'cover',
+  border: '1px solid #333',
+}
+
+const brandFallbackStyle: React.CSSProperties = {
+  width: '44px',
+  height: '44px',
+  borderRadius: '50%',
+  background: '#27272a',
+  display: 'grid',
+  placeItems: 'center',
+}
+
+const brandNameStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: '16px',
+  lineHeight: 1.2,
+}
+
+const brandSubStyle: React.CSSProperties = {
+  margin: '4px 0 0',
+  color: '#a1a1aa',
+  fontSize: '12px',
+}
+
+const navStyle: React.CSSProperties = {
+  display: 'grid',
+  gap: '8px',
 }
 
 const menuButtonStyle: React.CSSProperties = {
-  display: 'block',
   width: '100%',
-  padding: '10px',
-  color: 'white',
-  background: 'transparent',
-  border: 'none',
   textAlign: 'left',
+  padding: '13px 14px',
+  borderRadius: '14px',
   cursor: 'pointer',
+  fontSize: '15px',
+  fontWeight: 800,
+}
+
+const bottomBoxStyle: React.CSSProperties = {
+  marginTop: '24px',
+}
+
+const planCardStyle: React.CSSProperties = {
+  background: 'linear-gradient(180deg, #1b1b1b 0%, #151515 100%)',
+  padding: '16px',
+  borderRadius: '16px',
+  fontSize: '14px',
+  border: '1px solid #2f2f2f',
+  marginBottom: '12px',
+}
+
+const planTextStyle: React.CSSProperties = {
+  margin: '0 0 8px',
+  lineHeight: 1.4,
+}
+
+const logoutButtonStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '13px',
+  borderRadius: '14px',
+  border: 'none',
+  background: '#27272a',
+  color: 'white',
+  cursor: 'pointer',
+  fontWeight: 800,
+}
+
+const contentStyle: React.CSSProperties = {
+  flex: 1,
+  minHeight: '100vh',
+  padding: '26px',
+  overflowX: 'hidden',
+}
+
+const contentInnerStyle: React.CSSProperties = {
+  maxWidth: '1180px',
+  margin: '0 auto',
+}
+
+const mobileButtonStyle: React.CSSProperties = {
+  marginBottom: '18px',
+  background: '#1f1f1f',
+  border: '1px solid #333',
+  borderRadius: '14px',
+  color: 'white',
+  padding: '12px 16px',
+  cursor: 'pointer',
+  fontWeight: 800,
+  fontSize: '16px',
 }
