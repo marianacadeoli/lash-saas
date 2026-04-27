@@ -359,8 +359,9 @@ const contentStyle: React.CSSProperties = {
 }
 
 const contentInnerStyle: React.CSSProperties = {
-  maxWidth: '1180px',
+  maxWidth: '1100px',
   margin: '0 auto',
+  paddingTop: '8px', //
 }
 
 const mobileButtonStyle: React.CSSProperties = {

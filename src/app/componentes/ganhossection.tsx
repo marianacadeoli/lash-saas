@@ -111,7 +111,7 @@ export default function GanhosSection() {
 
   return (
     <div>
-      <h1 style={{ margin: 0 }}>Ganhos</h1>
+    <h1 style={{ margin: 0, marginBottom: '8px' }}>Ganhos</h1>
 
       <p style={subtitleStyle}>
         Acompanhe seus ganhos com base nos atendimentos marcados como feitos.

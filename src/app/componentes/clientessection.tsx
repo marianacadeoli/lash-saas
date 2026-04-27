@@ -231,7 +231,7 @@ Válido até o dia do seu aniversário.`
     <div>
       <div style={topBarStyle}>
         <div>
-          <h1 style={{ margin: 0 }}>Clientes</h1>
+        <h1 style={{ margin: 0, marginBottom: '8px' }}>Clientes</h1>
           <p style={subtitleStyle}>
             Cadastre, edite e acompanhe aniversários das suas clientes.
           </p>

@@ -45,12 +45,8 @@ export default function VisaoGeralSection() {
       .from('Agendamentos')
       .select(`
         *,
-        Clientes (
-          nome
-        ),
-        Servicos (
-          nome
-        )
+        Clientes ( nome ),
+        Servicos ( nome )
       `)
       .eq('user_id', userId)
       .eq('data', hoje)
@@ -101,12 +97,13 @@ export default function VisaoGeralSection() {
 
   return (
     <div>
-      <h1 style={{ margin: 0 }}>Visão geral</h1>
+      <h1 style={{ margin: 0, marginBottom: '8px' }}>Visão geral</h1>
 
       <p style={subtitleStyle}>
         Resumo rápido do seu dia — {formatarDataHoje()}.
       </p>
 
+      {/* CARDS TOP */}
       <div style={cardsGridStyle}>
         <div style={cardStyle}>
           <span style={labelStyle}>Atendimentos hoje</span>
@@ -134,6 +131,7 @@ export default function VisaoGeralSection() {
         </div>
       </div>
 
+      {/* PRÓXIMO */}
       <div style={sectionCardStyle}>
         <h2 style={{ marginTop: 0 }}>Próximo atendimento</h2>
 
@@ -143,15 +141,16 @@ export default function VisaoGeralSection() {
           <div style={itemStyle}>
             <div>
               <strong>
-                {proximoAtendimento.hora_inicio} às {proximoAtendimento.hora_fim}
+                {proximoAtendimento.hora_inicio.slice(0, 5)} às{' '}
+                {proximoAtendimento.hora_fim.slice(0, 5)}
               </strong>
 
               <p style={mutedStyle}>
                 {proximoAtendimento.Clientes?.nome || 'Cliente'}
               </p>
 
-              <p style={mutedStyle}>
-                {proximoAtendimento.Servicos?.nome || 'Serviço'}
+              <p style={{ ...mutedStyle, margin: '2px 0' }}>
+                💅 {proximoAtendimento.Servicos?.nome || 'Serviço'}
               </p>
             </div>
 
@@ -160,29 +159,40 @@ export default function VisaoGeralSection() {
         )}
       </div>
 
+      {/* LISTA */}
       <div style={sectionCardStyle}>
-        <h2 style={{ marginTop: 0 }}>Atendimentos de hoje</h2>
+        <h2 style={{ marginTop: 0, marginBottom: '16px' }}>
+          Atendimentos de hoje
+        </h2>
 
         {agendamentos.length === 0 ? (
           <p style={subtitleStyle}>Nenhum atendimento marcado para hoje.</p>
         ) : (
           <div style={{ display: 'grid', gap: '12px' }}>
-            {agendamentos.map((item) => (
+            {agendamentos.map((item, index) => (
               <div key={item.id} style={itemStyle}>
                 <div>
+                  {/* NUMERO */}
+                  <strong style={indexStyle}>#{index + 1}</strong>
+
                   <strong>
-                    {item.hora_inicio} às {item.hora_fim}
+                    {item.hora_inicio.slice(0, 5)} às{' '}
+                    {item.hora_fim.slice(0, 5)}
                   </strong>
 
                   <p style={mutedStyle}>
                     {item.Clientes?.nome || 'Cliente'}
                   </p>
 
-                  <p style={mutedStyle}>
-                    {item.Servicos?.nome || 'Serviço'}
-                  </p>
+                  <div style={{ marginTop: '6px' }}>
+                    <p style={{ ...mutedStyle, margin: '2px 0' }}>
+                      💅 {item.Servicos?.nome || 'Serviço'}
+                    </p>
 
-                  <p style={mutedStyle}>Status: {item.status}</p>
+                    <p style={{ ...mutedStyle, margin: '2px 0' }}>
+                      Status: {item.status}
+                    </p>
+                  </div>
                 </div>
 
                 <strong>{formatarMoeda(Number(item.valor))}</strong>
@@ -246,4 +256,11 @@ const itemStyle: React.CSSProperties = {
 const mutedStyle: React.CSSProperties = {
   color: '#b4b4b4',
   margin: '6px 0',
-} 
+}
+
+const indexStyle: React.CSSProperties = {
+  display: 'block',
+  fontSize: '13px',
+  color: '#a1a1aa',
+  marginBottom: '4px',
+}

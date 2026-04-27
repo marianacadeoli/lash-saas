@@ -11,7 +11,7 @@ export default function AjudaSection() {
 
   return (
     <div>
-      <h1 style={{ margin: 0 }}>Suporte</h1>
+    <h1 style={{ margin: 0, marginBottom: '8px' }}>Suporte</h1>
 
       <p style={subtitleStyle}>
         Precisa de ajuda? Fale com a gente.

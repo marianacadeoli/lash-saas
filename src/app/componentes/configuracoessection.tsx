@@ -219,7 +219,7 @@ export default function ConfiguracoesSection() {
 
   return (
     <div>
-      <h1 style={{ margin: 0 }}>Configurações</h1>
+    <h1 style={{ margin: 0, marginBottom: '8px' }}>Configurações</h1>
 
       <p style={subtitleStyle}>
         Gerencie os dados do negócio, cupom de aniversário, plano e conta.
@@ -387,7 +387,7 @@ export default function ConfiguracoesSection() {
       )}
 
       <div style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>💳 Plano e assinatura</h2>
+        <h2 style={{ marginTop: 0 }}>Plano e assinatura</h2>
 
         <div style={infoGridStyle}>
           <p>
