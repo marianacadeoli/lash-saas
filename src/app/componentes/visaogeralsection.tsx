@@ -60,22 +60,24 @@ export default function VisaoGeralSection() {
     setAgendamentos((data as Agendamento[]) || [])
   }
 
-  const feitos = agendamentos.filter((i) => i.status === 'feito')
-  const agendados = agendamentos.filter((i) => i.status === 'agendado')
-  const cancelados = agendamentos.filter((i) => i.status === 'cancelado')
+  const feitos = agendamentos.filter((item) => item.status === 'feito')
+  const agendados = agendamentos.filter((item) => item.status === 'agendado')
+  const cancelados = agendamentos.filter((item) => item.status === 'cancelado')
 
   const ganhoPrevisto = agendamentos
-    .filter((i) => i.status !== 'cancelado')
-    .reduce((t, i) => t + Number(i.valor), 0)
+    .filter((item) => item.status !== 'cancelado')
+    .reduce((total, item) => total + Number(item.valor), 0)
 
   const ganhoRealizado = feitos.reduce(
-    (t, i) => t + Number(i.valor),
+    (total, item) => total + Number(item.valor),
     0
   )
 
   const proximoAtendimento = useMemo(() => {
-    const agora = new Date().toTimeString().slice(0, 5)
-    return agendados.find((i) => i.hora_inicio >= agora)
+    const agora = new Date()
+    const horaAtual = agora.toTimeString().slice(0, 5)
+
+    return agendados.find((item) => item.hora_inicio >= horaAtual)
   }, [agendados])
 
   function formatarMoeda(valor: number) {
@@ -94,45 +96,62 @@ export default function VisaoGeralSection() {
   }
 
   return (
-    <div style={containerStyle}>
-      <h1 style={titleStyle}>Visão geral</h1>
+    <div>
+      <h1 style={{ margin: 0, marginBottom: '8px' }}>Visão geral</h1>
 
       <p style={subtitleStyle}>
-        Resumo do seu dia — {formatarDataHoje()}.
+        Resumo rápido do seu dia — {formatarDataHoje()}.
       </p>
 
-      {/* CARDS */}
+      {/* CARDS TOP */}
       <div style={cardsGridStyle}>
-        <Card label="Atendimentos hoje" value={agendamentos.length} />
-        <Card label="Feitos" value={feitos.length} />
-        <Card label="Cancelados" value={cancelados.length} />
-        <Card label="Ganho previsto" value={formatarMoeda(ganhoPrevisto)} />
-        <Card label="Ganho realizado" value={formatarMoeda(ganhoRealizado)} />
+        <div style={cardStyle}>
+          <span style={labelStyle}>Atendimentos hoje</span>
+          <strong style={numberStyle}>{agendamentos.length}</strong>
+        </div>
+
+        <div style={cardStyle}>
+          <span style={labelStyle}>Feitos</span>
+          <strong style={numberStyle}>{feitos.length}</strong>
+        </div>
+
+        <div style={cardStyle}>
+          <span style={labelStyle}>Cancelados</span>
+          <strong style={numberStyle}>{cancelados.length}</strong>
+        </div>
+
+        <div style={cardStyle}>
+          <span style={labelStyle}>Ganho previsto</span>
+          <strong style={numberStyle}>{formatarMoeda(ganhoPrevisto)}</strong>
+        </div>
+
+        <div style={cardStyle}>
+          <span style={labelStyle}>Ganho realizado</span>
+          <strong style={numberStyle}>{formatarMoeda(ganhoRealizado)}</strong>
+        </div>
       </div>
 
       {/* PRÓXIMO */}
       <div style={sectionCardStyle}>
-        <h2 style={sectionTitleStyle}>Próximo atendimento</h2>
+        <h2 style={{ marginTop: 0 }}>Próximo atendimento</h2>
 
         {!proximoAtendimento ? (
           <p style={subtitleStyle}>Nenhum próximo atendimento para hoje.</p>
         ) : (
           <div style={itemStyle}>
             <div>
-              <strong style={timeStyle}>
+              <strong>
                 {proximoAtendimento.hora_inicio.slice(0, 5)} às{' '}
                 {proximoAtendimento.hora_fim.slice(0, 5)}
               </strong>
 
-              <div style={infoGroupStyle}>
-                <p style={primaryTextStyle}>
-                  {proximoAtendimento.Clientes?.nome || 'Cliente'}
-                </p>
+              <p style={mutedStyle}>
+                {proximoAtendimento.Clientes?.nome || 'Cliente'}
+              </p>
 
-                <p style={secondaryTextStyle}>
-                  {proximoAtendimento.Servicos?.nome || 'Serviço'}
-                </p>
-              </div>
+              <p style={{ ...mutedStyle, margin: '2px 0' }}>
+                {proximoAtendimento.Servicos?.nome || 'Serviço'}
+              </p>
             </div>
 
             <strong>{formatarMoeda(Number(proximoAtendimento.valor))}</strong>
@@ -142,33 +161,36 @@ export default function VisaoGeralSection() {
 
       {/* LISTA */}
       <div style={sectionCardStyle}>
-        <h2 style={sectionTitleStyle}>Atendimentos de hoje</h2>
+        <h2 style={{ marginTop: 0, marginBottom: '16px' }}>
+          Atendimentos de hoje
+        </h2>
 
         {agendamentos.length === 0 ? (
-          <p style={subtitleStyle}>Nenhum atendimento hoje.</p>
+          <p style={subtitleStyle}>Nenhum atendimento marcado para hoje.</p>
         ) : (
           <div style={{ display: 'grid', gap: '12px' }}>
             {agendamentos.map((item, index) => (
               <div key={item.id} style={itemStyle}>
                 <div>
-                  <span style={indexStyle}>#{index + 1}</span>
+                  {/* NUMERO */}
+                  <strong style={indexStyle}>#{index + 1}</strong>
 
-                  <strong style={timeStyle}>
+                  <strong>
                     {item.hora_inicio.slice(0, 5)} às{' '}
                     {item.hora_fim.slice(0, 5)}
                   </strong>
 
-                  <div style={infoGroupStyle}>
-                    <p style={primaryTextStyle}>
-                      {item.Clientes?.nome || 'Cliente'}
+                  <p style={mutedStyle}>
+                    {item.Clientes?.nome || 'Cliente'}
+                  </p>
+
+                  <div style={{ marginTop: '6px' }}>
+                    <p style={{ ...mutedStyle, margin: '2px 0' }}>
+                    {item.Servicos?.nome || 'Serviço'}
                     </p>
 
-                    <p style={secondaryTextStyle}>
-                      {item.Servicos?.nome || 'Serviço'}
-                    </p>
-
-                    <p style={statusTextStyle}>
-                      {item.status}
+                    <p style={{ ...mutedStyle, margin: '2px 0' }}>
+                      Status: {item.status}
                     </p>
                   </div>
                 </div>
@@ -183,114 +205,63 @@ export default function VisaoGeralSection() {
   )
 }
 
-/* COMPONENT CARD */
-function Card({ label, value }: { label: string; value: any }) {
-  return (
-    <div style={cardStyle}>
-      <span style={labelStyle}>{label}</span>
-      <strong style={numberStyle}>{value}</strong>
-    </div>
-  )
-}
-
-/* STYLES */
-
-const containerStyle: React.CSSProperties = {
-  padding: '0 10px',
-}
-
-const titleStyle: React.CSSProperties = {
-  margin: 0,
-  fontSize: '22px',
-}
-
 const subtitleStyle: React.CSSProperties = {
-  color: '#a1a1aa',
-  marginTop: '6px',
+  color: '#b4b4b4',
+  lineHeight: 1.6,
 }
 
 const cardsGridStyle: React.CSSProperties = {
   marginTop: '24px',
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-  gap: '14px',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+  gap: '16px',
 }
 
 const cardStyle: React.CSSProperties = {
-  background: 'linear-gradient(135deg, #1a1a1a, #0f0f0f)',
-  border: '1px solid #2a2a2a',
-  borderRadius: '16px',
-  padding: '16px',
+  background: 'linear-gradient(135deg, rgba(217,70,239,0.18), rgba(88,28,135,0.18))',
+  border: '1px solid rgba(217,70,239,0.35)',
+  borderRadius: '18px',
+  padding: '18px',
+  boxShadow: '0 12px 30px rgba(217,70,239,0.08)',
 }
 
 const labelStyle: React.CSSProperties = {
+  display: 'block',
   color: '#a1a1aa',
-  fontSize: '13px',
+  marginBottom: '10px',
 }
 
 const numberStyle: React.CSSProperties = {
-  fontSize: '20px',
-  marginTop: '6px',
+  fontSize: '24px',
 }
 
 const sectionCardStyle: React.CSSProperties = {
   marginTop: '24px',
   background: '#101010',
   border: '1px solid #2a2a2a',
-  borderRadius: '16px',
+  borderRadius: '18px',
   padding: '18px',
-}
-
-const sectionTitleStyle: React.CSSProperties = {
-  marginTop: 0,
-  marginBottom: '14px',
-  fontSize: '16px',
 }
 
 const itemStyle: React.CSSProperties = {
   background: '#151515',
   border: '1px solid #2a2a2a',
-  borderRadius: '14px',
-  padding: '14px',
+  borderRadius: '16px',
+  padding: '16px',
   display: 'flex',
   justifyContent: 'space-between',
+  gap: '16px',
+  flexWrap: 'wrap',
+}
+
+const mutedStyle: React.CSSProperties = {
+  color: '#b4b4b4',
+  margin: '6px 0',
 }
 
 const indexStyle: React.CSSProperties = {
-  fontSize: '12px',
-  color: '#888',
   display: 'block',
-  marginBottom: '4px',
-}
-
-const timeStyle: React.CSSProperties = {
-  fontSize: '15px',
-}
-
-const infoGroupStyle: React.CSSProperties = {
-  marginTop: '4px',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '2px',
-}
-
-const primaryTextStyle: React.CSSProperties = {
-  margin: 0,
-  color: '#fff',
-  fontWeight: 600,
-  fontSize: '14px',
-}
-
-const secondaryTextStyle: React.CSSProperties = {
-  margin: 0,
-  color: '#a1a1aa',
   fontSize: '13px',
-}
-
-const statusTextStyle: React.CSSProperties = {
-  margin: 0,
-  color: '#22c55e',
-  fontSize: '12px',
-  fontWeight: 600,
-  textTransform: 'capitalize',
+  color: '#a1a1aa',
+  marginBottom: '4px',
 }
