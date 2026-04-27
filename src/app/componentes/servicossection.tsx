@@ -94,7 +94,7 @@ export default function ServicosSection() {
 
   return (
     <div>
-      <h1>💅 Serviços</h1>
+      <h1>Serviços</h1>
 
       <input
         placeholder="Buscar serviço..."

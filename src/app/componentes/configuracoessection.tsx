@@ -211,7 +211,7 @@ export default function ConfiguracoesSection() {
   if (carregando) {
     return (
       <div>
-        <h1 style={{ margin: 0 }}>⚙️ Configurações</h1>
+        <h1 style={{ margin: 0 }}>Configurações</h1>
         <p style={subtitleStyle}>Carregando configurações...</p>
       </div>
     )
@@ -219,7 +219,7 @@ export default function ConfiguracoesSection() {
 
   return (
     <div>
-      <h1 style={{ margin: 0 }}>⚙️ Configurações</h1>
+      <h1 style={{ margin: 0 }}>Configurações</h1>
 
       <p style={subtitleStyle}>
         Gerencie os dados do negócio, cupom de aniversário, plano e conta.
@@ -228,13 +228,13 @@ export default function ConfiguracoesSection() {
       <div style={resumoGridStyle}>
         <div style={resumoCardStyle}>
           <div style={cardHeaderStyle}>
-            <h2 style={{ margin: 0 }}>💅 Resumo do negócio</h2>
+            <h2 style={{ margin: 0 }}>Resumo do negócio</h2>
 
             <button
               onClick={() => setEditandoNegocio(!editandoNegocio)}
               style={editButtonStyle}
             >
-              ✏️ Editar
+              Editar
             </button>
           </div>
 
@@ -324,13 +324,13 @@ export default function ConfiguracoesSection() {
 
         <div style={resumoCardStyle}>
           <div style={cardHeaderStyle}>
-            <h2 style={{ margin: 0 }}>🎂 Resumo do cupom</h2>
+            <h2 style={{ margin: 0 }}>Resumo do cupom</h2>
 
             <button
               onClick={() => setEditandoCupom(!editandoCupom)}
               style={editButtonStyle}
             >
-              ✏️ Editar
+              Editar
             </button>
           </div>
 

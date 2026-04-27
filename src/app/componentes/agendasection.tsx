@@ -302,11 +302,11 @@ export default function AgendaSection() {
                   </strong>
 
                   <p style={mutedTextStyle}>
-                    👩‍🦰 {agendamento.Clientes?.nome || 'Cliente'}
+                    {agendamento.Clientes?.nome || 'Cliente'}
                   </p>
 
                   <p style={mutedTextStyle}>
-                    💅 {agendamento.Servicos?.nome || 'Serviço'} — R${' '}
+                    {agendamento.Servicos?.nome || 'Serviço'} — R${' '}
                     {Number(agendamento.valor).toFixed(2)}
                   </p>
 

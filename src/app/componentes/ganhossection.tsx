@@ -111,7 +111,7 @@ export default function GanhosSection() {
 
   return (
     <div>
-      <h1 style={{ margin: 0 }}>💰 Ganhos</h1>
+      <h1 style={{ margin: 0 }}>Ganhos</h1>
 
       <p style={subtitleStyle}>
         Acompanhe seus ganhos com base nos atendimentos marcados como feitos.
@@ -174,11 +174,11 @@ export default function GanhosSection() {
                   </strong>
 
                   <p style={mutedStyle}>
-                    👩‍🦰 {item.Clientes?.nome || 'Cliente'}
+                    {item.Clientes?.nome || 'Cliente'}
                   </p>
 
                   <p style={mutedStyle}>
-                    💅 {item.Servicos?.nome || 'Serviço'}
+                    {item.Servicos?.nome || 'Serviço'}
                   </p>
                 </div>
 

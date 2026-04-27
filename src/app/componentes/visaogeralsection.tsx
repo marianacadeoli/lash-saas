@@ -101,7 +101,7 @@ export default function VisaoGeralSection() {
 
   return (
     <div>
-      <h1 style={{ margin: 0 }}>🏠 Visão geral</h1>
+      <h1 style={{ margin: 0 }}>Visão geral</h1>
 
       <p style={subtitleStyle}>
         Resumo rápido do seu dia — {formatarDataHoje()}.
@@ -135,7 +135,7 @@ export default function VisaoGeralSection() {
       </div>
 
       <div style={sectionCardStyle}>
-        <h2 style={{ marginTop: 0 }}>⏰ Próximo atendimento</h2>
+        <h2 style={{ marginTop: 0 }}>Próximo atendimento</h2>
 
         {!proximoAtendimento ? (
           <p style={subtitleStyle}>Nenhum próximo atendimento para hoje.</p>
@@ -147,11 +147,11 @@ export default function VisaoGeralSection() {
               </strong>
 
               <p style={mutedStyle}>
-                👩‍🦰 {proximoAtendimento.Clientes?.nome || 'Cliente'}
+                {proximoAtendimento.Clientes?.nome || 'Cliente'}
               </p>
 
               <p style={mutedStyle}>
-                💅 {proximoAtendimento.Servicos?.nome || 'Serviço'}
+                {proximoAtendimento.Servicos?.nome || 'Serviço'}
               </p>
             </div>
 
@@ -161,7 +161,7 @@ export default function VisaoGeralSection() {
       </div>
 
       <div style={sectionCardStyle}>
-        <h2 style={{ marginTop: 0 }}>📅 Atendimentos de hoje</h2>
+        <h2 style={{ marginTop: 0 }}>Atendimentos de hoje</h2>
 
         {agendamentos.length === 0 ? (
           <p style={subtitleStyle}>Nenhum atendimento marcado para hoje.</p>
@@ -175,11 +175,11 @@ export default function VisaoGeralSection() {
                   </strong>
 
                   <p style={mutedStyle}>
-                    👩‍🦰 {item.Clientes?.nome || 'Cliente'}
+                    {item.Clientes?.nome || 'Cliente'}
                   </p>
 
                   <p style={mutedStyle}>
-                    💅 {item.Servicos?.nome || 'Serviço'}
+                    {item.Servicos?.nome || 'Serviço'}
                   </p>
 
                   <p style={mutedStyle}>Status: {item.status}</p>
