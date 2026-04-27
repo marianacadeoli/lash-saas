@@ -175,7 +175,7 @@ export default function ClientesSection() {
       return
     }
 
-    const texto = mensagem || `Oi, ${cliente.nome}! Tudo bem? 💅`
+    const texto = mensagem || `Oi, ${cliente.nome}! Tudo bem? `
     const url = `https://wa.me/55${numero}?text=${encodeURIComponent(texto)}`
 
     window.open(url, '_blank')
@@ -220,9 +220,9 @@ export default function ClientesSection() {
   }, [clientes])
 
   function mensagemAniversario(cliente: Cliente) {
-    return `Oi, ${cliente.nome}! Vi que seu aniversário está chegando 🎉
+    return `Oi, ${cliente.nome}! Vi que seu aniversário está chegando 
 
-Preparei um presente especial para você: ${desconto}% OFF no seu próximo atendimento 💅
+Preparei um presente especial para você: ${desconto}% OFF no seu próximo atendimento 
 
 Válido até o dia do seu aniversário.`
   }
@@ -231,7 +231,7 @@ Válido até o dia do seu aniversário.`
     <div>
       <div style={topBarStyle}>
         <div>
-          <h1 style={{ margin: 0 }}>👩‍🦰 Clientes</h1>
+          <h1 style={{ margin: 0 }}>Clientes</h1>
           <p style={subtitleStyle}>
             Cadastre, edite e acompanhe aniversários das suas clientes.
           </p>
@@ -310,7 +310,7 @@ Válido até o dia do seu aniversário.`
       )}
 
       <div style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>🎂 Aniversários nos próximos 5 dias</h2>
+        <h2 style={{ marginTop: 0 }}>Aniversários nos próximos 5 dias</h2>
 
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
           <label>Desconto do cupom (%)</label>
@@ -360,14 +360,14 @@ Válido até o dia do seu aniversário.`
                 <div>
                   <strong style={{ fontSize: '18px' }}>👤 {cliente.nome}</strong>
 
-                  <p style={mutedTextStyle}>📲 {cliente.telefone}</p>
+                  <p style={mutedTextStyle}>{cliente.telefone}</p>
 
                   <p style={mutedTextStyle}>
-                    🎂 {formatarData(cliente.data_nascimento)}
+                    {formatarData(cliente.data_nascimento)}
                   </p>
 
                   {cliente.observacoes && (
-                    <p style={mutedTextStyle}>📝 {cliente.observacoes}</p>
+                    <p style={mutedTextStyle}>{cliente.observacoes}</p>
                   )}
                 </div>
 
