@@ -43,9 +43,18 @@ export default function AgendaSection() {
   const [horaInicio, setHoraInicio] = useState('')
   const [status, setStatus] = useState('agendado')
   const [carregando, setCarregando] = useState(false)
+  const [agora, setAgora] = useState(new Date())
 
   useEffect(() => {
     carregarDados()
+  }, [])
+
+  useEffect(() => {
+    const intervalo = setInterval(() => {
+      setAgora(new Date())
+    }, 30000)
+
+    return () => clearInterval(intervalo)
   }, [])
 
   async function pegarUserId() {
@@ -120,6 +129,11 @@ export default function AgendaSection() {
     const minutoFinal = String(dataBase.getMinutes()).padStart(2, '0')
 
     return `${horaFinal}:${minutoFinal}`
+  }
+
+  function podeMarcarFeito(agendamento: Agendamento) {
+    const fim = new Date(`${agendamento.data}T${agendamento.hora_fim}`)
+    return agora >= fim
   }
 
   const horaFim = calcularHoraFim(horaInicio, servicoSelecionado?.duracao)
@@ -213,7 +227,7 @@ export default function AgendaSection() {
 
   return (
     <div>
-    <h1 style={{ margin: 0, marginBottom: '8px' }}>Agenda</h1>
+      <h1 style={{ margin: 0, marginBottom: '8px' }}>Agenda</h1>
 
       <p style={subtitleStyle}>
         Cadastre atendimentos usando cliente, serviço, valor e duração automática.
@@ -269,7 +283,6 @@ export default function AgendaSection() {
             onChange={(e) => setStatus(e.target.value)}
           >
             <option value="agendado">Agendado</option>
-            <option value="feito">Feito</option>
             <option value="cancelado">Cancelado</option>
           </select>
         </div>
@@ -293,50 +306,60 @@ export default function AgendaSection() {
           <p style={subtitleStyle}>Nenhum agendamento cadastrado.</p>
         ) : (
           <div style={{ display: 'grid', gap: '12px' }}>
-            {agendamentos.map((agendamento) => (
-              <div key={agendamento.id} style={appointmentCardStyle}>
-                <div>
-                  <strong style={{ fontSize: '18px' }}>
-                    {formatarData(agendamento.data)} — {agendamento.hora_inicio} até{' '}
-                    {agendamento.hora_fim}
-                  </strong>
+            {agendamentos.map((agendamento) => {
+              const podeFeito = podeMarcarFeito(agendamento)
 
-                  <p style={mutedTextStyle}>
-                    {agendamento.Clientes?.nome || 'Cliente'}
-                  </p>
+              return (
+                <div key={agendamento.id} style={appointmentCardStyle}>
+                  <div>
+                    <strong style={{ fontSize: '18px' }}>
+                      {formatarData(agendamento.data)} —{' '}
+                      {agendamento.hora_inicio.slice(0, 5)} até{' '}
+                      {agendamento.hora_fim.slice(0, 5)}
+                    </strong>
 
-                  <p style={mutedTextStyle}>
-                    {agendamento.Servicos?.nome || 'Serviço'} — R${' '}
-                    {Number(agendamento.valor).toFixed(2)}
-                  </p>
+                    <p style={mutedTextStyle}>
+                      {agendamento.Clientes?.nome || 'Cliente'}
+                    </p>
 
-                  <p style={mutedTextStyle}>Status: {agendamento.status}</p>
+                    <p style={mutedTextStyle}>
+                      {agendamento.Servicos?.nome || 'Serviço'} — R${' '}
+                      {Number(agendamento.valor).toFixed(2)}
+                    </p>
+
+                    <p style={mutedTextStyle}>Status: {agendamento.status}</p>
+                  </div>
+
+                  <div style={actionsStyle}>
+                    <button
+                      style={{
+                        ...secondaryButtonStyle,
+                        opacity: podeFeito ? 1 : 0.45,
+                        cursor: podeFeito ? 'pointer' : 'not-allowed',
+                      }}
+                      disabled={!podeFeito}
+                      onClick={() => alterarStatus(agendamento.id, 'feito')}
+                    >
+                      Feito
+                    </button>
+
+                    <button
+                      style={secondaryButtonStyle}
+                      onClick={() => alterarStatus(agendamento.id, 'cancelado')}
+                    >
+                      Cancelar
+                    </button>
+
+                    <button
+                      style={dangerButtonStyle}
+                      onClick={() => excluirAgendamento(agendamento.id)}
+                    >
+                      Excluir
+                    </button>
+                  </div>
                 </div>
-
-                <div style={actionsStyle}>
-                  <button
-                    style={secondaryButtonStyle}
-                    onClick={() => alterarStatus(agendamento.id, 'feito')}
-                  >
-                    Feito
-                  </button>
-
-                  <button
-                    style={secondaryButtonStyle}
-                    onClick={() => alterarStatus(agendamento.id, 'cancelado')}
-                  >
-                    Cancelar
-                  </button>
-
-                  <button
-                    style={dangerButtonStyle}
-                    onClick={() => excluirAgendamento(agendamento.id)}
-                  >
-                    Excluir
-                  </button>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

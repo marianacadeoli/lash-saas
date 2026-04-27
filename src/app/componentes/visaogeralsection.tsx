@@ -103,7 +103,7 @@ export default function VisaoGeralSection() {
         Resumo rápido do seu dia — {formatarDataHoje()}.
       </p>
 
-      {/* CARDS TOP */}
+      {/* CARDS */}
       <div style={cardsGridStyle}>
         <div style={cardStyle}>
           <span style={labelStyle}>Atendimentos hoje</span>
@@ -174,14 +174,17 @@ export default function VisaoGeralSection() {
             {agendamentos.map((item, index) => (
               <div key={item.id} style={itemStyle}>
                 <div>
-                  <strong style={indexStyle}>#{index + 1}</strong>
 
-                  <strong>
-                    {item.hora_inicio.slice(0, 5)} às{' '}
-                    {item.hora_fim.slice(0, 5)}
-                  </strong>
+                  {/* 🔥 LINHA DO NÚMERO + HORÁRIO */}
+                  <div style={headerRowStyle}>
+                    <span style={indexStyle}>{index + 1}</span>
 
-                  {/* 👇 AQUI FOI AJUSTADO PERFEITO */}
+                    <strong style={timeStyle}>
+                      {item.hora_inicio.slice(0, 5)} às{' '}
+                      {item.hora_fim.slice(0, 5)}
+                    </strong>
+                  </div>
+
                   <div style={infoGroupStyle}>
                     <p style={primaryTextStyle}>
                       {item.Clientes?.nome || 'Cliente'}
@@ -257,38 +260,57 @@ const itemStyle: React.CSSProperties = {
   flexWrap: 'wrap',
 }
 
-const indexStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: '13px',
-  color: '#a1a1aa',
-  marginBottom: '4px',
+const headerRowStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+  marginBottom: '6px',
 }
 
-/* 👇 ESSA PARTE RESOLVE SEU PROBLEMA */
+const timeStyle: React.CSSProperties = {
+  color: '#ffffff',
+  fontSize: '18px',
+  fontWeight: 700,
+}
+
+const indexStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '26px',
+  height: '26px',
+  borderRadius: '50%',
+  background: 'linear-gradient(135deg, rgba(217,70,239,0.18), rgba(88,28,135,0.18))',
+  border: '1px solid rgba(217,70,239,0.35)',
+  color: '#ffffff',
+  fontSize: '12px',
+  fontWeight: 700,
+}
 
 const infoGroupStyle: React.CSSProperties = {
-  marginTop: '6px',
+  marginTop: '4px',
   display: 'flex',
   flexDirection: 'column',
-  gap: '2px',
+  gap: '0px',
 }
 
 const primaryTextStyle: React.CSSProperties = {
   margin: 0,
-  color: '#fff',
-  fontWeight: 600,
+  color: '#a1a1aa',
+  fontWeight: 400,
   fontSize: '14px',
 }
 
 const secondaryTextStyle: React.CSSProperties = {
   margin: 0,
   color: '#a1a1aa',
-  fontSize: '13px',
+  fontSize: '14px',
+  fontWeight: 400,
 }
 
 const statusTextStyle: React.CSSProperties = {
   margin: 0,
   color: '#22c55e',
-  fontSize: '12px',
-  fontWeight: 600,
+  fontSize: '14px',
+  fontWeight: 400,
 }
