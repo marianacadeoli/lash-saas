@@ -35,6 +35,9 @@ export default function ConfiguracoesSection() {
   const [diasAviso, setDiasAviso] = useState('5')
   const [logoUrl, setLogoUrl] = useState('')
 
+  const [editandoNegocio, setEditandoNegocio] = useState(false)
+  const [editandoCupom, setEditandoCupom] = useState(false)
+
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [enviandoLogo, setEnviandoLogo] = useState(false)
@@ -156,6 +159,8 @@ export default function ConfiguracoesSection() {
       return
     }
 
+    setEditandoNegocio(false)
+    setEditandoCupom(false)
     setSalvando(false)
     alert('Configurações salvas com sucesso!')
   }
@@ -217,133 +222,169 @@ export default function ConfiguracoesSection() {
       <h1 style={{ margin: 0 }}>⚙️ Configurações</h1>
 
       <p style={subtitleStyle}>
-        Ajuste os dados do negócio, horários, logo e cupom de aniversário.
+        Gerencie os dados do negócio, cupom de aniversário, plano e conta.
       </p>
 
-      <div style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>💅 Dados do negócio</h2>
+      <div style={resumoGridStyle}>
+        <div style={resumoCardStyle}>
+          <div style={cardHeaderStyle}>
+            <h2 style={{ margin: 0 }}>💅 Resumo do negócio</h2>
 
-        <div style={gridStyle}>
-          <div>
-            <label style={labelStyle}>Nome do negócio</label>
-            <input
-              style={inputStyle}
-              placeholder="Ex: Mariana Lash Designer"
-              value={nomeNegocio}
-              onChange={(e) => setNomeNegocio(e.target.value)}
-            />
+            <button
+              onClick={() => setEditandoNegocio(!editandoNegocio)}
+              style={editButtonStyle}
+            >
+              ✏️ Editar
+            </button>
           </div>
 
-          <div>
-            <label style={labelStyle}>Horário de início</label>
-            <input
-              style={inputStyle}
-              type="time"
-              value={horaInicio}
-              onChange={(e) => setHoraInicio(e.target.value)}
-            />
-          </div>
+          {!editandoNegocio ? (
+            <div style={{ marginTop: '16px' }}>
+              {logoUrl && (
+                <img
+                  src={logoUrl}
+                  alt="Logo do negócio"
+                  style={logoPreviewStyle}
+                />
+              )}
 
-          <div>
-            <label style={labelStyle}>Horário de fim</label>
-            <input
-              style={inputStyle}
-              type="time"
-              value={horaFim}
-              onChange={(e) => setHoraFim(e.target.value)}
-            />
-          </div>
+              <p style={resumoTextStyle}>
+                <strong>Nome:</strong> {nomeNegocio || '-'}
+              </p>
+
+              <p style={resumoTextStyle}>
+                <strong>Atendimento:</strong>{' '}
+                {horaInicio && horaFim ? `${horaInicio} às ${horaFim}` : '-'}
+              </p>
+
+              <p style={resumoTextStyle}>
+                <strong>Logo:</strong> {logoUrl ? 'Adicionada' : 'Não adicionada'}
+              </p>
+            </div>
+          ) : (
+            <div style={{ marginTop: '16px' }}>
+              <div style={gridStyle}>
+                <div>
+                  <label style={labelStyle}>Nome do negócio</label>
+                  <input
+                    style={inputStyle}
+                    placeholder="Ex: Mariana Lash Designer"
+                    value={nomeNegocio}
+                    onChange={(e) => setNomeNegocio(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Horário de início</label>
+                  <input
+                    style={inputStyle}
+                    type="time"
+                    value={horaInicio}
+                    onChange={(e) => setHoraInicio(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Horário de fim</label>
+                  <input
+                    style={inputStyle}
+                    type="time"
+                    value={horaFim}
+                    onChange={(e) => setHoraFim(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginTop: '18px' }}>
+                <label style={labelStyle}>Logo do negócio</label>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={enviarLogo}
+                  style={fileInputStyle}
+                />
+
+                {enviandoLogo && <p style={mutedStyle}>Enviando logo...</p>}
+
+                {logoUrl && (
+                  <div style={logoPreviewBoxStyle}>
+                    <img
+                      src={logoUrl}
+                      alt="Logo do negócio"
+                      style={logoPreviewStyle}
+                    />
+                    <p style={mutedStyle}>Logo carregada.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div style={{ marginTop: '18px' }}>
-          <label style={labelStyle}>Logo do negócio</label>
+        <div style={resumoCardStyle}>
+          <div style={cardHeaderStyle}>
+            <h2 style={{ margin: 0 }}>🎂 Resumo do cupom</h2>
 
-          <input
-            type="file"
-            accept="image/*"
-            onChange={enviarLogo}
-            style={fileInputStyle}
-          />
+            <button
+              onClick={() => setEditandoCupom(!editandoCupom)}
+              style={editButtonStyle}
+            >
+              ✏️ Editar
+            </button>
+          </div>
 
-          {enviandoLogo && <p style={mutedStyle}>Enviando logo...</p>}
+          {!editandoCupom ? (
+            <div style={{ marginTop: '16px' }}>
+              <p style={resumoTextStyle}>
+                <strong>Desconto:</strong> {descontoAniversario || '-'}%
+              </p>
 
-          {logoUrl && (
-            <div style={logoPreviewBoxStyle}>
-              <img src={logoUrl} alt="Logo do negócio" style={logoPreviewStyle} />
-              <p style={mutedStyle}>Logo carregada com sucesso.</p>
+              <p style={resumoTextStyle}>
+                <strong>Aviso:</strong> {diasAviso || '-'} dias antes
+              </p>
+            </div>
+          ) : (
+            <div style={{ marginTop: '16px' }}>
+              <div style={gridStyle}>
+                <div>
+                  <label style={labelStyle}>Desconto padrão (%)</label>
+                  <input
+                    style={inputStyle}
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={descontoAniversario}
+                    onChange={(e) => setDescontoAniversario(e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <label style={labelStyle}>Avisar quantos dias antes?</label>
+                  <input
+                    style={inputStyle}
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={diasAviso}
+                    onChange={(e) => setDiasAviso(e.target.value)}
+                  />
+                </div>
+              </div>
             </div>
           )}
         </div>
       </div>
 
-      <div style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>🎂 Cupom de aniversário</h2>
-
-        <div style={gridStyle}>
-          <div>
-            <label style={labelStyle}>Desconto padrão (%)</label>
-            <input
-              style={inputStyle}
-              type="number"
-              min="0"
-              max="100"
-              value={descontoAniversario}
-              onChange={(e) => setDescontoAniversario(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label style={labelStyle}>Avisar quantos dias antes?</label>
-            <input
-              style={inputStyle}
-              type="number"
-              min="1"
-              max="30"
-              value={diasAviso}
-              onChange={(e) => setDiasAviso(e.target.value)}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div style={resumoGridStyle}>
-        <div style={resumoCardStyle}>
-          <h3 style={{ marginTop: 0 }}>💅 Resumo do negócio</h3>
-
-          <p style={resumoTextStyle}>
-            <strong>Nome:</strong> {nomeNegocio || '-'}
-          </p>
-
-          <p style={resumoTextStyle}>
-            <strong>Atendimento:</strong>{' '}
-            {horaInicio && horaFim ? `${horaInicio} às ${horaFim}` : '-'}
-          </p>
-
-          <p style={resumoTextStyle}>
-            <strong>Logo:</strong> {logoUrl ? 'Adicionada' : 'Não adicionada'}
-          </p>
-        </div>
-
-        <div style={resumoCardStyle}>
-          <h3 style={{ marginTop: 0 }}>🎂 Resumo do cupom</h3>
-
-          <p style={resumoTextStyle}>
-            <strong>Desconto:</strong> {descontoAniversario || '-'}%
-          </p>
-
-          <p style={resumoTextStyle}>
-            <strong>Aviso:</strong> {diasAviso || '-'} dias antes
-          </p>
-        </div>
-      </div>
-
-      <button
-        onClick={salvarConfiguracoes}
-        disabled={salvando}
-        style={buttonStyle}
-      >
-        {salvando ? 'Salvando...' : 'Salvar configurações'}
-      </button>
+      {(editandoNegocio || editandoCupom) && (
+        <button
+          onClick={salvarConfiguracoes}
+          disabled={salvando}
+          style={buttonStyle}
+        >
+          {salvando ? 'Salvando...' : 'Salvar alterações'}
+        </button>
+      )}
 
       <div style={cardStyle}>
         <h2 style={{ marginTop: 0 }}>💳 Plano e assinatura</h2>
@@ -393,6 +434,37 @@ const cardStyle: React.CSSProperties = {
   border: '1px solid #2a2a2a',
   borderRadius: '18px',
   padding: '18px',
+}
+
+const resumoGridStyle: React.CSSProperties = {
+  marginTop: '24px',
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+  gap: '14px',
+}
+
+const resumoCardStyle: React.CSSProperties = {
+  background: '#151515',
+  border: '1px solid #2a2a2a',
+  borderRadius: '18px',
+  padding: '18px',
+}
+
+const cardHeaderStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  gap: '12px',
+}
+
+const editButtonStyle: React.CSSProperties = {
+  padding: '9px 12px',
+  borderRadius: '12px',
+  border: '1px solid #333',
+  background: '#27272a',
+  color: 'white',
+  cursor: 'pointer',
+  fontWeight: 800,
 }
 
 const gridStyle: React.CSSProperties = {
@@ -449,25 +521,11 @@ const logoPreviewBoxStyle: React.CSSProperties = {
 }
 
 const logoPreviewStyle: React.CSSProperties = {
-  width: '64px',
-  height: '64px',
+  width: '52px',
+  height: '52px',
   objectFit: 'cover',
-  borderRadius: '14px',
+  borderRadius: '50%',
   border: '1px solid #333',
-}
-
-const resumoGridStyle: React.CSSProperties = {
-  marginTop: '24px',
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-  gap: '14px',
-}
-
-const resumoCardStyle: React.CSSProperties = {
-  background: '#151515',
-  border: '1px solid #2a2a2a',
-  borderRadius: '18px',
-  padding: '18px',
 }
 
 const resumoTextStyle: React.CSSProperties = {
