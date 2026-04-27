@@ -275,7 +275,7 @@ const sidebarStyle: React.CSSProperties = {
   flexDirection: 'column',
   justifyContent: 'space-between',
   zIndex: 999,
-  overflowY: 'auto',
+  overflow: 'hidden', // 👈 aqui muda
   boxShadow: '12px 0 40px rgba(0,0,0,0.35)',
   transition: 'left 0.25s ease',
 }
