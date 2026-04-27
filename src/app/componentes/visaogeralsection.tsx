@@ -150,7 +150,7 @@ export default function VisaoGeralSection() {
               </p>
 
               <p style={{ ...mutedStyle, margin: '2px 0' }}>
-                💅 {proximoAtendimento.Servicos?.nome || 'Serviço'}
+                {proximoAtendimento.Servicos?.nome || 'Serviço'}
               </p>
             </div>
 
@@ -186,7 +186,7 @@ export default function VisaoGeralSection() {
 
                   <div style={{ marginTop: '6px' }}>
                     <p style={{ ...mutedStyle, margin: '2px 0' }}>
-                      💅 {item.Servicos?.nome || 'Serviço'}
+                    {item.Servicos?.nome || 'Serviço'}
                     </p>
 
                     <p style={{ ...mutedStyle, margin: '2px 0' }}>
@@ -218,10 +218,11 @@ const cardsGridStyle: React.CSSProperties = {
 }
 
 const cardStyle: React.CSSProperties = {
-  background: '#101010',
-  border: '1px solid #2a2a2a',
+  background: 'linear-gradient(135deg, rgba(217,70,239,0.18), rgba(88,28,135,0.18))',
+  border: '1px solid rgba(217,70,239,0.35)',
   borderRadius: '18px',
   padding: '18px',
+  boxShadow: '0 12px 30px rgba(217,70,239,0.08)',
 }
 
 const labelStyle: React.CSSProperties = {

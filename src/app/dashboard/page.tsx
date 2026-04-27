@@ -178,18 +178,27 @@ export default function DashboardPage() {
               const ativo = abaAtual === item.id
 
               return (
-                <button
-                  key={item.id}
-                  onClick={() => trocarAba(item.id)}
-                  style={{
-                    ...menuButtonStyle,
-                    background: ativo ? 'rgba(217,70,239,0.18)' : 'transparent',
-                    border: ativo ? '1px solid #d946ef' : '1px solid transparent',
-                    color: ativo ? '#fff' : '#d4d4d4',
-                  }}
-                >
-                  {item.label}
-                </button>
+<button
+  key={item.id}
+  onClick={() => trocarAba(item.id)}
+  onMouseEnter={(e) => {
+    e.currentTarget.style.background = 'rgba(217,70,239,0.12)'
+    e.currentTarget.style.transform = 'translateX(4px)'
+  }}
+  onMouseLeave={(e) => {
+    e.currentTarget.style.background =
+      ativo ? 'rgba(217,70,239,0.18)' : 'transparent'
+    e.currentTarget.style.transform = 'translateX(0)'
+  }}
+  style={{
+    ...menuButtonStyle,
+    background: ativo ? 'rgba(217,70,239,0.18)' : 'transparent',
+    border: ativo ? '1px solid #d946ef' : '1px solid transparent',
+    color: ativo ? '#fff' : '#d4d4d4',
+  }}
+>
+  {item.label}
+</button>
               )
             })}
           </nav>
@@ -315,11 +324,14 @@ const navStyle: React.CSSProperties = {
 const menuButtonStyle: React.CSSProperties = {
   width: '100%',
   textAlign: 'left',
-  padding: '13px 14px',
-  borderRadius: '14px',
+  padding: '14px 16px',
+  borderRadius: '16px',
   cursor: 'pointer',
-  fontSize: '15px',
-  fontWeight: 800,
+  fontSize: '16px',
+  fontWeight: 700,
+  letterSpacing: '-0.2px',
+  fontFamily: 'Inter, Arial, sans-serif',
+  transition: 'all 0.25s ease',
 }
 
 const bottomBoxStyle: React.CSSProperties = {
