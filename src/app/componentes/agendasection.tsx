@@ -32,7 +32,6 @@ type Agendamento = {
 
 export default function AgendaSection() {
   const supabase = createClient()
-
   const hoje = new Date().toLocaleDateString('sv-SE')
 
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -131,6 +130,7 @@ export default function AgendaSection() {
     dataBase.setHours(horas)
     dataBase.setMinutes(minutos)
     dataBase.setSeconds(0)
+
     dataBase.setMinutes(dataBase.getMinutes() + duracaoMinutos)
 
     const horaFinal = String(dataBase.getHours()).padStart(2, '0')
@@ -171,6 +171,55 @@ export default function AgendaSection() {
     return '#b4b4b4'
   }
 
+  function formatarData(dataIso: string) {
+    return new Date(dataIso + 'T00:00:00').toLocaleDateString('pt-BR')
+  }
+
+  function mudarMes(direcao: 'anterior' | 'proximo') {
+    const novaData = new Date(mesAtual)
+
+    if (direcao === 'anterior') {
+      novaData.setMonth(novaData.getMonth() - 1)
+    } else {
+      novaData.setMonth(novaData.getMonth() + 1)
+    }
+
+    setMesAtual(novaData)
+  }
+
+  function selecionarDia(dataIso: string) {
+    setDataSelecionada(dataIso)
+    setData(dataIso)
+  }
+
+  function gerarDiasCalendario() {
+    const ano = mesAtual.getFullYear()
+    const mes = mesAtual.getMonth()
+
+    const primeiroDiaMes = new Date(ano, mes, 1)
+    const ultimoDiaMes = new Date(ano, mes + 1, 0)
+
+    const dias: (string | null)[] = []
+    const diaSemanaInicio = primeiroDiaMes.getDay()
+
+    for (let i = 0; i < diaSemanaInicio; i++) {
+      dias.push(null)
+    }
+
+    for (let dia = 1; dia <= ultimoDiaMes.getDate(); dia++) {
+      const dataDia = new Date(ano, mes, dia).toLocaleDateString('sv-SE')
+      dias.push(dataDia)
+    }
+
+    return dias
+  }
+
+  function contarAgendamentosDoDia(dataIso: string) {
+    return agendamentos.filter(
+      (item) => item.data === dataIso && item.status !== 'cancelado'
+    ).length
+  }
+
   async function salvarAgendamento() {
     const userId = await pegarUserId()
     if (!userId) return
@@ -180,12 +229,10 @@ export default function AgendaSection() {
       return
     }
 
-    const hoje = new Date().toLocaleDateString('sv-SE')
-
-if (data < hoje) {
-  alert('Não é possível criar agendamento em uma data passada.')
-  return
-}
+    if (data < hoje) {
+      alert('Não é possível criar agendamento em uma data passada.')
+      return
+    }
 
     if (!servicoSelecionado) {
       alert('Serviço inválido.')
@@ -290,56 +337,6 @@ if (data < hoje) {
     await carregarDados()
   }
 
-  function formatarData(dataIso: string) {
-    return new Date(dataIso + 'T00:00:00').toLocaleDateString('pt-BR')
-  }
-
-  function mudarMes(direcao: 'anterior' | 'proximo') {
-    const novaData = new Date(mesAtual)
-
-    if (direcao === 'anterior') {
-      novaData.setMonth(novaData.getMonth() - 1)
-    } else {
-      novaData.setMonth(novaData.getMonth() + 1)
-    }
-
-    setMesAtual(novaData)
-  }
-
-  function selecionarDia(dataIso: string) {
-    setDataSelecionada(dataIso)
-    setData(dataIso)
-  }
-
-  function gerarDiasCalendario() {
-    const ano = mesAtual.getFullYear()
-    const mes = mesAtual.getMonth()
-
-    const primeiroDiaMes = new Date(ano, mes, 1)
-    const ultimoDiaMes = new Date(ano, mes + 1, 0)
-
-    const dias = []
-
-    const diaSemanaInicio = primeiroDiaMes.getDay()
-
-    for (let i = 0; i < diaSemanaInicio; i++) {
-      dias.push(null)
-    }
-
-    for (let dia = 1; dia <= ultimoDiaMes.getDate(); dia++) {
-      const dataDia = new Date(ano, mes, dia).toLocaleDateString('sv-SE')
-      dias.push(dataDia)
-    }
-
-    return dias
-  }
-
-  function contarAgendamentosDoDia(dataIso: string) {
-    return agendamentos.filter(
-      (item) => item.data === dataIso && item.status !== 'cancelado'
-    ).length
-  }
-
   return (
     <div>
       <h1 style={{ margin: 0, marginBottom: '8px' }}>Agenda</h1>
@@ -397,11 +394,7 @@ if (data < hoje) {
               >
                 <strong>{Number(dataDia.split('-')[2])}</strong>
 
-                {quantidade > 0 && (
-                  <span style={dotStyle}>
-                    {quantidade}
-                  </span>
-                )}
+                {quantidade > 0 && <span style={dotStyle}>{quantidade}</span>}
               </button>
             )
           })}
@@ -438,16 +431,16 @@ if (data < hoje) {
             ))}
           </select>
 
-<input
-  style={inputStyle}
-  type="date"
-  value={data}
-  min={hoje}
-  onChange={(e) => {
-    setData(e.target.value)
-    setDataSelecionada(e.target.value)
-  }}
-/>
+          <input
+            style={inputStyle}
+            type="date"
+            value={data}
+            min={hoje}
+            onChange={(e) => {
+              setData(e.target.value)
+              setDataSelecionada(e.target.value)
+            }}
+          />
 
           <input
             style={inputStyle}
@@ -487,48 +480,61 @@ if (data < hoje) {
           <p style={subtitleStyle}>Nenhum agendamento para este dia.</p>
         ) : (
           <div style={{ display: 'grid', gap: '12px' }}>
-            {agendamentosDoDia.map((agendamento) => {
+            {agendamentosDoDia.map((agendamento, index) => {
               const podeFeito = podeMarcarFeito(agendamento)
               const mesmoHorario = temMesmoHorario(agendamento)
 
               return (
                 <div key={agendamento.id} style={appointmentCardStyle}>
                   <div>
-                    <strong style={{ fontSize: '18px' }}>
-                      {agendamento.hora_inicio.slice(0, 5)} até{' '}
-                      {agendamento.hora_fim.slice(0, 5)}
-                    </strong>
+                    <div style={headerRowStyle}>
+                      <span style={indexStyle}>{index + 1}</span>
+
+                      <strong style={timeStyle}>
+                        {agendamento.hora_inicio.slice(0, 5)} até{' '}
+                        {agendamento.hora_fim.slice(0, 5)}
+                      </strong>
+                    </div>
 
                     {mesmoHorario && (
                       <span style={sameTimeBadgeStyle}>Mesmo horário</span>
                     )}
 
-                    <p style={mutedTextStyle}>
-                      {agendamento.Clientes?.nome || 'Cliente'}
-                    </p>
+                    <div style={infoGroupStyle}>
+                      <p style={primaryTextStyle}>
+                        {agendamento.Clientes?.nome || 'Cliente'}
+                      </p>
 
-                    <p style={mutedTextStyle}>
-                      {agendamento.Servicos?.nome || 'Serviço'} — R${' '}
-                      {Number(agendamento.valor).toFixed(2)}
-                    </p>
+                      <p style={secondaryTextStyle}>
+                        {agendamento.Servicos?.nome || 'Serviço'} — R${' '}
+                        {Number(agendamento.valor).toFixed(2)}
+                      </p>
 
-                    <p
-                      style={{
-                        ...mutedTextStyle,
-                        color: corStatus(agendamento.status),
-                        fontWeight: 700,
-                      }}
-                    >
-                      Status: {formatarStatus(agendamento.status)}
-                    </p>
+                      <p
+                        style={{
+                          ...statusTextStyle,
+                          color: corStatus(agendamento.status),
+                        }}
+                      >
+                        Status: {formatarStatus(agendamento.status)}
+                      </p>
+                    </div>
                   </div>
 
                   <div style={actionsStyle}>
                     <button
                       style={{
                         ...secondaryButtonStyle,
-                        opacity: agendamento.status === 'feito' ? 0.45 : podeFeito ? 1 : 0.65,
-                        cursor: agendamento.status === 'feito' ? 'not-allowed' : 'pointer',
+                        opacity:
+                          agendamento.status === 'feito'
+                            ? 0.45
+                            : podeFeito
+                              ? 1
+                              : 0.65,
+                        cursor:
+                          agendamento.status === 'feito'
+                            ? 'not-allowed'
+                            : 'pointer',
                       }}
                       onClick={() => marcarComoFeito(agendamento)}
                     >
@@ -618,8 +624,8 @@ const calendarGridStyle: React.CSSProperties = {
 }
 
 const dayButtonStyle: React.CSSProperties = {
-  minHeight: '72px',
-  borderRadius: '16px',
+  minHeight: '58px',
+  borderRadius: '14px',
   color: 'white',
   cursor: 'pointer',
   position: 'relative',
@@ -627,15 +633,15 @@ const dayButtonStyle: React.CSSProperties = {
 
 const dotStyle: React.CSSProperties = {
   position: 'absolute',
-  right: '8px',
-  bottom: '8px',
-  minWidth: '22px',
-  height: '22px',
-  padding: '0 7px',
+  right: '7px',
+  bottom: '7px',
+  minWidth: '20px',
+  height: '20px',
+  padding: '0 6px',
   borderRadius: '999px',
   background: '#d946ef',
   color: 'white',
-  fontSize: '12px',
+  fontSize: '11px',
   fontWeight: 800,
   display: 'inline-flex',
   alignItems: 'center',
@@ -680,9 +686,64 @@ const appointmentCardStyle: React.CSSProperties = {
   flexWrap: 'wrap',
 }
 
+const headerRowStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+  marginBottom: '6px',
+}
+
+const timeStyle: React.CSSProperties = {
+  color: '#ffffff',
+  fontSize: '18px',
+  fontWeight: 700,
+}
+
+const indexStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  width: '26px',
+  height: '26px',
+  borderRadius: '50%',
+  background: 'linear-gradient(135deg, rgba(217,70,239,0.18), rgba(88,28,135,0.18))',
+  border: '1px solid rgba(217,70,239,0.35)',
+  color: '#ffffff',
+  fontSize: '12px',
+  fontWeight: 700,
+}
+
+const infoGroupStyle: React.CSSProperties = {
+  marginTop: '4px',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '0px',
+}
+
+const primaryTextStyle: React.CSSProperties = {
+  margin: 0,
+  color: '#a1a1aa',
+  fontWeight: 400,
+  fontSize: '14px',
+}
+
+const secondaryTextStyle: React.CSSProperties = {
+  margin: 0,
+  color: '#a1a1aa',
+  fontSize: '14px',
+  fontWeight: 400,
+}
+
+const statusTextStyle: React.CSSProperties = {
+  margin: 0,
+  fontSize: '14px',
+  fontWeight: 700,
+}
+
 const sameTimeBadgeStyle: React.CSSProperties = {
   display: 'inline-block',
-  marginLeft: '10px',
+  marginLeft: '36px',
+  marginBottom: '6px',
   padding: '5px 9px',
   borderRadius: '999px',
   background: 'linear-gradient(135deg, rgba(217,70,239,0.18), rgba(88,28,135,0.18))',
@@ -690,11 +751,6 @@ const sameTimeBadgeStyle: React.CSSProperties = {
   color: '#fff',
   fontSize: '12px',
   fontWeight: 700,
-}
-
-const mutedTextStyle: React.CSSProperties = {
-  color: '#b4b4b4',
-  margin: '6px 0',
 }
 
 const actionsStyle: React.CSSProperties = {
