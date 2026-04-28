@@ -33,17 +33,22 @@ type Agendamento = {
 export default function AgendaSection() {
   const supabase = createClient()
 
+  const hoje = new Date().toLocaleDateString('sv-SE')
+
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [servicos, setServicos] = useState<Servico[]>([])
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([])
 
   const [clienteId, setClienteId] = useState('')
   const [servicoId, setServicoId] = useState('')
-  const [data, setData] = useState('')
+  const [data, setData] = useState(hoje)
   const [horaInicio, setHoraInicio] = useState('')
   const [status, setStatus] = useState('agendado')
   const [carregando, setCarregando] = useState(false)
   const [agora, setAgora] = useState(new Date())
+
+  const [dataSelecionada, setDataSelecionada] = useState(hoje)
+  const [mesAtual, setMesAtual] = useState(new Date())
 
   useEffect(() => {
     carregarDados()
@@ -114,6 +119,10 @@ export default function AgendaSection() {
     return servicos.find((servico) => String(servico.id) === servicoId)
   }, [servicos, servicoId])
 
+  const agendamentosDoDia = agendamentos.filter(
+    (item) => item.data === dataSelecionada
+  )
+
   function calcularHoraFim(hora: string, duracaoMinutos?: number) {
     if (!hora || !duracaoMinutos) return ''
 
@@ -122,7 +131,6 @@ export default function AgendaSection() {
     dataBase.setHours(horas)
     dataBase.setMinutes(minutos)
     dataBase.setSeconds(0)
-
     dataBase.setMinutes(dataBase.getMinutes() + duracaoMinutos)
 
     const horaFinal = String(dataBase.getHours()).padStart(2, '0')
@@ -130,6 +138,8 @@ export default function AgendaSection() {
 
     return `${horaFinal}:${minutoFinal}`
   }
+
+  const horaFim = calcularHoraFim(horaInicio, servicoSelecionado?.duracao)
 
   function podeMarcarFeito(agendamento: Agendamento) {
     const fim = new Date(`${agendamento.data}T${agendamento.hora_fim}`)
@@ -146,7 +156,20 @@ export default function AgendaSection() {
     )
   }
 
-  const horaFim = calcularHoraFim(horaInicio, servicoSelecionado?.duracao)
+  function formatarStatus(status: string) {
+    const s = status?.trim().toLowerCase() || ''
+    return s.charAt(0).toUpperCase() + s.slice(1)
+  }
+
+  function corStatus(status: string) {
+    const s = status?.trim().toLowerCase() || ''
+
+    if (s === 'feito') return '#22c55e'
+    if (s === 'cancelado') return '#ef4444'
+    if (s === 'agendado') return '#eab308'
+
+    return '#b4b4b4'
+  }
 
   async function salvarAgendamento() {
     const userId = await pegarUserId()
@@ -199,7 +222,7 @@ export default function AgendaSection() {
 
     setClienteId('')
     setServicoId('')
-    setData('')
+    setData(dataSelecionada)
     setHoraInicio('')
     setStatus('agendado')
 
@@ -218,7 +241,6 @@ export default function AgendaSection() {
       .eq('user_id', userId)
 
     if (error) {
-      console.log('ERRO AO ALTERAR STATUS:', error)
       alert('Erro ao alterar status.')
       return
     }
@@ -265,20 +287,51 @@ export default function AgendaSection() {
     return new Date(dataIso + 'T00:00:00').toLocaleDateString('pt-BR')
   }
 
-function formatarStatus(status: string) {
-  const s = status?.trim().toLowerCase() || ''
-  return s.charAt(0).toUpperCase() + s.slice(1)
-}
+  function mudarMes(direcao: 'anterior' | 'proximo') {
+    const novaData = new Date(mesAtual)
 
-function corStatus(status: string) {
-  const s = status?.trim().toLowerCase() || ''
+    if (direcao === 'anterior') {
+      novaData.setMonth(novaData.getMonth() - 1)
+    } else {
+      novaData.setMonth(novaData.getMonth() + 1)
+    }
 
-  if (s === 'feito') return '#22c55e'
-  if (s === 'cancelado') return '#ef4444'
-  if (s === 'agendado') return '#eab308'
+    setMesAtual(novaData)
+  }
 
-  return '#b4b4b4'
-}
+  function selecionarDia(dataIso: string) {
+    setDataSelecionada(dataIso)
+    setData(dataIso)
+  }
+
+  function gerarDiasCalendario() {
+    const ano = mesAtual.getFullYear()
+    const mes = mesAtual.getMonth()
+
+    const primeiroDiaMes = new Date(ano, mes, 1)
+    const ultimoDiaMes = new Date(ano, mes + 1, 0)
+
+    const dias = []
+
+    const diaSemanaInicio = primeiroDiaMes.getDay()
+
+    for (let i = 0; i < diaSemanaInicio; i++) {
+      dias.push(null)
+    }
+
+    for (let dia = 1; dia <= ultimoDiaMes.getDate(); dia++) {
+      const dataDia = new Date(ano, mes, dia).toLocaleDateString('sv-SE')
+      dias.push(dataDia)
+    }
+
+    return dias
+  }
+
+  function contarAgendamentosDoDia(dataIso: string) {
+    return agendamentos.filter(
+      (item) => item.data === dataIso && item.status !== 'cancelado'
+    ).length
+  }
 
   return (
     <div>
@@ -287,6 +340,66 @@ function corStatus(status: string) {
       <p style={subtitleStyle}>
         Cadastre atendimentos usando cliente, serviço, valor e duração automática.
       </p>
+
+      <div style={calendarCardStyle}>
+        <div style={calendarHeaderStyle}>
+          <button style={calendarNavButtonStyle} onClick={() => mudarMes('anterior')}>
+            ‹
+          </button>
+
+          <h2 style={{ margin: 0 }}>
+            {mesAtual.toLocaleDateString('pt-BR', {
+              month: 'long',
+              year: 'numeric',
+            })}
+          </h2>
+
+          <button style={calendarNavButtonStyle} onClick={() => mudarMes('proximo')}>
+            ›
+          </button>
+        </div>
+
+        <div style={weekGridStyle}>
+          {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((dia) => (
+            <span key={dia} style={weekDayStyle}>
+              {dia}
+            </span>
+          ))}
+        </div>
+
+        <div style={calendarGridStyle}>
+          {gerarDiasCalendario().map((dataDia, index) => {
+            if (!dataDia) return <div key={index} />
+
+            const ativo = dataDia === dataSelecionada
+            const quantidade = contarAgendamentosDoDia(dataDia)
+
+            return (
+              <button
+                key={dataDia}
+                onClick={() => selecionarDia(dataDia)}
+                style={{
+                  ...dayButtonStyle,
+                  background: ativo
+                    ? 'linear-gradient(135deg, rgba(217,70,239,0.28), rgba(88,28,135,0.28))'
+                    : '#111',
+                  border: ativo
+                    ? '1px solid rgba(217,70,239,0.75)'
+                    : '1px solid #2a2a2a',
+                }}
+              >
+                <strong>{Number(dataDia.split('-')[2])}</strong>
+
+                {quantidade > 0 && (
+                  <span style={dotStyle}>
+                    {quantidade}
+                  </span>
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
 
       <div style={cardStyle}>
         <h2 style={{ marginTop: 0 }}>Novo agendamento</h2>
@@ -322,7 +435,10 @@ function corStatus(status: string) {
             style={inputStyle}
             type="date"
             value={data}
-            onChange={(e) => setData(e.target.value)}
+            onChange={(e) => {
+              setData(e.target.value)
+              setDataSelecionada(e.target.value)
+            }}
           />
 
           <input
@@ -355,13 +471,15 @@ function corStatus(status: string) {
       </div>
 
       <div style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>Agendamentos</h2>
+        <h2 style={{ marginTop: 0 }}>
+          Atendimentos de {formatarData(dataSelecionada)}
+        </h2>
 
-        {agendamentos.length === 0 ? (
-          <p style={subtitleStyle}>Nenhum agendamento cadastrado.</p>
+        {agendamentosDoDia.length === 0 ? (
+          <p style={subtitleStyle}>Nenhum agendamento para este dia.</p>
         ) : (
           <div style={{ display: 'grid', gap: '12px' }}>
-            {agendamentos.map((agendamento) => {
+            {agendamentosDoDia.map((agendamento) => {
               const podeFeito = podeMarcarFeito(agendamento)
               const mesmoHorario = temMesmoHorario(agendamento)
 
@@ -369,7 +487,6 @@ function corStatus(status: string) {
                 <div key={agendamento.id} style={appointmentCardStyle}>
                   <div>
                     <strong style={{ fontSize: '18px' }}>
-                      {formatarData(agendamento.data)} —{' '}
                       {agendamento.hora_inicio.slice(0, 5)} até{' '}
                       {agendamento.hora_fim.slice(0, 5)}
                     </strong>
@@ -388,14 +505,14 @@ function corStatus(status: string) {
                     </p>
 
                     <p
-  style={{
-    ...mutedTextStyle,
-    color: corStatus(agendamento.status),
-    fontWeight: 600,
-  }}
->
-  Status: {formatarStatus(agendamento.status)}
-</p>
+                      style={{
+                        ...mutedTextStyle,
+                        color: corStatus(agendamento.status),
+                        fontWeight: 700,
+                      }}
+                    >
+                      Status: {formatarStatus(agendamento.status)}
+                    </p>
                   </div>
 
                   <div style={actionsStyle}>
@@ -445,6 +562,76 @@ const cardStyle: React.CSSProperties = {
   border: '1px solid #2a2a2a',
   borderRadius: '18px',
   padding: '18px',
+}
+
+const calendarCardStyle: React.CSSProperties = {
+  marginTop: '24px',
+  background: 'linear-gradient(135deg, rgba(217,70,239,0.10), rgba(88,28,135,0.08))',
+  border: '1px solid rgba(217,70,239,0.25)',
+  borderRadius: '18px',
+  padding: '18px',
+}
+
+const calendarHeaderStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginBottom: '18px',
+}
+
+const calendarNavButtonStyle: React.CSSProperties = {
+  width: '38px',
+  height: '38px',
+  borderRadius: '12px',
+  border: '1px solid rgba(217,70,239,0.35)',
+  background: '#151515',
+  color: 'white',
+  cursor: 'pointer',
+  fontSize: '24px',
+}
+
+const weekGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(7, 1fr)',
+  gap: '8px',
+  marginBottom: '8px',
+}
+
+const weekDayStyle: React.CSSProperties = {
+  color: '#a1a1aa',
+  fontSize: '13px',
+  textAlign: 'center',
+}
+
+const calendarGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(7, 1fr)',
+  gap: '8px',
+}
+
+const dayButtonStyle: React.CSSProperties = {
+  minHeight: '72px',
+  borderRadius: '16px',
+  color: 'white',
+  cursor: 'pointer',
+  position: 'relative',
+}
+
+const dotStyle: React.CSSProperties = {
+  position: 'absolute',
+  right: '8px',
+  bottom: '8px',
+  minWidth: '22px',
+  height: '22px',
+  padding: '0 7px',
+  borderRadius: '999px',
+  background: '#d946ef',
+  color: 'white',
+  fontSize: '12px',
+  fontWeight: 800,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
 }
 
 const gridStyle: React.CSSProperties = {
