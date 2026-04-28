@@ -180,6 +180,13 @@ export default function AgendaSection() {
       return
     }
 
+    const hoje = new Date().toLocaleDateString('sv-SE')
+
+if (data < hoje) {
+  alert('Não é possível criar agendamento em uma data passada.')
+  return
+}
+
     if (!servicoSelecionado) {
       alert('Serviço inválido.')
       return
@@ -431,15 +438,16 @@ export default function AgendaSection() {
             ))}
           </select>
 
-          <input
-            style={inputStyle}
-            type="date"
-            value={data}
-            onChange={(e) => {
-              setData(e.target.value)
-              setDataSelecionada(e.target.value)
-            }}
-          />
+<input
+  style={inputStyle}
+  type="date"
+  value={data}
+  min={hoje}
+  onChange={(e) => {
+    setData(e.target.value)
+    setDataSelecionada(e.target.value)
+  }}
+/>
 
           <input
             style={inputStyle}
