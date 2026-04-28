@@ -575,7 +575,7 @@ const cardStyle: React.CSSProperties = {
   background: '#101010',
   border: '1px solid #2a2a2a',
   borderRadius: '18px',
-  padding: '18px',
+  padding: '22px',
 }
 
 const calendarCardStyle: React.CSSProperties = {
@@ -679,9 +679,10 @@ const appointmentCardStyle: React.CSSProperties = {
   background: '#151515',
   border: '1px solid #2a2a2a',
   borderRadius: '16px',
-  padding: '16px',
+  padding: '20px',
   display: 'flex',
   justifyContent: 'space-between',
+  alignItems: 'center',
   gap: '16px',
   flexWrap: 'wrap',
 }
