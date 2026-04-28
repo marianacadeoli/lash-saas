@@ -408,9 +408,10 @@ export default function AgendaSection() {
             value={clienteId}
             onChange={(e) => setClienteId(e.target.value)}
           >
-            <option value="">Selecione a cliente</option>
+            <option style={optionStyle} value="">Selecione a cliente</option>
             {clientes.map((cliente) => (
-              <option key={cliente.id} value={cliente.id}>
+
+             <option style={optionStyle} key={cliente.id} value={cliente.id}>
                 {cliente.nome}
               </option>
             ))}
@@ -421,9 +422,9 @@ export default function AgendaSection() {
             value={servicoId}
             onChange={(e) => setServicoId(e.target.value)}
           >
-            <option value="">Selecione o serviço</option>
+            <option style={optionStyle} value="">Selecione o serviço</option>
             {servicos.map((servico) => (
-              <option key={servico.id} value={servico.id}>
+            <option style={optionStyle} key={servico.id} value={servico.id}>
                 {servico.nome} — R$ {servico.valor} — {servico.duracao} min
               </option>
             ))}
@@ -452,8 +453,8 @@ export default function AgendaSection() {
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
-            <option value="agendado">Agendado</option>
-            <option value="cancelado">Cancelado</option>
+            <option style={optionStyle} value="agendado">Agendado</option>
+            <option style={optionStyle} value="cancelado">Cancelado</option>
           </select>
         </div>
 
@@ -673,12 +674,11 @@ const inputStyle: React.CSSProperties = {
   padding: '0 16px',
   borderRadius: '16px',
   border: '1px solid rgba(255,255,255,0.12)',
-  background: 'linear-gradient(180deg, #151515, #0f0f0f)',
-  color: 'white',
+  background: '#111111',
+  color: '#ffffff',
   fontSize: '14px',
-  fontWeight: 600,
+  fontWeight: 500,
   outline: 'none',
-  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
 }
 
 const previewTextStyle: React.CSSProperties = {
@@ -691,14 +691,13 @@ const previewTextStyle: React.CSSProperties = {
 const buttonStyle: React.CSSProperties = {
   marginTop: '18px',
   padding: '14px 22px',
-  borderRadius: '16px',
-  border: '1px solid rgba(255,255,255,0.14)',
-  background: 'linear-gradient(135deg, #d946ef, #a855f7)',
+  borderRadius: '14px',
+  border: 'none',
+  background: '#d946ef',
   color: 'white',
   cursor: 'pointer',
-  fontWeight: 900,
+  fontWeight: 800,
   fontSize: '15px',
-  boxShadow: '0 14px 35px rgba(217,70,239,0.35)',
 }
 
 const appointmentCardStyle: React.CSSProperties = {
@@ -805,4 +804,9 @@ const dangerButtonStyle: React.CSSProperties = {
   color: 'white',
   cursor: 'pointer',
   fontWeight: 700,
+}
+
+const optionStyle: React.CSSProperties = {
+  background: '#111111',
+  color: '#ffffff',
 }
