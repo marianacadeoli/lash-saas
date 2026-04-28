@@ -39,7 +39,7 @@ export default function VisaoGeralSection() {
     const userId = await pegarUserId()
     if (!userId) return
 
-    const hoje = new Date().toISOString().split('T')[0]
+    const hoje = new Date().toLocaleDateString('sv-SE')
 
     const { data, error } = await supabase
       .from('Agendamentos')
