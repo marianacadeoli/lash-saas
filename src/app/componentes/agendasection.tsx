@@ -130,7 +130,6 @@ export default function AgendaSection() {
     dataBase.setHours(horas)
     dataBase.setMinutes(minutos)
     dataBase.setSeconds(0)
-
     dataBase.setMinutes(dataBase.getMinutes() + duracaoMinutos)
 
     const horaFinal = String(dataBase.getHours()).padStart(2, '0')
@@ -393,7 +392,6 @@ export default function AgendaSection() {
                 }}
               >
                 <strong>{Number(dataDia.split('-')[2])}</strong>
-
                 {quantidade > 0 && <span style={dotStyle}>{quantidade}</span>}
               </button>
             )
@@ -401,10 +399,10 @@ export default function AgendaSection() {
         </div>
       </div>
 
-      <div style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>Novo agendamento</h2>
+      <div style={formCardStyle}>
+        <h2 style={formTitleStyle}>Novo agendamento</h2>
 
-        <div style={gridStyle}>
+        <div style={formGridStyle}>
           <select
             style={inputStyle}
             value={clienteId}
@@ -460,7 +458,7 @@ export default function AgendaSection() {
         </div>
 
         {servicoSelecionado && horaInicio && (
-          <p style={{ color: '#b4b4b4' }}>
+          <p style={previewTextStyle}>
             Esse atendimento vai de <strong>{horaInicio}</strong> até{' '}
             <strong>{horaFim}</strong>.
           </p>
@@ -648,31 +646,59 @@ const dotStyle: React.CSSProperties = {
   justifyContent: 'center',
 }
 
-const gridStyle: React.CSSProperties = {
+const formCardStyle: React.CSSProperties = {
+  marginTop: '24px',
+  background: 'linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.015))',
+  border: '1px solid rgba(255,255,255,0.10)',
+  borderRadius: '20px',
+  padding: '22px',
+  boxShadow: '0 18px 45px rgba(0,0,0,0.18)',
+}
+
+const formTitleStyle: React.CSSProperties = {
+  marginTop: 0,
+  marginBottom: '16px',
+  fontSize: '18px',
+}
+
+const formGridStyle: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-  gap: '12px',
+  gap: '14px',
 }
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: '13px 14px',
-  borderRadius: '14px',
-  border: '1px solid #333',
-  background: '#0f0f0f',
+  minHeight: '52px',
+  padding: '0 16px',
+  borderRadius: '16px',
+  border: '1px solid rgba(255,255,255,0.12)',
+  background: 'linear-gradient(180deg, #151515, #0f0f0f)',
   color: 'white',
-  fontSize: '15px',
+  fontSize: '14px',
+  fontWeight: 600,
+  outline: 'none',
+  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04)',
+}
+
+const previewTextStyle: React.CSSProperties = {
+  marginTop: '14px',
+  marginBottom: 0,
+  color: '#b4b4b4',
+  fontSize: '14px',
 }
 
 const buttonStyle: React.CSSProperties = {
-  marginTop: '14px',
-  padding: '13px 16px',
-  borderRadius: '14px',
-  border: 'none',
-  background: '#d946ef',
+  marginTop: '18px',
+  padding: '14px 22px',
+  borderRadius: '16px',
+  border: '1px solid rgba(255,255,255,0.14)',
+  background: 'linear-gradient(135deg, #d946ef, #a855f7)',
   color: 'white',
   cursor: 'pointer',
-  fontWeight: 800,
+  fontWeight: 900,
+  fontSize: '15px',
+  boxShadow: '0 14px 35px rgba(217,70,239,0.35)',
 }
 
 const appointmentCardStyle: React.CSSProperties = {
