@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 import ClientesSection from '../componentes/clientessection'
-import ServicosSection from '../componentes/servicossection'
+import EmprestimosSection from "../componentes/emprestimos";
 import AgendaSection from '../componentes/agendasection'
-import GanhosSection from '../componentes/ganhossection'
+import RecebimentosSection from '../componentes/recebimentossection'
 import VisaoGeralSection from '../componentes/visaogeralsection'
 import ConfiguracoesSection from '../componentes/configuracoessection'
 import AjudaSection from '../componentes/ajudasection'
@@ -16,8 +16,8 @@ type Aba =
   | 'visao'
   | 'agenda'
   | 'clientes'
-  | 'servicos'
-  | 'ganhos'
+  | 'emprestimos'
+  | 'recebimentos'
   | 'configuracoes'
   | 'ajuda'
 
@@ -107,8 +107,8 @@ export default function DashboardPage() {
     { id: 'visao', label: 'Visão geral' },
     { id: 'agenda', label: 'Agenda' },
     { id: 'clientes', label: 'Clientes' },
-    { id: 'servicos', label: 'Serviços' },
-    { id: 'ganhos', label: 'Ganhos' },
+    { id: 'emprestimos', label: 'Empréstimos' },
+    { id: 'recebimentos', label: 'Recebimentos' },
     { id: 'configuracoes', label: 'Configurações' },
     { id: 'ajuda', label: 'Ajuda' },
   ]
@@ -122,8 +122,8 @@ export default function DashboardPage() {
     if (abaAtual === 'visao') return <VisaoGeralSection />
     if (abaAtual === 'agenda') return <AgendaSection />
     if (abaAtual === 'clientes') return <ClientesSection />
-    if (abaAtual === 'servicos') return <ServicosSection />
-    if (abaAtual === 'ganhos') return <GanhosSection />
+    if (abaAtual === 'emprestimos') return <EmprestimosSection />
+    if (abaAtual === 'recebimentos') return <RecebimentosSection />
     if (abaAtual === 'configuracoes') return <ConfiguracoesSection />
     if (abaAtual === 'ajuda') return <AjudaSection />
   }
@@ -159,7 +159,7 @@ export default function DashboardPage() {
 
             <div>
               <strong style={brandNameStyle}>
-                {configuracao?.nome_negocio || 'Lash SaaS'}
+                {configuracao?.nome_negocio || 'CredControl'}
               </strong>
             </div>
           </div>

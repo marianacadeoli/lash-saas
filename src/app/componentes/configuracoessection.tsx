@@ -268,7 +268,7 @@ export default function ConfiguracoesSection() {
                   <label style={labelStyle}>Nome do negócio</label>
                   <input
                     style={inputStyle}
-                    placeholder="Ex: Mariana Lash Designer"
+                    placeholder="CredControl"
                     value={nomeNegocio}
                     onChange={(e) => setNomeNegocio(e.target.value)}
                   />

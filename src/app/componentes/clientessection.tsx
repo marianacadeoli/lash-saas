@@ -7,7 +7,16 @@ type Cliente = {
   id: number
   nome: string
   telefone: string
-  data_nascimento: string | null
+  cpf: string | null
+  cep: string | null
+  rua: string | null
+  numero: string | null
+  complemento: string | null
+  bairro: string | null
+  cidade: string | null
+  estado: string | null
+  profissao: string | null
+  local_trabalho: string | null
   observacoes: string | null
   user_id: string
 }
@@ -23,9 +32,17 @@ export default function ClientesSection() {
 
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
-  const [dataNascimento, setDataNascimento] = useState('')
+  const [cpf, setCpf] = useState('')
+  const [cep, setCep] = useState('')
+  const [rua, setRua] = useState('')
+  const [numero, setNumero] = useState('')
+  const [complemento, setComplemento] = useState('')
+  const [bairro, setBairro] = useState('')
+  const [cidade, setCidade] = useState('')
+  const [estado, setEstado] = useState('')
+  const [profissao, setProfissao] = useState('')
+  const [localTrabalho, setLocalTrabalho] = useState('')
   const [observacoes, setObservacoes] = useState('')
-  const [desconto, setDesconto] = useState('10')
 
   const [editandoId, setEditandoId] = useState<number | null>(null)
   const [carregando, setCarregando] = useState(false)
@@ -57,13 +74,22 @@ export default function ClientesSection() {
       return
     }
 
-    setClientes(data || [])
+    setClientes((data as Cliente[]) || [])
   }
 
   function limparFormulario() {
     setNome('')
     setTelefone('')
-    setDataNascimento('')
+    setCpf('')
+    setCep('')
+    setRua('')
+    setNumero('')
+    setComplemento('')
+    setBairro('')
+    setCidade('')
+    setEstado('')
+    setProfissao('')
+    setLocalTrabalho('')
     setObservacoes('')
     setEditandoId(null)
     setMostrarFormulario(false)
@@ -74,12 +100,12 @@ export default function ClientesSection() {
     if (!userId) return
 
     if (!nome.trim()) {
-      alert('Digite o nome da cliente.')
+      alert('Digite o nome completo do cliente.')
       return
     }
 
     if (!telefone.trim()) {
-      alert('Digite o WhatsApp da cliente.')
+      alert('Digite o celular do cliente.')
       return
     }
 
@@ -101,7 +127,16 @@ export default function ClientesSection() {
     const payload = {
       nome: nome.trim(),
       telefone: telefone.trim(),
-      data_nascimento: dataNascimento || null,
+      cpf: cpf.trim() || null,
+      cep: cep.trim() || null,
+      rua: rua.trim() || null,
+      numero: numero.trim() || null,
+      complemento: complemento.trim() || null,
+      bairro: bairro.trim() || null,
+      cidade: cidade.trim() || null,
+      estado: estado.trim() || null,
+      profissao: profissao.trim() || null,
+      local_trabalho: localTrabalho.trim() || null,
       observacoes: observacoes.trim() || null,
       user_id: userId,
     }
@@ -114,7 +149,8 @@ export default function ClientesSection() {
         .eq('user_id', userId)
 
       if (error) {
-        alert('Erro ao editar cliente.')
+        console.log('ERRO AO EDITAR CLIENTE:', error)
+        alert(error.message)
         setCarregando(false)
         return
       }
@@ -122,7 +158,8 @@ export default function ClientesSection() {
       const { error } = await supabase.from('Clientes').insert(payload)
 
       if (error) {
-        alert('Erro ao salvar cliente.')
+        console.log('ERRO AO SALVAR CLIENTE:', error)
+        alert(error.message)
         setCarregando(false)
         return
       }
@@ -135,19 +172,34 @@ export default function ClientesSection() {
 
   function editarCliente(cliente: Cliente) {
     setEditandoId(cliente.id)
-    setNome(cliente.nome)
-    setTelefone(cliente.telefone)
-    setDataNascimento(cliente.data_nascimento || '')
+    setNome(cliente.nome || '')
+    setTelefone(cliente.telefone || '')
+    setCpf(cliente.cpf || '')
+    setCep(cliente.cep || '')
+    setRua(cliente.rua || '')
+    setNumero(cliente.numero || '')
+    setComplemento(cliente.complemento || '')
+    setBairro(cliente.bairro || '')
+    setCidade(cliente.cidade || '')
+    setEstado(cliente.estado || '')
+    setProfissao(cliente.profissao || '')
+    setLocalTrabalho(cliente.local_trabalho || '')
     setObservacoes(cliente.observacoes || '')
     setMostrarFormulario(true)
   }
 
   async function excluirCliente(id: number) {
-    const confirmou = confirm('Tem certeza que deseja excluir esta cliente?')
+    const confirmou = confirm('Tem certeza que deseja excluir este cliente?')
     if (!confirmou) return
 
     const userId = await pegarUserId()
     if (!userId) return
+
+    await supabase
+      .from('Agendamentos')
+      .delete()
+      .eq('cliente_id', id)
+      .eq('user_id', userId)
 
     const { error } = await supabase
       .from('Clientes')
@@ -156,7 +208,8 @@ export default function ClientesSection() {
       .eq('user_id', userId)
 
     if (error) {
-      alert('Erro ao excluir cliente.')
+      console.log('ERRO AO EXCLUIR CLIENTE:', error)
+      alert(error.message)
       return
     }
 
@@ -167,7 +220,7 @@ export default function ClientesSection() {
     return telefone.replace(/\D/g, '')
   }
 
-  function abrirWhatsApp(cliente: Cliente, mensagem?: string) {
+  function abrirWhatsApp(cliente: Cliente) {
     const numero = telefoneLimpo(cliente.telefone)
 
     if (!numero) {
@@ -175,65 +228,46 @@ export default function ClientesSection() {
       return
     }
 
-    const texto = mensagem || `Oi, ${cliente.nome}! Tudo bem? `
+    const texto = `Oi, ${cliente.nome}! Tudo bem?`
     const url = `https://wa.me/55${numero}?text=${encodeURIComponent(texto)}`
 
     window.open(url, '_blank')
   }
 
-  function diasAteAniversario(dataNascimento: string | null) {
-    if (!dataNascimento) return null
+  const clientesFiltrados = useMemo(() => {
+    return clientes.filter((cliente) => {
+      const termo = busca.toLowerCase()
 
-    const hoje = new Date()
-    const nascimento = new Date(dataNascimento + 'T00:00:00')
-
-    const aniversarioEsteAno = new Date(
-      hoje.getFullYear(),
-      nascimento.getMonth(),
-      nascimento.getDate()
-    )
-
-    if (aniversarioEsteAno < hoje) {
-      aniversarioEsteAno.setFullYear(hoje.getFullYear() + 1)
-    }
-
-    const diferenca = aniversarioEsteAno.getTime() - hoje.getTime()
-    return Math.ceil(diferenca / (1000 * 60 * 60 * 24))
-  }
-
-  function formatarData(data: string | null) {
-    if (!data) return '-'
-    return new Date(data + 'T00:00:00').toLocaleDateString('pt-BR')
-  }
-
-  const clientesFiltradas = useMemo(() => {
-    return clientes.filter((cliente) =>
-      cliente.nome.toLowerCase().includes(busca.toLowerCase())
-    )
+      return (
+        cliente.nome?.toLowerCase().includes(termo) ||
+        cliente.telefone?.toLowerCase().includes(termo) ||
+        cliente.cpf?.toLowerCase().includes(termo) ||
+        cliente.cidade?.toLowerCase().includes(termo)
+      )
+    })
   }, [clientes, busca])
 
-  const aniversariantes = useMemo(() => {
-    return clientes.filter((cliente) => {
-      const dias = diasAteAniversario(cliente.data_nascimento)
-      return dias !== null && dias >= 0 && dias <= 5
-    })
-  }, [clientes])
+  function montarEndereco(cliente: Cliente) {
+    const partes = [
+      cliente.rua,
+      cliente.numero,
+      cliente.complemento,
+      cliente.bairro,
+      cliente.cidade,
+      cliente.estado,
+      cliente.cep ? `CEP: ${cliente.cep}` : null,
+    ].filter(Boolean)
 
-  function mensagemAniversario(cliente: Cliente) {
-    return `Oi, ${cliente.nome}! Vi que seu aniversário está chegando 
-
-Preparei um presente especial para você: ${desconto}% OFF no seu próximo atendimento 
-
-Válido até o dia do seu aniversário.`
+    return partes.length > 0 ? partes.join(', ') : 'Endereço não informado'
   }
 
   return (
     <div>
       <div style={topBarStyle}>
         <div>
-        <h1 style={{ margin: 0, marginBottom: '8px' }}>Clientes</h1>
+          <h1 style={{ margin: 0, marginBottom: '8px' }}>Clientes</h1>
           <p style={subtitleStyle}>
-            Cadastre, edite e acompanhe aniversários das suas clientes.
+            Cadastre e organize os dados dos clientes.
           </p>
         </div>
 
@@ -257,45 +291,120 @@ Válido até o dia do seu aniversário.`
         />
 
         <span style={{ color: '#a1a1aa', fontSize: '14px' }}>
-          {clientes.length}/{LIMITE_CLIENTES} clientes cadastradas
+          {clientes.length}/{LIMITE_CLIENTES} clientes cadastrados
         </span>
       </div>
 
       {mostrarFormulario && (
         <div style={cardStyle}>
           <h2 style={{ marginTop: 0 }}>
-            {editandoId ? 'Editar cliente' : 'Nova cliente'}
+            {editandoId ? 'Editar cliente' : 'Novo cliente'}
           </h2>
+
+          <h3 style={sectionTitleStyle}>Dados do cliente</h3>
 
           <div style={gridStyle}>
             <input
               style={inputStyle}
-              placeholder="Nome"
+              placeholder="Nome completo"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
             />
 
             <input
               style={inputStyle}
-              placeholder="WhatsApp"
+              placeholder="Celular"
               value={telefone}
               onChange={(e) => setTelefone(e.target.value)}
             />
 
             <input
               style={inputStyle}
-              type="date"
-              value={dataNascimento}
-              onChange={(e) => setDataNascimento(e.target.value)}
+              placeholder="CPF"
+              value={cpf}
+              onChange={(e) => setCpf(e.target.value)}
+            />
+          </div>
+
+          <h3 style={sectionTitleStyle}>Endereço completo</h3>
+
+          <div style={gridStyle}>
+            <input
+              style={inputStyle}
+              placeholder="CEP"
+              value={cep}
+              onChange={(e) => setCep(e.target.value)}
             />
 
             <input
               style={inputStyle}
-              placeholder="Observações"
-              value={observacoes}
-              onChange={(e) => setObservacoes(e.target.value)}
+              placeholder="Rua"
+              value={rua}
+              onChange={(e) => setRua(e.target.value)}
+            />
+
+            <input
+              style={inputStyle}
+              placeholder="Número"
+              value={numero}
+              onChange={(e) => setNumero(e.target.value)}
+            />
+
+            <input
+              style={inputStyle}
+              placeholder="Complemento"
+              value={complemento}
+              onChange={(e) => setComplemento(e.target.value)}
+            />
+
+            <input
+              style={inputStyle}
+              placeholder="Bairro"
+              value={bairro}
+              onChange={(e) => setBairro(e.target.value)}
+            />
+
+            <input
+              style={inputStyle}
+              placeholder="Cidade"
+              value={cidade}
+              onChange={(e) => setCidade(e.target.value)}
+            />
+
+            <input
+              style={inputStyle}
+              placeholder="Estado"
+              value={estado}
+              onChange={(e) => setEstado(e.target.value)}
             />
           </div>
+
+          <h3 style={sectionTitleStyle}>Informações profissionais</h3>
+
+          <div style={gridStyle}>
+            <input
+              style={inputStyle}
+              placeholder="Profissão"
+              value={profissao}
+              onChange={(e) => setProfissao(e.target.value)}
+            />
+
+            <input
+              style={inputStyle}
+              placeholder="Local de trabalho"
+              value={localTrabalho}
+              onChange={(e) => setLocalTrabalho(e.target.value)}
+            />
+          </div>
+
+          <h3 style={sectionTitleStyle}>Observações</h3>
+
+          <textarea
+            style={textareaStyle}
+            placeholder="Ex: prefere pagar por PIX, cobrar após as 18h, cliente antigo..."
+            value={observacoes}
+            onChange={(e) => setObservacoes(e.target.value)}
+          />
 
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '14px' }}>
             <button style={buttonStyle} onClick={salvarCliente} disabled={carregando}>
@@ -310,64 +419,34 @@ Válido até o dia do seu aniversário.`
       )}
 
       <div style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>Aniversários nos próximos 5 dias</h2>
-
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <label>Desconto do cupom (%)</label>
-
-          <input
-            style={{ ...inputStyle, maxWidth: '120px' }}
-            type="number"
-            value={desconto}
-            onChange={(e) => setDesconto(e.target.value)}
-          />
-        </div>
-
-        {aniversariantes.length === 0 ? (
-          <p style={subtitleStyle}>Nenhum aniversário nos próximos dias.</p>
-        ) : (
-          <div style={{ display: 'grid', gap: '12px', marginTop: '16px' }}>
-            {aniversariantes.map((cliente) => (
-              <div key={cliente.id} style={clientCardStyle}>
-                <div>
-                  <strong>{cliente.nome}</strong>
-                  <p style={mutedTextStyle}>
-                    Faz aniversário em {diasAteAniversario(cliente.data_nascimento)} dia(s)
-                  </p>
-                </div>
-
-                <button
-                  style={whatsButtonStyle}
-                  onClick={() => abrirWhatsApp(cliente, mensagemAniversario(cliente))}
-                >
-                  Enviar cupom
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div style={cardStyle}>
         <h2 style={{ marginTop: 0 }}>Lista de clientes</h2>
 
-        {clientesFiltradas.length === 0 ? (
-          <p style={subtitleStyle}>Nenhuma cliente encontrada.</p>
+        {clientesFiltrados.length === 0 ? (
+          <p style={subtitleStyle}>Nenhum cliente encontrado.</p>
         ) : (
           <div style={{ display: 'grid', gap: '12px' }}>
-            {clientesFiltradas.map((cliente) => (
+            {clientesFiltrados.map((cliente) => (
               <div key={cliente.id} style={clientCardStyle}>
                 <div>
                   <strong style={{ fontSize: '18px' }}>👤 {cliente.nome}</strong>
 
-                  <p style={mutedTextStyle}>{cliente.telefone}</p>
+                  <p style={mutedTextStyle}>📱 {cliente.telefone}</p>
 
-                  <p style={mutedTextStyle}>
-                    {formatarData(cliente.data_nascimento)}
-                  </p>
+                  {cliente.cpf && (
+                    <p style={mutedTextStyle}>🪪 CPF: {cliente.cpf}</p>
+                  )}
+
+                  <p style={mutedTextStyle}>📍 {montarEndereco(cliente)}</p>
+
+                  {(cliente.profissao || cliente.local_trabalho) && (
+                    <p style={mutedTextStyle}>
+                      💼 {cliente.profissao || 'Profissão não informada'}
+                      {cliente.local_trabalho ? ` — ${cliente.local_trabalho}` : ''}
+                    </p>
+                  )}
 
                   {cliente.observacoes && (
-                    <p style={mutedTextStyle}>{cliente.observacoes}</p>
+                    <p style={mutedTextStyle}>📝 {cliente.observacoes}</p>
                   )}
                 </div>
 
@@ -423,6 +502,13 @@ const cardStyle: React.CSSProperties = {
   padding: '18px',
 }
 
+const sectionTitleStyle: React.CSSProperties = {
+  marginTop: '20px',
+  marginBottom: '12px',
+  fontSize: '15px',
+  color: '#f5f5f5',
+}
+
 const gridStyle: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
@@ -437,6 +523,12 @@ const inputStyle: React.CSSProperties = {
   background: '#0f0f0f',
   color: 'white',
   fontSize: '15px',
+}
+
+const textareaStyle: React.CSSProperties = {
+  ...inputStyle,
+  minHeight: '110px',
+  resize: 'vertical',
 }
 
 const buttonStyle: React.CSSProperties = {

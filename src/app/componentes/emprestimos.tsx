@@ -11,7 +11,7 @@ type Servico = {
   user_id: string
 }
 
-export default function ServicosSection() {
+export default function EmprestimosSection() {
   const supabase = createClient()
 
   const [servicos, setServicos] = useState<Servico[]>([])

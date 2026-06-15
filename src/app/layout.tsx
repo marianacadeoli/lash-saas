@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Lash SaaS",
-  description: "Sistema de gestão para lash designers",
+  description: "Sistema de gestão de empréstimos",
 };
 
 export default function RootLayout({

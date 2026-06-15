@@ -18,7 +18,7 @@ type Agendamento = {
   }
 }
 
-export default function GanhosSection() {
+export default function RecebimentosSection() {
   const supabase = createClient()
 
   const [agendamentos, setAgendamentos] = useState<Agendamento[]>([])
