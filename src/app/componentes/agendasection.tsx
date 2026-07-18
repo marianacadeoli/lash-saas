@@ -422,7 +422,7 @@ export default function AgendaSection() {
   }
 
   return (
-    <div>
+    <div style={pageContainerStyle}>
       <div style={pageHeaderStyle}>
         <div>
           <h1 style={{ margin: 0, marginBottom: '8px' }}>
@@ -837,6 +837,12 @@ export default function AgendaSection() {
   )
 }
 
+const pageContainerStyle: React.CSSProperties = {
+  width: '100%',
+  maxWidth: '1180px',
+  margin: '0 auto',
+}
+
 const pageHeaderStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
@@ -900,7 +906,7 @@ const summaryDetailStyle: React.CSSProperties = {
 
 const calendarCardStyle: React.CSSProperties = {
   marginTop: '24px',
-  padding: '20px',
+  padding: '18px',
   borderRadius: '20px',
   border: '1px solid rgba(217,70,239,0.28)',
   background:
@@ -912,18 +918,18 @@ const calendarHeaderStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: '12px',
-  marginBottom: '14px',
+  marginBottom: '12px',
 }
 
 const calendarNavButtonStyle: React.CSSProperties = {
-  width: '42px',
-  height: '42px',
-  borderRadius: '12px',
+  width: '38px',
+  height: '38px',
+  borderRadius: '11px',
   border: '1px solid rgba(217,70,239,0.35)',
   background: '#151515',
   color: '#ffffff',
   cursor: 'pointer',
-  fontSize: '25px',
+  fontSize: '22px',
 }
 
 const legendStyle: React.CSSProperties = {
@@ -931,7 +937,7 @@ const legendStyle: React.CSSProperties = {
   gap: '16px',
   alignItems: 'center',
   flexWrap: 'wrap',
-  marginBottom: '18px',
+  marginBottom: '14px',
 }
 
 const legendItemStyle: React.CSSProperties = {
@@ -951,8 +957,8 @@ const legendDotStyle: React.CSSProperties = {
 const weekGridStyle: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-  gap: '8px',
-  marginBottom: '8px',
+  gap: '6px',
+  marginBottom: '6px',
 }
 
 const weekDayStyle: React.CSSProperties = {
@@ -964,13 +970,13 @@ const weekDayStyle: React.CSSProperties = {
 const calendarGridStyle: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
-  gap: '8px',
+  gap: '6px',
 }
 
 const dayButtonStyle: React.CSSProperties = {
-  minHeight: '72px',
-  padding: '10px',
-  borderRadius: '14px',
+  minHeight: '62px',
+  padding: '8px',
+  borderRadius: '12px',
   color: '#ffffff',
   cursor: 'pointer',
   position: 'relative',
@@ -978,14 +984,14 @@ const dayButtonStyle: React.CSSProperties = {
 
 const dayNumberStyle: React.CSSProperties = {
   display: 'block',
-  fontSize: '16px',
+  fontSize: '15px',
 }
 
 const dayIndicatorsStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'center',
   gap: '4px',
-  marginTop: '9px',
+  marginTop: '7px',
 }
 
 const smallIndicatorStyle: React.CSSProperties = {
@@ -997,10 +1003,10 @@ const smallIndicatorStyle: React.CSSProperties = {
 
 const quantityBadgeStyle: React.CSSProperties = {
   position: 'absolute',
-  right: '6px',
-  bottom: '6px',
-  minWidth: '20px',
-  height: '20px',
+  right: '5px',
+  bottom: '5px',
+  minWidth: '18px',
+  height: '18px',
   padding: '0 5px',
   borderRadius: '999px',
   background: '#d946ef',
@@ -1008,7 +1014,7 @@ const quantityBadgeStyle: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
-  fontSize: '11px',
+  fontSize: '10px',
   fontWeight: 800,
 }
 
