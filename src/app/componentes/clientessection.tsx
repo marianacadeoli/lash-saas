@@ -262,7 +262,7 @@ export default function ClientesSection() {
   }
 
   return (
-    <div>
+    <div style={pageContainerStyle}>
       <div style={topBarStyle}>
         <div>
           <h1 style={{ margin: 0, marginBottom: '8px' }}>Clientes</h1>
@@ -282,16 +282,47 @@ export default function ClientesSection() {
         </button>
       </div>
 
-      <div style={searchCardStyle}>
-        <input
-          style={inputStyle}
-          placeholder="Buscar cliente..."
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-        />
+      <div style={summaryGridStyle}>
+        <div style={summaryCardStyle}>
+          <span style={summaryLabelStyle}>Clientes cadastrados</span>
+          <strong style={summaryValueStyle}>{clientes.length}</strong>
+          <span style={summaryDetailStyle}>
+            Limite de {LIMITE_CLIENTES} clientes
+          </span>
+        </div>
 
-        <span style={{ color: '#a1a1aa', fontSize: '14px' }}>
-          {clientes.length}/{LIMITE_CLIENTES} clientes cadastrados
+        <div style={summaryCardStyle}>
+          <span style={summaryLabelStyle}>Resultados encontrados</span>
+          <strong style={summaryValueStyle}>{clientesFiltrados.length}</strong>
+          <span style={summaryDetailStyle}>
+            Conforme a busca atual
+          </span>
+        </div>
+
+        <div style={summaryCardStyle}>
+          <span style={summaryLabelStyle}>Capacidade disponível</span>
+          <strong style={summaryValueStyle}>
+            {Math.max(0, LIMITE_CLIENTES - clientes.length)}
+          </strong>
+          <span style={summaryDetailStyle}>
+            Novos cadastros permitidos
+          </span>
+        </div>
+      </div>
+
+      <div style={searchCardStyle}>
+        <div style={searchFieldWrapperStyle}>
+          <span style={searchIconStyle}>⌕</span>
+          <input
+            style={searchInputStyle}
+            placeholder="Buscar por nome, telefone, CPF ou cidade..."
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </div>
+
+        <span style={counterBadgeStyle}>
+          {clientes.length}/{LIMITE_CLIENTES} clientes
         </span>
       </div>
 
@@ -419,7 +450,14 @@ export default function ClientesSection() {
       )}
 
       <div style={cardStyle}>
-        <h2 style={{ marginTop: 0 }}>Lista de clientes</h2>
+        <div style={listHeaderStyle}>
+          <div>
+            <h2 style={{ margin: 0 }}>Lista de clientes</h2>
+            <p style={{ ...subtitleStyle, margin: '6px 0 0' }}>
+              Consulte os dados, atualize informações ou entre em contato.
+            </p>
+          </div>
+        </div>
 
         {clientesFiltrados.length === 0 ? (
           <p style={subtitleStyle}>Nenhum cliente encontrado.</p>
@@ -427,39 +465,82 @@ export default function ClientesSection() {
           <div style={{ display: 'grid', gap: '12px' }}>
             {clientesFiltrados.map((cliente) => (
               <div key={cliente.id} style={clientCardStyle}>
-                <div>
-                  <strong style={{ fontSize: '18px' }}>👤 {cliente.nome}</strong>
+                <div style={clientMainStyle}>
+                  <div style={clientHeaderStyle}>
+                    <div>
+                      <strong style={clientNameStyle}>{cliente.nome}</strong>
+                      <span style={clientPhoneStyle}>{cliente.telefone}</span>
+                    </div>
 
-                  <p style={mutedTextStyle}>📱 {cliente.telefone}</p>
+                    <span style={clientIdBadgeStyle}>
+                      Cliente #{cliente.id}
+                    </span>
+                  </div>
 
-                  {cliente.cpf && (
-                    <p style={mutedTextStyle}>🪪 CPF: {cliente.cpf}</p>
-                  )}
+                  <div style={clientInfoGridStyle}>
+                    <div style={infoBoxStyle}>
+                      <span style={infoLabelStyle}>CPF</span>
+                      <strong style={infoValueStyle}>
+                        {cliente.cpf || 'Não informado'}
+                      </strong>
+                    </div>
 
-                  <p style={mutedTextStyle}>📍 {montarEndereco(cliente)}</p>
+                    <div style={infoBoxStyle}>
+                      <span style={infoLabelStyle}>Cidade</span>
+                      <strong style={infoValueStyle}>
+                        {cliente.cidade || 'Não informada'}
+                      </strong>
+                    </div>
 
-                  {(cliente.profissao || cliente.local_trabalho) && (
-                    <p style={mutedTextStyle}>
-                      💼 {cliente.profissao || 'Profissão não informada'}
-                      {cliente.local_trabalho ? ` — ${cliente.local_trabalho}` : ''}
-                    </p>
-                  )}
+                    <div style={infoBoxStyle}>
+                      <span style={infoLabelStyle}>Profissão</span>
+                      <strong style={infoValueStyle}>
+                        {cliente.profissao || 'Não informada'}
+                      </strong>
+                    </div>
+
+                    <div style={infoBoxStyle}>
+                      <span style={infoLabelStyle}>Local de trabalho</span>
+                      <strong style={infoValueStyle}>
+                        {cliente.local_trabalho || 'Não informado'}
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div style={addressBoxStyle}>
+                    <span style={infoLabelStyle}>Endereço</span>
+                    <strong style={addressValueStyle}>
+                      {montarEndereco(cliente)}
+                    </strong>
+                  </div>
 
                   {cliente.observacoes && (
-                    <p style={mutedTextStyle}>📝 {cliente.observacoes}</p>
+                    <div style={observationBoxStyle}>
+                      <span style={infoLabelStyle}>Observações</span>
+                      <p style={observationTextStyle}>{cliente.observacoes}</p>
+                    </div>
                   )}
                 </div>
 
                 <div style={actionsStyle}>
-                  <button style={whatsButtonStyle} onClick={() => abrirWhatsApp(cliente)}>
+                  <button
+                    style={whatsButtonStyle}
+                    onClick={() => abrirWhatsApp(cliente)}
+                  >
                     WhatsApp
                   </button>
 
-                  <button style={secondaryButtonStyle} onClick={() => editarCliente(cliente)}>
+                  <button
+                    style={secondaryButtonStyle}
+                    onClick={() => editarCliente(cliente)}
+                  >
                     Editar
                   </button>
 
-                  <button style={dangerButtonStyle} onClick={() => excluirCliente(cliente.id)}>
+                  <button
+                    style={dangerButtonStyle}
+                    onClick={() => excluirCliente(cliente.id)}
+                  >
                     Excluir
                   </button>
                 </div>
@@ -470,6 +551,12 @@ export default function ClientesSection() {
       </div>
     </div>
   )
+}
+
+const pageContainerStyle: React.CSSProperties = {
+  width: '100%',
+  maxWidth: '1180px',
+  margin: '0 auto',
 }
 
 const topBarStyle: React.CSSProperties = {
@@ -483,6 +570,44 @@ const topBarStyle: React.CSSProperties = {
 const subtitleStyle: React.CSSProperties = {
   color: '#b4b4b4',
   lineHeight: 1.6,
+  marginTop: 0,
+}
+
+const summaryGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
+  gap: '16px',
+  marginTop: '24px',
+}
+
+const summaryCardStyle: React.CSSProperties = {
+  minHeight: '122px',
+  padding: '20px',
+  borderRadius: '18px',
+  border: '1px solid rgba(217,70,239,0.35)',
+  background:
+    'linear-gradient(135deg, rgba(217,70,239,0.14), rgba(88,28,135,0.12))',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  gap: '7px',
+}
+
+const summaryLabelStyle: React.CSSProperties = {
+  color: '#a1a1aa',
+  fontSize: '14px',
+}
+
+const summaryValueStyle: React.CSSProperties = {
+  color: '#ffffff',
+  fontSize: '30px',
+  lineHeight: 1,
+}
+
+const summaryDetailStyle: React.CSSProperties = {
+  color: '#d4d4d8',
+  fontSize: '13px',
+  fontWeight: 700,
 }
 
 const searchCardStyle: React.CSSProperties = {
@@ -494,16 +619,60 @@ const searchCardStyle: React.CSSProperties = {
   flexWrap: 'wrap',
 }
 
+const searchFieldWrapperStyle: React.CSSProperties = {
+  position: 'relative',
+  flex: '1 1 520px',
+}
+
+const searchIconStyle: React.CSSProperties = {
+  position: 'absolute',
+  left: '15px',
+  top: '50%',
+  transform: 'translateY(-50%)',
+  color: '#8f8f97',
+  fontSize: '20px',
+  pointerEvents: 'none',
+}
+
+const searchInputStyle: React.CSSProperties = {
+  width: '100%',
+  padding: '14px 16px 14px 44px',
+  borderRadius: '14px',
+  border: '1px solid #333',
+  background: '#0f0f0f',
+  color: '#ffffff',
+  fontSize: '15px',
+  boxSizing: 'border-box',
+}
+
+const counterBadgeStyle: React.CSSProperties = {
+  padding: '10px 13px',
+  borderRadius: '999px',
+  border: '1px solid rgba(217,70,239,0.35)',
+  background: 'rgba(217,70,239,0.10)',
+  color: '#e879f9',
+  fontSize: '13px',
+  fontWeight: 800,
+}
+
 const cardStyle: React.CSSProperties = {
   marginTop: '24px',
   background: '#101010',
   border: '1px solid #2a2a2a',
-  borderRadius: '18px',
-  padding: '18px',
+  borderRadius: '20px',
+  padding: '22px',
+}
+
+const listHeaderStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  gap: '16px',
+  alignItems: 'flex-start',
+  marginBottom: '18px',
 }
 
 const sectionTitleStyle: React.CSSProperties = {
-  marginTop: '20px',
+  marginTop: '22px',
   marginBottom: '12px',
   fontSize: '15px',
   color: '#f5f5f5',
@@ -523,6 +692,7 @@ const inputStyle: React.CSSProperties = {
   background: '#0f0f0f',
   color: 'white',
   fontSize: '15px',
+  boxSizing: 'border-box',
 }
 
 const textareaStyle: React.CSSProperties = {
@@ -544,7 +714,7 @@ const buttonStyle: React.CSSProperties = {
 const secondaryButtonStyle: React.CSSProperties = {
   padding: '10px 12px',
   borderRadius: '12px',
-  border: '1px solid #333',
+  border: '1px solid #3f3f46',
   background: '#27272a',
   color: 'white',
   cursor: 'pointer',
@@ -574,17 +744,108 @@ const dangerButtonStyle: React.CSSProperties = {
 const clientCardStyle: React.CSSProperties = {
   background: '#151515',
   border: '1px solid #2a2a2a',
-  borderRadius: '16px',
-  padding: '16px',
+  borderRadius: '18px',
+  padding: '18px',
   display: 'flex',
   justifyContent: 'space-between',
-  gap: '16px',
+  gap: '20px',
+  flexWrap: 'wrap',
+  alignItems: 'stretch',
+}
+
+const clientMainStyle: React.CSSProperties = {
+  flex: '1 1 720px',
+  minWidth: 0,
+}
+
+const clientHeaderStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  gap: '12px',
+  alignItems: 'flex-start',
   flexWrap: 'wrap',
 }
 
-const mutedTextStyle: React.CSSProperties = {
-  color: '#b4b4b4',
-  margin: '6px 0',
+const clientNameStyle: React.CSSProperties = {
+  display: 'block',
+  color: '#ffffff',
+  fontSize: '19px',
+  marginBottom: '5px',
+}
+
+const clientPhoneStyle: React.CSSProperties = {
+  color: '#a1a1aa',
+  fontSize: '14px',
+}
+
+const clientIdBadgeStyle: React.CSSProperties = {
+  padding: '6px 9px',
+  borderRadius: '999px',
+  background: 'rgba(217,70,239,0.10)',
+  color: '#e879f9',
+  border: '1px solid rgba(217,70,239,0.35)',
+  fontSize: '11px',
+  fontWeight: 800,
+}
+
+const clientInfoGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+  gap: '10px',
+  marginTop: '16px',
+}
+
+const infoBoxStyle: React.CSSProperties = {
+  padding: '12px',
+  borderRadius: '13px',
+  border: '1px solid #292929',
+  background: '#101010',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '5px',
+}
+
+const infoLabelStyle: React.CSSProperties = {
+  color: '#8f8f97',
+  fontSize: '12px',
+}
+
+const infoValueStyle: React.CSSProperties = {
+  color: '#ffffff',
+  fontSize: '14px',
+  wordBreak: 'break-word',
+}
+
+const addressBoxStyle: React.CSSProperties = {
+  marginTop: '10px',
+  padding: '12px',
+  borderRadius: '13px',
+  border: '1px solid #292929',
+  background: '#101010',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '5px',
+}
+
+const addressValueStyle: React.CSSProperties = {
+  color: '#d4d4d8',
+  fontSize: '14px',
+  lineHeight: 1.5,
+}
+
+const observationBoxStyle: React.CSSProperties = {
+  marginTop: '10px',
+  padding: '12px',
+  borderRadius: '13px',
+  border: '1px solid rgba(234,179,8,0.25)',
+  background: 'rgba(234,179,8,0.06)',
+}
+
+const observationTextStyle: React.CSSProperties = {
+  color: '#d4d4d8',
+  margin: '6px 0 0',
+  lineHeight: 1.5,
+  fontSize: '14px',
 }
 
 const actionsStyle: React.CSSProperties = {
@@ -592,4 +853,5 @@ const actionsStyle: React.CSSProperties = {
   gap: '8px',
   flexWrap: 'wrap',
   alignItems: 'center',
+  alignSelf: 'center',
 }
