@@ -21,6 +21,16 @@ type Cliente = {
   user_id: string
 }
 
+type ViaCepResponse = {
+  cep?: string
+  logradouro?: string
+  complemento?: string
+  bairro?: string
+  localidade?: string
+  uf?: string
+  erro?: boolean
+}
+
 const LIMITE_CLIENTES = 500
 
 export default function ClientesSection() {
@@ -46,6 +56,7 @@ export default function ClientesSection() {
 
   const [editandoId, setEditandoId] = useState<number | null>(null)
   const [carregando, setCarregando] = useState(false)
+  const [buscandoCep, setBuscandoCep] = useState(false)
 
   useEffect(() => {
     carregarClientes()
@@ -93,6 +104,61 @@ export default function ClientesSection() {
     setObservacoes('')
     setEditandoId(null)
     setMostrarFormulario(false)
+  }
+
+  function formatarCep(valor: string) {
+    const numeros = valor.replace(/\D/g, '').slice(0, 8)
+
+    if (numeros.length <= 5) {
+      return numeros
+    }
+
+    return `${numeros.slice(0, 5)}-${numeros.slice(5)}`
+  }
+
+  async function consultarCep() {
+    const cepLimpo = cep.replace(/\D/g, '')
+
+    if (!cepLimpo) return
+
+    if (cepLimpo.length !== 8) {
+      alert('Digite um CEP com 8 números.')
+      return
+    }
+
+    setBuscandoCep(true)
+
+    try {
+      const resposta = await fetch(
+        `https://viacep.com.br/ws/${cepLimpo}/json/`
+      )
+
+      if (!resposta.ok) {
+        throw new Error('Não foi possível consultar o CEP.')
+      }
+
+      const dados = (await resposta.json()) as ViaCepResponse
+
+      if (dados.erro) {
+        alert('CEP não encontrado.')
+        return
+      }
+
+      setCep(formatarCep(dados.cep || cepLimpo))
+      setRua(dados.logradouro || '')
+      setBairro(dados.bairro || '')
+      setCidade(dados.localidade || '')
+      setEstado(dados.uf || '')
+
+      if (dados.complemento && !complemento.trim()) {
+        setComplemento(dados.complemento)
+      }
+    } catch (error) {
+      console.error('ERRO AO CONSULTAR CEP:', error)
+      alert('Não foi possível buscar o endereço pelo CEP.')
+    } finally {
+      setBuscandoCep(false)
+    }
   }
 
   async function salvarCliente() {
@@ -360,12 +426,21 @@ export default function ClientesSection() {
           <h3 style={sectionTitleStyle}>Endereço completo</h3>
 
           <div style={gridStyle}>
-            <input
-              style={inputStyle}
-              placeholder="CEP"
-              value={cep}
-              onChange={(e) => setCep(e.target.value)}
-            />
+            <div style={cepFieldWrapperStyle}>
+              <input
+                style={inputStyle}
+                placeholder="CEP"
+                value={cep}
+                inputMode="numeric"
+                maxLength={9}
+                onChange={(e) => setCep(formatarCep(e.target.value))}
+                onBlur={consultarCep}
+              />
+
+              <span style={cepStatusStyle}>
+                {buscandoCep ? 'Buscando endereço...' : 'Preenche automaticamente'}
+              </span>
+            </div>
 
             <input
               style={inputStyle}
@@ -438,7 +513,7 @@ export default function ClientesSection() {
           />
 
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '14px' }}>
-            <button style={buttonStyle} onClick={salvarCliente} disabled={carregando}>
+            <button style={buttonStyle} onClick={salvarCliente} disabled={carregando || buscandoCep}>
               {carregando ? 'Salvando...' : editandoId ? 'Salvar alterações' : 'Cadastrar'}
             </button>
 
@@ -463,86 +538,88 @@ export default function ClientesSection() {
           <p style={subtitleStyle}>Nenhum cliente encontrado.</p>
         ) : (
           <div style={{ display: 'grid', gap: '12px' }}>
-            {clientesFiltrados.map((cliente) => (
-              <div key={cliente.id} style={clientCardStyle}>
-                <div style={clientMainStyle}>
-                  <div style={clientHeaderStyle}>
+            {clientesFiltrados.map((cliente, index) => (
+              <div
+                key={cliente.id}
+                style={{
+                  ...clientCardStyle,
+                  ...coresDosCards[index % coresDosCards.length],
+                }}
+              >
+                <div style={clientHeaderStyle}>
+                  <div style={clientIdentityStyle}>
+                    <div style={avatarStyle}>
+                      {cliente.nome?.trim().charAt(0).toUpperCase() || 'C'}
+                    </div>
+
                     <div>
                       <strong style={clientNameStyle}>{cliente.nome}</strong>
                       <span style={clientPhoneStyle}>{cliente.telefone}</span>
                     </div>
+                  </div>
 
-                    <span style={clientIdBadgeStyle}>
-                      Cliente #{cliente.id}
+                  <div style={actionsStyle}>
+                    <button
+                      style={whatsButtonStyle}
+                      onClick={() => abrirWhatsApp(cliente)}
+                    >
+                      WhatsApp
+                    </button>
+
+                    <button
+                      style={secondaryButtonStyle}
+                      onClick={() => editarCliente(cliente)}
+                    >
+                      Editar
+                    </button>
+
+                    <button
+                      style={dangerButtonStyle}
+                      onClick={() => excluirCliente(cliente.id)}
+                    >
+                      Excluir
+                    </button>
+                  </div>
+                </div>
+
+                <div style={compactInfoRowStyle}>
+                  <span style={compactInfoItemStyle}>
+                    <span style={compactLabelStyle}>CPF</span>
+                    <strong>{cliente.cpf || 'Não informado'}</strong>
+                  </span>
+
+                  <span style={compactInfoItemStyle}>
+                    <span style={compactLabelStyle}>Cidade</span>
+                    <strong>{cliente.cidade || 'Não informada'}</strong>
+                  </span>
+
+                  <span style={compactInfoItemStyle}>
+                    <span style={compactLabelStyle}>Profissão</span>
+                    <strong>{cliente.profissao || 'Não informada'}</strong>
+                  </span>
+
+                  <span style={compactInfoItemStyle}>
+                    <span style={compactLabelStyle}>Trabalho</span>
+                    <strong>{cliente.local_trabalho || 'Não informado'}</strong>
+                  </span>
+                </div>
+
+                <div style={detailsRowStyle}>
+                  <div style={compactDetailStyle}>
+                    <span style={compactLabelStyle}>Endereço</span>
+                    <span style={compactTextStyle}>
+                      {montarEndereco(cliente)}
                     </span>
                   </div>
 
-                  <div style={clientInfoGridStyle}>
-                    <div style={infoBoxStyle}>
-                      <span style={infoLabelStyle}>CPF</span>
-                      <strong style={infoValueStyle}>
-                        {cliente.cpf || 'Não informado'}
-                      </strong>
-                    </div>
-
-                    <div style={infoBoxStyle}>
-                      <span style={infoLabelStyle}>Cidade</span>
-                      <strong style={infoValueStyle}>
-                        {cliente.cidade || 'Não informada'}
-                      </strong>
-                    </div>
-
-                    <div style={infoBoxStyle}>
-                      <span style={infoLabelStyle}>Profissão</span>
-                      <strong style={infoValueStyle}>
-                        {cliente.profissao || 'Não informada'}
-                      </strong>
-                    </div>
-
-                    <div style={infoBoxStyle}>
-                      <span style={infoLabelStyle}>Local de trabalho</span>
-                      <strong style={infoValueStyle}>
-                        {cliente.local_trabalho || 'Não informado'}
-                      </strong>
-                    </div>
-                  </div>
-
-                  <div style={addressBoxStyle}>
-                    <span style={infoLabelStyle}>Endereço</span>
-                    <strong style={addressValueStyle}>
-                      {montarEndereco(cliente)}
-                    </strong>
-                  </div>
-
                   {cliente.observacoes && (
-                    <div style={observationBoxStyle}>
-                      <span style={infoLabelStyle}>Observações</span>
-                      <p style={observationTextStyle}>{cliente.observacoes}</p>
+                    <div style={compactObservationStyle}>
+                      <span style={compactLabelStyle}>Observações</span>
+                      <span style={compactTextStyle}>
+                        {cliente.observacoes}
+                      </span>
                     </div>
                   )}
-                </div>
-
-                <div style={actionsStyle}>
-                  <button
-                    style={whatsButtonStyle}
-                    onClick={() => abrirWhatsApp(cliente)}
-                  >
-                    WhatsApp
-                  </button>
-
-                  <button
-                    style={secondaryButtonStyle}
-                    onClick={() => editarCliente(cliente)}
-                  >
-                    Editar
-                  </button>
-
-                  <button
-                    style={dangerButtonStyle}
-                    onClick={() => excluirCliente(cliente.id)}
-                  >
-                    Excluir
-                  </button>
                 </div>
               </div>
             ))}
@@ -701,6 +778,18 @@ const textareaStyle: React.CSSProperties = {
   resize: 'vertical',
 }
 
+const cepFieldWrapperStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '6px',
+}
+
+const cepStatusStyle: React.CSSProperties = {
+  color: '#8f8f97',
+  fontSize: '11px',
+  paddingLeft: '3px',
+}
+
 const buttonStyle: React.CSSProperties = {
   padding: '13px 16px',
   borderRadius: '14px',
@@ -741,117 +830,148 @@ const dangerButtonStyle: React.CSSProperties = {
   fontWeight: 700,
 }
 
+const coresDosCards: React.CSSProperties[] = [
+  {
+    borderColor: 'rgba(217,70,239,0.42)',
+    background:
+      'linear-gradient(135deg, rgba(217,70,239,0.10), rgba(21,21,21,0.98) 42%)',
+    boxShadow: 'inset 3px 0 0 rgba(217,70,239,0.72)',
+  },
+  {
+    borderColor: 'rgba(56,189,248,0.38)',
+    background:
+      'linear-gradient(135deg, rgba(56,189,248,0.09), rgba(21,21,21,0.98) 42%)',
+    boxShadow: 'inset 3px 0 0 rgba(56,189,248,0.68)',
+  },
+  {
+    borderColor: 'rgba(34,197,94,0.36)',
+    background:
+      'linear-gradient(135deg, rgba(34,197,94,0.08), rgba(21,21,21,0.98) 42%)',
+    boxShadow: 'inset 3px 0 0 rgba(34,197,94,0.66)',
+  },
+  {
+    borderColor: 'rgba(245,158,11,0.38)',
+    background:
+      'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(21,21,21,0.98) 42%)',
+    boxShadow: 'inset 3px 0 0 rgba(245,158,11,0.66)',
+  },
+]
+
 const clientCardStyle: React.CSSProperties = {
   background: '#151515',
   border: '1px solid #2a2a2a',
-  borderRadius: '18px',
-  padding: '18px',
-  display: 'flex',
-  justifyContent: 'space-between',
-  gap: '20px',
-  flexWrap: 'wrap',
-  alignItems: 'stretch',
-}
-
-const clientMainStyle: React.CSSProperties = {
-  flex: '1 1 720px',
-  minWidth: 0,
+  borderRadius: '16px',
+  padding: '16px',
 }
 
 const clientHeaderStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
-  gap: '12px',
-  alignItems: 'flex-start',
+  alignItems: 'center',
+  gap: '14px',
   flexWrap: 'wrap',
+}
+
+const clientIdentityStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '11px',
+  minWidth: 0,
+}
+
+const avatarStyle: React.CSSProperties = {
+  width: '40px',
+  height: '40px',
+  borderRadius: '12px',
+  background:
+    'linear-gradient(135deg, rgba(217,70,239,0.30), rgba(88,28,135,0.35))',
+  border: '1px solid rgba(217,70,239,0.45)',
+  color: '#ffffff',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '16px',
+  fontWeight: 900,
+  flexShrink: 0,
 }
 
 const clientNameStyle: React.CSSProperties = {
   display: 'block',
   color: '#ffffff',
-  fontSize: '19px',
-  marginBottom: '5px',
+  fontSize: '17px',
+  marginBottom: '3px',
 }
 
 const clientPhoneStyle: React.CSSProperties = {
   color: '#a1a1aa',
-  fontSize: '14px',
+  fontSize: '13px',
 }
 
-const clientIdBadgeStyle: React.CSSProperties = {
-  padding: '6px 9px',
-  borderRadius: '999px',
-  background: 'rgba(217,70,239,0.10)',
-  color: '#e879f9',
-  border: '1px solid rgba(217,70,239,0.35)',
-  fontSize: '11px',
-  fontWeight: 800,
-}
-
-const clientInfoGridStyle: React.CSSProperties = {
+const compactInfoRowStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
-  gap: '10px',
-  marginTop: '16px',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))',
+  gap: '8px',
+  marginTop: '14px',
 }
 
-const infoBoxStyle: React.CSSProperties = {
-  padding: '12px',
-  borderRadius: '13px',
+const compactInfoItemStyle: React.CSSProperties = {
+  minWidth: 0,
+  padding: '10px 11px',
+  borderRadius: '11px',
   border: '1px solid #292929',
   background: '#101010',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '5px',
-}
-
-const infoLabelStyle: React.CSSProperties = {
-  color: '#8f8f97',
-  fontSize: '12px',
-}
-
-const infoValueStyle: React.CSSProperties = {
   color: '#ffffff',
-  fontSize: '14px',
-  wordBreak: 'break-word',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '4px',
+  fontSize: '13px',
 }
 
-const addressBoxStyle: React.CSSProperties = {
-  marginTop: '10px',
-  padding: '12px',
-  borderRadius: '13px',
+const compactLabelStyle: React.CSSProperties = {
+  color: '#8f8f97',
+  fontSize: '11px',
+  fontWeight: 600,
+}
+
+const detailsRowStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1.5fr) minmax(220px, 0.8fr)',
+  gap: '8px',
+  marginTop: '8px',
+}
+
+const compactDetailStyle: React.CSSProperties = {
+  padding: '10px 11px',
+  borderRadius: '11px',
   border: '1px solid #292929',
   background: '#101010',
   display: 'flex',
   flexDirection: 'column',
-  gap: '5px',
+  gap: '4px',
+  minWidth: 0,
 }
 
-const addressValueStyle: React.CSSProperties = {
+const compactObservationStyle: React.CSSProperties = {
+  padding: '10px 11px',
+  borderRadius: '11px',
+  border: '1px solid rgba(234,179,8,0.24)',
+  background: 'rgba(234,179,8,0.05)',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '4px',
+  minWidth: 0,
+}
+
+const compactTextStyle: React.CSSProperties = {
   color: '#d4d4d8',
-  fontSize: '14px',
-  lineHeight: 1.5,
-}
-
-const observationBoxStyle: React.CSSProperties = {
-  marginTop: '10px',
-  padding: '12px',
-  borderRadius: '13px',
-  border: '1px solid rgba(234,179,8,0.25)',
-  background: 'rgba(234,179,8,0.06)',
-}
-
-const observationTextStyle: React.CSSProperties = {
-  color: '#d4d4d8',
-  margin: '6px 0 0',
-  lineHeight: 1.5,
-  fontSize: '14px',
+  fontSize: '13px',
+  lineHeight: 1.45,
+  overflowWrap: 'anywhere',
 }
 
 const actionsStyle: React.CSSProperties = {
   display: 'flex',
-  gap: '8px',
+  gap: '7px',
   flexWrap: 'wrap',
   alignItems: 'center',
-  alignSelf: 'center',
 }
