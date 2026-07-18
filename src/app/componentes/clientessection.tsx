@@ -538,14 +538,8 @@ export default function ClientesSection() {
           <p style={subtitleStyle}>Nenhum cliente encontrado.</p>
         ) : (
           <div style={{ display: 'grid', gap: '12px' }}>
-            {clientesFiltrados.map((cliente, index) => (
-              <div
-                key={cliente.id}
-                style={{
-                  ...clientCardStyle,
-                  ...coresDosCards[index % coresDosCards.length],
-                }}
-              >
+            {clientesFiltrados.map((cliente) => (
+              <div key={cliente.id} style={clientCardStyle}>
                 <div style={clientHeaderStyle}>
                   <div style={clientIdentityStyle}>
                     <div style={avatarStyle}>
@@ -830,36 +824,9 @@ const dangerButtonStyle: React.CSSProperties = {
   fontWeight: 700,
 }
 
-const coresDosCards: React.CSSProperties[] = [
-  {
-    borderColor: 'rgba(217,70,239,0.42)',
-    background:
-      'linear-gradient(135deg, rgba(217,70,239,0.10), rgba(21,21,21,0.98) 42%)',
-    boxShadow: 'inset 3px 0 0 rgba(217,70,239,0.72)',
-  },
-  {
-    borderColor: 'rgba(56,189,248,0.38)',
-    background:
-      'linear-gradient(135deg, rgba(56,189,248,0.09), rgba(21,21,21,0.98) 42%)',
-    boxShadow: 'inset 3px 0 0 rgba(56,189,248,0.68)',
-  },
-  {
-    borderColor: 'rgba(34,197,94,0.36)',
-    background:
-      'linear-gradient(135deg, rgba(34,197,94,0.08), rgba(21,21,21,0.98) 42%)',
-    boxShadow: 'inset 3px 0 0 rgba(34,197,94,0.66)',
-  },
-  {
-    borderColor: 'rgba(245,158,11,0.38)',
-    background:
-      'linear-gradient(135deg, rgba(245,158,11,0.08), rgba(21,21,21,0.98) 42%)',
-    boxShadow: 'inset 3px 0 0 rgba(245,158,11,0.66)',
-  },
-]
-
 const clientCardStyle: React.CSSProperties = {
-  background: '#151515',
-  border: '1px solid #2a2a2a',
+  background: '#2b1d33',
+  border: '1px solid #6f3d7a',
   borderRadius: '16px',
   padding: '16px',
 }
@@ -883,9 +850,8 @@ const avatarStyle: React.CSSProperties = {
   width: '40px',
   height: '40px',
   borderRadius: '12px',
-  background:
-    'linear-gradient(135deg, rgba(217,70,239,0.30), rgba(88,28,135,0.35))',
-  border: '1px solid rgba(217,70,239,0.45)',
+  background: '#8b4a97',
+  border: '1px solid #b46bc2',
   color: '#ffffff',
   display: 'flex',
   alignItems: 'center',
@@ -918,8 +884,8 @@ const compactInfoItemStyle: React.CSSProperties = {
   minWidth: 0,
   padding: '10px 11px',
   borderRadius: '11px',
-  border: '1px solid #292929',
-  background: '#101010',
+  border: '1px solid #5c4163',
+  background: '#36253e',
   color: '#ffffff',
   display: 'flex',
   flexDirection: 'column',
@@ -943,8 +909,8 @@ const detailsRowStyle: React.CSSProperties = {
 const compactDetailStyle: React.CSSProperties = {
   padding: '10px 11px',
   borderRadius: '11px',
-  border: '1px solid #292929',
-  background: '#101010',
+  border: '1px solid #5c4163',
+  background: '#36253e',
   display: 'flex',
   flexDirection: 'column',
   gap: '4px',
@@ -954,8 +920,8 @@ const compactDetailStyle: React.CSSProperties = {
 const compactObservationStyle: React.CSSProperties = {
   padding: '10px 11px',
   borderRadius: '11px',
-  border: '1px solid rgba(234,179,8,0.24)',
-  background: 'rgba(234,179,8,0.05)',
+  border: '1px solid #725977',
+  background: '#403047',
   display: 'flex',
   flexDirection: 'column',
   gap: '4px',
