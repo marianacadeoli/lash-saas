@@ -81,51 +81,93 @@ export default function EmprestimosSection() {
     return session?.user.id ?? null
   }
 
+  function mostrarErroSupabase(
+    origem: string,
+    error: {
+      message?: string
+      details?: string
+      hint?: string
+      code?: string
+    }
+  ) {
+    console.error(`[Supabase] Erro em ${origem}`, {
+      message: error.message ?? 'Sem mensagem',
+      details: error.details ?? 'Sem detalhes',
+      hint: error.hint ?? 'Sem dica',
+      code: error.code ?? 'Sem código',
+    })
+
+    return `${origem}: ${error.message ?? 'erro desconhecido'}`
+  }
+
   async function carregarDados() {
     setCarregando(true)
 
     try {
       const userId = await pegarUserId()
-      if (!userId) return
 
-      const [clientesResposta, emprestimosResposta, parcelasResposta] =
-        await Promise.all([
-          supabase
-            .from('Clientes')
-            .select('id, nome, telefone')
-            .eq('user_id', userId)
-            .order('nome'),
+      if (!userId) {
+        alert('Sua sessão expirou. Entre novamente no sistema.')
+        return
+      }
 
-          supabase
-            .from('Emprestimos')
-            .select(`
-              *,
-              cliente:Clientes (
-                id,
-                nome,
-                telefone
-              )
-            `)
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false }),
+      const clientesResposta = await supabase
+        .from('Clientes')
+        .select('id, nome, telefone')
+        .eq('user_id', userId)
+        .order('nome')
 
-          supabase
-            .from('Parcelas')
-            .select('*')
-            .eq('user_id', userId)
-            .order('vencimento'),
-        ])
+      if (clientesResposta.error) {
+        throw new Error(
+          mostrarErroSupabase('Clientes', clientesResposta.error)
+        )
+      }
 
-      if (clientesResposta.error) throw clientesResposta.error
-      if (emprestimosResposta.error) throw emprestimosResposta.error
-      if (parcelasResposta.error) throw parcelasResposta.error
+      const emprestimosResposta = await supabase
+        .from('Emprestimos')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
 
-      setClientes(clientesResposta.data ?? [])
-      setEmprestimos((emprestimosResposta.data ?? []) as Emprestimo[])
+      if (emprestimosResposta.error) {
+        throw new Error(
+          mostrarErroSupabase('Emprestimos', emprestimosResposta.error)
+        )
+      }
+
+      const parcelasResposta = await supabase
+        .from('Parcelas')
+        .select('*')
+        .eq('user_id', userId)
+        .order('vencimento')
+
+      if (parcelasResposta.error) {
+        throw new Error(
+          mostrarErroSupabase('Parcelas', parcelasResposta.error)
+        )
+      }
+
+      const listaClientes = clientesResposta.data ?? []
+      const mapaClientes = new Map(
+        listaClientes.map((cliente) => [cliente.id, cliente])
+      )
+
+      const listaEmprestimos = (emprestimosResposta.data ?? []).map(
+        (emprestimo) => ({
+          ...emprestimo,
+          cliente: mapaClientes.get(emprestimo.cliente_id) ?? null,
+        })
+      )
+
+      setClientes(listaClientes)
+      setEmprestimos(listaEmprestimos as Emprestimo[])
       setParcelas((parcelasResposta.data ?? []) as Parcela[])
     } catch (error) {
-      console.error('Erro ao carregar empréstimos:', error)
-      alert('Não foi possível carregar os empréstimos.')
+      const mensagem =
+        error instanceof Error ? error.message : 'Erro desconhecido'
+
+      console.error('Erro detalhado ao carregar empréstimos:', mensagem)
+      alert(`Não foi possível carregar os empréstimos.\n\n${mensagem}`)
     } finally {
       setCarregando(false)
     }
@@ -180,7 +222,11 @@ export default function EmprestimosSection() {
 
   async function salvarEmprestimo() {
     const userId = await pegarUserId()
-    if (!userId) return
+
+    if (!userId) {
+      alert('Sua sessão expirou. Entre novamente no sistema.')
+      return
+    }
 
     const {
       valorEmprestado,
@@ -204,12 +250,14 @@ export default function EmprestimosSection() {
 
     setSalvando(true)
 
+    let novoEmprestimoId: number | null = null
+
     try {
       const payload = {
         cliente_id: Number(form.clienteId),
         valor_emprestado: valorEmprestado,
         taxa_juros: taxaJuros,
-        valor_total: valorTotal,
+        valor_total: Number(valorTotal.toFixed(2)),
         quantidade_parcelas: quantidadeParcelas,
         data_emprestimo: form.dataEmprestimo,
         primeiro_vencimento: form.primeiroVencimento,
@@ -225,7 +273,11 @@ export default function EmprestimosSection() {
           .eq('id', editandoId)
           .eq('user_id', userId)
 
-        if (error) throw error
+        if (error) {
+          throw new Error(
+            mostrarErroSupabase('Atualização de Emprestimos', error)
+          )
+        }
       } else {
         const { data: novoEmprestimo, error: erroEmprestimo } = await supabase
           .from('Emprestimos')
@@ -233,14 +285,20 @@ export default function EmprestimosSection() {
           .select('id')
           .single()
 
-        if (erroEmprestimo) throw erroEmprestimo
+        if (erroEmprestimo) {
+          throw new Error(
+            mostrarErroSupabase('Cadastro em Emprestimos', erroEmprestimo)
+          )
+        }
+
+        novoEmprestimoId = Number(novoEmprestimo.id)
 
         const primeiraData = new Date(`${form.primeiroVencimento}T12:00:00`)
 
         const novasParcelas = Array.from(
           { length: quantidadeParcelas },
           (_, indice) => ({
-            emprestimo_id: novoEmprestimo.id,
+            emprestimo_id: novoEmprestimoId,
             numero_parcela: indice + 1,
             valor: Number(valorParcela.toFixed(2)),
             vencimento: dataParaBanco(adicionarMes(primeiraData, indice)),
@@ -254,14 +312,32 @@ export default function EmprestimosSection() {
           .from('Parcelas')
           .insert(novasParcelas)
 
-        if (erroParcelas) throw erroParcelas
+        if (erroParcelas) {
+          await supabase
+            .from('Emprestimos')
+            .delete()
+            .eq('id', novoEmprestimoId)
+            .eq('user_id', userId)
+
+          throw new Error(
+            mostrarErroSupabase('Cadastro em Parcelas', erroParcelas)
+          )
+        }
       }
 
       limparFormulario()
       await carregarDados()
+      alert(
+        editandoId
+          ? 'Empréstimo atualizado com sucesso.'
+          : 'Empréstimo cadastrado com sucesso.'
+      )
     } catch (error) {
-      console.error('Erro ao salvar empréstimo:', error)
-      alert('Não foi possível salvar o empréstimo.')
+      const mensagem =
+        error instanceof Error ? error.message : 'Erro desconhecido'
+
+      console.error('Erro detalhado ao salvar empréstimo:', mensagem)
+      alert(`Não foi possível salvar o empréstimo.\n\n${mensagem}`)
     } finally {
       setSalvando(false)
     }
@@ -887,7 +963,8 @@ const pageHeaderStyle: React.CSSProperties = {
 
 const titleStyle: React.CSSProperties = {
   margin: 0,
-  fontSize: '30px',
+  fontSize: '18px',
+  lineHeight: 1.35,
 }
 
 const subtitleStyle: React.CSSProperties = {
