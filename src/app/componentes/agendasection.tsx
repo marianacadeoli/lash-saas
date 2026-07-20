@@ -877,55 +877,6 @@ export default function AgendaSection() {
                         Lembrete
                       </button>
                     )}
-
-                    {situacao === 'pago' ? (
-                      <button
-                        type="button"
-                        style={secondaryButtonStyle}
-                        disabled={processando}
-                        onClick={() =>
-                          desfazerPagamento(parcela)
-                        }
-                      >
-                        {processando
-                          ? 'Processando...'
-                          : 'Desfazer pagamento'}
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          style={primaryButtonStyle}
-                          disabled={
-                            processando ||
-                            situacao === 'cancelado' ||
-                            situacao === 'renegociado'
-                          }
-                          onClick={() =>
-                            registrarPagamento(parcela)
-                          }
-                        >
-                          {processando
-                            ? 'Processando...'
-                            : 'Registrar pagamento'}
-                        </button>
-
-                        <button
-                          type="button"
-                          style={secondaryButtonStyle}
-                          disabled={
-                            processando ||
-                            situacao === 'cancelado' ||
-                            situacao === 'renegociado'
-                          }
-                          onClick={() =>
-                            marcarComoRenegociada(parcela)
-                          }
-                        >
-                          Renegociar
-                        </button>
-                      </>
-                    )}
                   </div>
                 </div>
               )
