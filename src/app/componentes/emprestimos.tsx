@@ -33,7 +33,7 @@ type Parcela = {
   valor: number
   vencimento?: string | null
   data_vencimento?: string | null
-  status: 'pendente' | 'paga' | 'atrasada'
+  status: 'pendente' | 'pago' | 'paga' | 'atrasada' | 'renegociado'
   data_pagamento: string | null
 }
 
@@ -527,20 +527,27 @@ export default function EmprestimosSection() {
       const { error } = await supabase
         .from('Parcelas')
         .update({
-          status: 'paga',
+          status: 'pago',
           data_pagamento: new Date().toISOString().slice(0, 10),
         })
         .eq('id', parcela.id)
         .eq('user_id', userId)
 
-      if (error) throw error
+      if (error) {
+        throw new Error(
+          mostrarErroSupabase('Registro de pagamento', error)
+        )
+      }
 
       const parcelasDoEmprestimo = parcelas.filter(
         (item) => item.emprestimo_id === parcela.emprestimo_id
       )
 
       const todasPagas = parcelasDoEmprestimo.every(
-        (item) => item.id === parcela.id || item.status === 'paga'
+        (item) =>
+          item.id === parcela.id ||
+          item.status === 'pago' ||
+          item.status === 'paga'
       )
 
       if (todasPagas) {
@@ -553,8 +560,62 @@ export default function EmprestimosSection() {
 
       await carregarDados()
     } catch (error) {
-      console.error('Erro ao registrar pagamento:', error)
-      alert('Não foi possível registrar o pagamento.')
+      const mensagem =
+        error instanceof Error ? error.message : 'Erro desconhecido'
+
+      console.warn('Erro ao registrar pagamento:', mensagem)
+      alert(`Não foi possível registrar o pagamento.\n\n${mensagem}`)
+    }
+  }
+
+  async function reabrirParcela(parcela: Parcela) {
+    const confirmou = window.confirm(
+      'Deseja voltar esta parcela para pendente?'
+    )
+
+    if (!confirmou) return
+
+    const userId = await pegarUserId()
+    if (!userId) return
+
+    try {
+      const { error } = await supabase
+        .from('Parcelas')
+        .update({
+          status: 'pendente',
+          data_pagamento: null,
+        })
+        .eq('id', parcela.id)
+        .eq('user_id', userId)
+
+      if (error) {
+        throw new Error(
+          mostrarErroSupabase('Reabertura da parcela', error)
+        )
+      }
+
+      const { error: erroEmprestimo } = await supabase
+        .from('Emprestimos')
+        .update({ status: 'ativo' })
+        .eq('id', parcela.emprestimo_id)
+        .eq('user_id', userId)
+
+      if (erroEmprestimo) {
+        throw new Error(
+          mostrarErroSupabase(
+            'Reabertura do empréstimo',
+            erroEmprestimo
+          )
+        )
+      }
+
+      await carregarDados()
+    } catch (error) {
+      const mensagem =
+        error instanceof Error ? error.message : 'Erro desconhecido'
+
+      console.warn('Erro ao reabrir parcela:', mensagem)
+      alert(`Não foi possível reabrir a parcela.\n\n${mensagem}`)
     }
   }
 
@@ -578,7 +639,7 @@ export default function EmprestimosSection() {
     )
 
     const totalAReceber = parcelas
-      .filter((parcela) => parcela.status !== 'paga')
+      .filter((parcela) => parcela.status !== 'pago' && parcela.status !== 'paga')
       .reduce((total, parcela) => total + Number(parcela.valor), 0)
 
     const ativos = emprestimos.filter(
@@ -587,6 +648,7 @@ export default function EmprestimosSection() {
 
     const atrasados = parcelas.filter((parcela) => {
       return (
+        parcela.status !== 'pago' &&
         parcela.status !== 'paga' &&
         new Date(`${parcela.data_vencimento ?? parcela.vencimento}T23:59:59`) < new Date()
       )
@@ -876,7 +938,9 @@ export default function EmprestimosSection() {
               )
 
               const parcelasPagas = parcelasDoEmprestimo.filter(
-                (parcela) => parcela.status === 'paga'
+                (parcela) =>
+                  parcela.status === 'pago' ||
+                  parcela.status === 'paga'
               ).length
 
               const progresso =
@@ -1017,7 +1081,15 @@ export default function EmprestimosSection() {
                               {nomeStatusParcela(parcela)}
                             </span>
 
-                            {parcela.status !== 'paga' && (
+                            {parcela.status === 'pago' ||
+                            parcela.status === 'paga' ? (
+                              <button
+                                onClick={() => reabrirParcela(parcela)}
+                                style={reopenButtonStyle}
+                              >
+                                Voltar para pendente
+                              </button>
+                            ) : (
                               <button
                                 onClick={() => registrarPagamento(parcela)}
                                 style={payButtonStyle}
@@ -1116,7 +1188,9 @@ function statusStyle(status: Emprestimo['status']) {
 }
 
 function nomeStatusParcela(parcela: Parcela) {
-  if (parcela.status === 'paga') return 'Paga'
+  if (parcela.status === 'pago' || parcela.status === 'paga') {
+    return 'Pago'
+  }
 
   const atrasada =
     new Date(`${parcela.data_vencimento ?? parcela.vencimento}T23:59:59`) < new Date()
@@ -1125,7 +1199,7 @@ function nomeStatusParcela(parcela: Parcela) {
 }
 
 function installmentStatusStyle(parcela: Parcela) {
-  if (parcela.status === 'paga') {
+  if (parcela.status === 'pago' || parcela.status === 'paga') {
     return {
       background: '#173d2b',
       borderColor: '#2f9c65',
@@ -1534,6 +1608,15 @@ const smallBadgeStyle: React.CSSProperties = {
   borderRadius: '999px',
   fontSize: '10px',
   fontWeight: 700,
+}
+
+const reopenButtonStyle: React.CSSProperties = {
+  border: '1px solid #8b6b2f',
+  borderRadius: '8px',
+  background: '#4a3a17',
+  color: '#ffe49b',
+  padding: '8px 10px',
+  cursor: 'pointer',
 }
 
 const payButtonStyle: React.CSSProperties = {
