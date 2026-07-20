@@ -28,9 +28,11 @@ type Emprestimo = {
 type Parcela = {
   id: number
   emprestimo_id: number
+  cliente_id?: number
   numero_parcela: number
   valor: number
-  vencimento: string
+  vencimento?: string | null
+  data_vencimento?: string | null
   status: 'pendente' | 'paga' | 'atrasada'
   data_pagamento: string | null
 }
@@ -68,10 +70,37 @@ export default function EmprestimosSection() {
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [detalhesId, setDetalhesId] = useState<number | null>(null)
+  const [datasParcelas, setDatasParcelas] = useState<string[]>([])
+  const [mostrarEdicao, setMostrarEdicao] = useState(false)
 
   useEffect(() => {
     void carregarDados()
   }, [])
+
+  useEffect(() => {
+    const quantidade = Number(form.quantidadeParcelas)
+
+    if (!form.primeiroVencimento || quantidade < 1) {
+      setDatasParcelas([])
+      return
+    }
+
+    setDatasParcelas((atuais) => {
+      if (
+        editandoId &&
+        atuais.length === quantidade &&
+        atuais.every(Boolean)
+      ) {
+        return atuais
+      }
+
+      return gerarDatasMensais(form.primeiroVencimento, quantidade)
+    })
+  }, [
+    form.primeiroVencimento,
+    form.quantidadeParcelas,
+    editandoId,
+  ])
 
   async function pegarUserId() {
     const {
@@ -139,7 +168,7 @@ export default function EmprestimosSection() {
         .from('Parcelas')
         .select('*')
         .eq('user_id', userId)
-        .order('vencimento')
+        .order('data_vencimento')
 
       if (parcelasResposta.error) {
         throw new Error(
@@ -161,7 +190,15 @@ export default function EmprestimosSection() {
 
       setClientes(listaClientes)
       setEmprestimos(listaEmprestimos as Emprestimo[])
-      setParcelas((parcelasResposta.data ?? []) as Parcela[])
+      const parcelasNormalizadas = (parcelasResposta.data ?? []).map(
+        (parcela) => ({
+          ...parcela,
+          vencimento:
+            parcela.data_vencimento ?? parcela.vencimento ?? null,
+        })
+      )
+
+      setParcelas(parcelasNormalizadas as Parcela[])
     } catch (error) {
       const mensagem =
         error instanceof Error ? error.message : 'Erro desconhecido'
@@ -183,6 +220,8 @@ export default function EmprestimosSection() {
   function limparFormulario() {
     setForm(formInicial)
     setEditandoId(null)
+    setDatasParcelas([])
+    setMostrarEdicao(false)
   }
 
   function adicionarMes(data: Date, meses: number) {
@@ -200,6 +239,27 @@ export default function EmprestimosSection() {
 
   function dataParaBanco(data: Date) {
     return data.toISOString().slice(0, 10)
+  }
+
+  function gerarDatasMensais(
+    primeiraData: string,
+    quantidade: number
+  ) {
+    if (!primeiraData || quantidade < 1) return []
+
+    const base = new Date(`${primeiraData}T12:00:00`)
+
+    return Array.from({ length: quantidade }, (_, indice) =>
+      dataParaBanco(adicionarMes(base, indice))
+    )
+  }
+
+  function atualizarDataParcela(indice: number, valor: string) {
+    setDatasParcelas((anteriores) =>
+      anteriores.map((data, posicao) =>
+        posicao === indice ? valor : data
+      )
+    )
   }
 
   function calcularValores() {
@@ -242,7 +302,9 @@ export default function EmprestimosSection() {
       taxaJuros < 0 ||
       quantidadeParcelas < 1 ||
       !form.dataEmprestimo ||
-      !form.primeiroVencimento
+      !form.primeiroVencimento ||
+      datasParcelas.length !== quantidadeParcelas ||
+      datasParcelas.some((data) => !data)
     ) {
       alert('Preencha corretamente todos os campos obrigatórios.')
       return
@@ -278,6 +340,48 @@ export default function EmprestimosSection() {
             mostrarErroSupabase('Atualização de Emprestimos', error)
           )
         }
+
+        const { error: erroExcluirParcelas } = await supabase
+          .from('Parcelas')
+          .delete()
+          .eq('emprestimo_id', editandoId)
+          .eq('user_id', userId)
+
+        if (erroExcluirParcelas) {
+          throw new Error(
+            mostrarErroSupabase(
+              'Atualização das Parcelas',
+              erroExcluirParcelas
+            )
+          )
+        }
+
+        const parcelasAtualizadas = datasParcelas.map(
+          (dataParcela, indice) => ({
+            emprestimo_id: editandoId,
+            cliente_id: Number(form.clienteId),
+            numero_parcela: indice + 1,
+            valor: Number(valorParcela.toFixed(2)),
+            vencimento: dataParcela,
+            data_vencimento: dataParcela,
+            status: 'pendente',
+            data_pagamento: null,
+            user_id: userId,
+          })
+        )
+
+        const { error: erroInserirParcelas } = await supabase
+          .from('Parcelas')
+          .insert(parcelasAtualizadas)
+
+        if (erroInserirParcelas) {
+          throw new Error(
+            mostrarErroSupabase(
+              'Recriação das Parcelas',
+              erroInserirParcelas
+            )
+          )
+        }
       } else {
         const { data: novoEmprestimo, error: erroEmprestimo } = await supabase
           .from('Emprestimos')
@@ -293,16 +397,14 @@ export default function EmprestimosSection() {
 
         novoEmprestimoId = Number(novoEmprestimo.id)
 
-        const primeiraData = new Date(`${form.primeiroVencimento}T12:00:00`)
-
-        const novasParcelas = Array.from(
-          { length: quantidadeParcelas },
-          (_, indice) => ({
+        const novasParcelas = datasParcelas.map(
+          (dataParcela, indice) => ({
             emprestimo_id: novoEmprestimoId,
             cliente_id: Number(form.clienteId),
             numero_parcela: indice + 1,
             valor: Number(valorParcela.toFixed(2)),
-            vencimento: dataParaBanco(adicionarMes(primeiraData, indice)),
+            vencimento: dataParcela,
+            data_vencimento: dataParcela,
             status: 'pendente',
             data_pagamento: null,
             user_id: userId,
@@ -345,6 +447,10 @@ export default function EmprestimosSection() {
   }
 
   function editarEmprestimo(emprestimo: Emprestimo) {
+    const parcelasDoEmprestimo = parcelas
+      .filter((parcela) => parcela.emprestimo_id === emprestimo.id)
+      .sort((a, b) => a.numero_parcela - b.numero_parcela)
+
     setEditandoId(emprestimo.id)
     setForm({
       clienteId: String(emprestimo.cliente_id),
@@ -356,7 +462,27 @@ export default function EmprestimosSection() {
       observacoes: emprestimo.observacoes ?? '',
     })
 
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setDatasParcelas(
+      parcelasDoEmprestimo.length > 0
+        ? parcelasDoEmprestimo.map(
+            (parcela) =>
+              parcela.data_vencimento ??
+              parcela.vencimento ??
+              ''
+          )
+        : gerarDatasMensais(
+            emprestimo.primeiro_vencimento,
+            emprestimo.quantidade_parcelas
+          )
+    )
+
+    setMostrarEdicao(true)
+
+    requestAnimationFrame(() => {
+      document
+        .getElementById('formulario-emprestimo')
+        ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
   }
 
   async function excluirEmprestimo(id: number) {
@@ -462,7 +588,7 @@ export default function EmprestimosSection() {
     const atrasados = parcelas.filter((parcela) => {
       return (
         parcela.status !== 'paga' &&
-        new Date(`${parcela.vencimento}T23:59:59`) < new Date()
+        new Date(`${parcela.data_vencimento ?? parcela.vencimento}T23:59:59`) < new Date()
       )
     }).length
 
@@ -480,7 +606,7 @@ export default function EmprestimosSection() {
     <div style={pageContainerStyle}>
       <div style={pageHeaderStyle}>
         <div>
-          <h1 style={titleStyle}>Empréstimos</h1>
+          <h1 style={{ margin: 0, marginBottom: '8px' }}>Empréstimos</h1>
           <p style={subtitleStyle}>
             Cadastre empréstimos, acompanhe parcelas e registre pagamentos.
           </p>
@@ -500,7 +626,33 @@ export default function EmprestimosSection() {
         <ResumoCard titulo="Parcelas atrasadas" valor={String(resumo.atrasados)} />
       </div>
 
-      <section style={formCardStyle}>
+      <section
+        id="formulario-emprestimo"
+        style={{
+          ...formCardStyle,
+          ...(editandoId ? editingFormCardStyle : {}),
+        }}
+      >
+        {editandoId && mostrarEdicao && (
+          <div style={editingBannerStyle}>
+            <div>
+              <strong style={editingBannerTitleStyle}>
+                Editando empréstimo #{editandoId}
+              </strong>
+              <span style={editingBannerTextStyle}>
+                Altere os campos abaixo e clique em “Salvar alterações”.
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={limparFormulario}
+              style={editingCloseButtonStyle}
+            >
+              Fechar edição
+            </button>
+          </div>
+        )}
         <div style={sectionHeaderStyle}>
           <div>
             <h2 style={sectionTitleStyle}>
@@ -595,6 +747,57 @@ export default function EmprestimosSection() {
               style={inputStyle}
             />
           </label>
+        </div>
+
+        <div style={installmentDatesSectionStyle}>
+          <div style={installmentDatesHeaderStyle}>
+            <div>
+              <h3 style={installmentDatesTitleStyle}>
+                Datas das parcelas
+              </h3>
+              <p style={installmentDatesDescriptionStyle}>
+                As datas são sugeridas mensalmente, mas você pode alterar
+                cada vencimento individualmente.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              style={secondaryButtonStyle}
+              onClick={() =>
+                setDatasParcelas(
+                  gerarDatasMensais(
+                    form.primeiroVencimento,
+                    Number(form.quantidadeParcelas)
+                  )
+                )
+              }
+            >
+              Recalcular mensalmente
+            </button>
+          </div>
+
+          {datasParcelas.length === 0 ? (
+            <div style={emptyInstallmentDatesStyle}>
+              Informe o primeiro vencimento e a quantidade de parcelas.
+            </div>
+          ) : (
+            <div style={installmentDatesGridStyle}>
+              {datasParcelas.map((dataParcela, indice) => (
+                <label key={indice} style={labelStyle}>
+                  Parcela {indice + 1}
+                  <input
+                    type="date"
+                    value={dataParcela}
+                    onChange={(e) =>
+                      atualizarDataParcela(indice, e.target.value)
+                    }
+                    style={inputStyle}
+                  />
+                </label>
+              ))}
+            </div>
+          )}
         </div>
 
         <label style={{ ...labelStyle, marginTop: '14px' }}>
@@ -754,7 +957,7 @@ export default function EmprestimosSection() {
                       <span style={previewLabelStyle}>Próxima parcela</span>
                       <strong style={{ display: 'block', marginTop: '4px' }}>
                         {proximaParcela
-                          ? `${formatarData(proximaParcela.vencimento)} — ${formatarMoeda(
+                          ? `${formatarData(proximaParcela.data_vencimento ?? proximaParcela.vencimento ?? '')} — ${formatarMoeda(
                               proximaParcela.valor
                             )}`
                           : 'Empréstimo quitado'}
@@ -791,7 +994,7 @@ export default function EmprestimosSection() {
                     <div style={installmentsWrapperStyle}>
                       {parcelasDoEmprestimo.length === 0 ? (
                         <div style={emptyInstallmentStyle}>
-                          Nenhuma parcela encontrada.
+                          Nenhuma parcela vinculada a este empréstimo.
                         </div>
                       ) : (
                         parcelasDoEmprestimo.map((parcela) => (
@@ -799,7 +1002,7 @@ export default function EmprestimosSection() {
                             <div>
                               <strong>Parcela {parcela.numero_parcela}</strong>
                               <span style={installmentDateStyle}>
-                                Vencimento: {formatarData(parcela.vencimento)}
+                                Vencimento: {formatarData(parcela.data_vencimento ?? parcela.vencimento ?? '')}
                               </span>
                             </div>
 
@@ -916,7 +1119,7 @@ function nomeStatusParcela(parcela: Parcela) {
   if (parcela.status === 'paga') return 'Paga'
 
   const atrasada =
-    new Date(`${parcela.vencimento}T23:59:59`) < new Date()
+    new Date(`${parcela.data_vencimento ?? parcela.vencimento}T23:59:59`) < new Date()
 
   return atrasada ? 'Atrasada' : 'Pendente'
 }
@@ -931,7 +1134,7 @@ function installmentStatusStyle(parcela: Parcela) {
   }
 
   const atrasada =
-    new Date(`${parcela.vencimento}T23:59:59`) < new Date()
+    new Date(`${parcela.data_vencimento ?? parcela.vencimento}T23:59:59`) < new Date()
 
   if (atrasada) {
     return {
@@ -958,26 +1161,22 @@ const pageContainerStyle: React.CSSProperties = {
 const pageHeaderStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
+  gap: '16px',
   alignItems: 'flex-start',
-  marginBottom: '22px',
-}
-
-const titleStyle: React.CSSProperties = {
-  margin: 0,
-  fontSize: '18px',
-  lineHeight: 1.35,
+  flexWrap: 'wrap',
 }
 
 const subtitleStyle: React.CSSProperties = {
-  margin: '7px 0 0',
-  color: '#97979f',
-  fontSize: '14px',
+  color: '#b4b4b4',
+  lineHeight: 1.6,
+  marginTop: 0,
 }
 
 const summaryGridStyle: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
   gap: '12px',
+  marginTop: '24px',
   marginBottom: '18px',
 }
 
@@ -997,6 +1196,90 @@ const summaryLabelStyle: React.CSSProperties = {
 
 const summaryValueStyle: React.CSSProperties = {
   fontSize: '22px',
+}
+
+const editingFormCardStyle: React.CSSProperties = {
+  border: '2px solid #c13bd5',
+  boxShadow: '0 0 0 4px rgba(193,59,213,0.10)',
+}
+
+const editingBannerStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  gap: '14px',
+  flexWrap: 'wrap',
+  marginBottom: '18px',
+  padding: '13px 14px',
+  borderRadius: '12px',
+  background: '#3b1843',
+  border: '1px solid #a94abb',
+}
+
+const editingBannerTitleStyle: React.CSSProperties = {
+  display: 'block',
+  color: '#ffffff',
+  fontSize: '15px',
+}
+
+const editingBannerTextStyle: React.CSSProperties = {
+  display: 'block',
+  marginTop: '3px',
+  color: '#e5c8e9',
+  fontSize: '12px',
+}
+
+const editingCloseButtonStyle: React.CSSProperties = {
+  border: '1px solid #c77ed2',
+  borderRadius: '9px',
+  background: '#5a2762',
+  color: '#ffffff',
+  padding: '8px 11px',
+  cursor: 'pointer',
+  fontWeight: 700,
+}
+
+const installmentDatesSectionStyle: React.CSSProperties = {
+  marginTop: '17px',
+  padding: '15px',
+  borderRadius: '13px',
+  background: '#211925',
+  border: '1px solid #4c3852',
+}
+
+const installmentDatesHeaderStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'flex-start',
+  gap: '12px',
+  flexWrap: 'wrap',
+  marginBottom: '13px',
+}
+
+const installmentDatesTitleStyle: React.CSSProperties = {
+  margin: 0,
+  fontSize: '15px',
+}
+
+const installmentDatesDescriptionStyle: React.CSSProperties = {
+  margin: '4px 0 0',
+  color: '#aaa0ad',
+  fontSize: '12px',
+}
+
+const installmentDatesGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+  gap: '11px',
+}
+
+const emptyInstallmentDatesStyle: React.CSSProperties = {
+  padding: '13px',
+  borderRadius: '10px',
+  border: '1px dashed #5b465f',
+  color: '#aaa0ad',
+  fontSize: '12px',
+  textAlign: 'center',
 }
 
 const formCardStyle: React.CSSProperties = {
