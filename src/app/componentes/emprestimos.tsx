@@ -90,7 +90,7 @@ export default function EmprestimosSection() {
       code?: string
     }
   ) {
-    console.error(`[Supabase] Erro em ${origem}`, {
+    console.warn(`[Supabase] Erro em ${origem}`, {
       message: error.message ?? 'Sem mensagem',
       details: error.details ?? 'Sem detalhes',
       hint: error.hint ?? 'Sem dica',
@@ -299,6 +299,7 @@ export default function EmprestimosSection() {
           { length: quantidadeParcelas },
           (_, indice) => ({
             emprestimo_id: novoEmprestimoId,
+            cliente_id: Number(form.clienteId),
             numero_parcela: indice + 1,
             valor: Number(valorParcela.toFixed(2)),
             vencimento: dataParaBanco(adicionarMes(primeiraData, indice)),
@@ -336,7 +337,7 @@ export default function EmprestimosSection() {
       const mensagem =
         error instanceof Error ? error.message : 'Erro desconhecido'
 
-      console.error('Erro detalhado ao salvar empréstimo:', mensagem)
+      console.warn('Erro detalhado ao salvar empréstimo:', mensagem)
       alert(`Não foi possível salvar o empréstimo.\n\n${mensagem}`)
     } finally {
       setSalvando(false)
