@@ -639,7 +639,12 @@ export default function EmprestimosSection() {
     )
 
     const totalAReceber = parcelas
-      .filter((parcela) => parcela.status !== 'pago' && parcela.status !== 'paga')
+      .filter(
+        (parcela) =>
+          parcela.status !== 'pago' &&
+          parcela.status !== 'paga' &&
+          parcela.status !== 'renegociado'
+      )
       .reduce((total, parcela) => total + Number(parcela.valor), 0)
 
     const ativos = emprestimos.filter(
@@ -650,6 +655,7 @@ export default function EmprestimosSection() {
       return (
         parcela.status !== 'pago' &&
         parcela.status !== 'paga' &&
+        parcela.status !== 'renegociado' &&
         new Date(`${parcela.data_vencimento ?? parcela.vencimento}T23:59:59`) < new Date()
       )
     }).length
@@ -937,6 +943,13 @@ export default function EmprestimosSection() {
                 (parcela) => parcela.emprestimo_id === emprestimo.id
               )
 
+              const parcelasResolvidas = parcelasDoEmprestimo.filter(
+                (parcela) =>
+                  parcela.status === 'pago' ||
+                  parcela.status === 'paga' ||
+                  parcela.status === 'renegociado'
+              ).length
+
               const parcelasPagas = parcelasDoEmprestimo.filter(
                 (parcela) =>
                   parcela.status === 'pago' ||
@@ -945,11 +958,16 @@ export default function EmprestimosSection() {
 
               const progresso =
                 emprestimo.quantidade_parcelas > 0
-                  ? (parcelasPagas / emprestimo.quantidade_parcelas) * 100
+                  ? (parcelasResolvidas /
+                      emprestimo.quantidade_parcelas) *
+                    100
                   : 0
 
               const proximaParcela = parcelasDoEmprestimo.find(
-                (parcela) => parcela.status !== 'paga'
+                (parcela) =>
+                  parcela.status !== 'pago' &&
+                  parcela.status !== 'paga' &&
+                  parcela.status !== 'renegociado'
               )
 
               const aberto = detalhesId === emprestimo.id
@@ -1024,7 +1042,9 @@ export default function EmprestimosSection() {
                           ? `${formatarData(proximaParcela.data_vencimento ?? proximaParcela.vencimento ?? '')} — ${formatarMoeda(
                               proximaParcela.valor
                             )}`
-                          : 'Empréstimo quitado'}
+                          : emprestimo.status === 'renegociado'
+                            ? 'Aguardando nova negociação'
+                            : 'Empréstimo quitado'}
                       </strong>
                     </div>
 
@@ -1082,12 +1102,15 @@ export default function EmprestimosSection() {
                             </span>
 
                             {parcela.status === 'pago' ||
-                            parcela.status === 'paga' ? (
+                            parcela.status === 'paga' ||
+                            parcela.status === 'renegociado' ? (
                               <button
                                 onClick={() => reabrirParcela(parcela)}
                                 style={reopenButtonStyle}
                               >
-                                Voltar para pendente
+                                {parcela.status === 'renegociado'
+                                  ? 'Reabrir parcela'
+                                  : 'Voltar para pendente'}
                               </button>
                             ) : (
                               <button
@@ -1192,6 +1215,10 @@ function nomeStatusParcela(parcela: Parcela) {
     return 'Pago'
   }
 
+  if (parcela.status === 'renegociado') {
+    return 'Renegociada'
+  }
+
   const atrasada =
     new Date(`${parcela.data_vencimento ?? parcela.vencimento}T23:59:59`) < new Date()
 
@@ -1199,6 +1226,14 @@ function nomeStatusParcela(parcela: Parcela) {
 }
 
 function installmentStatusStyle(parcela: Parcela) {
+  if (parcela.status === 'renegociado') {
+    return {
+      background: '#3c284b',
+      borderColor: '#8d59a7',
+      color: '#e9c3ff',
+    }
+  }
+
   if (parcela.status === 'pago' || parcela.status === 'paga') {
     return {
       background: '#173d2b',

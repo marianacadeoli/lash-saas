@@ -322,6 +322,82 @@ export default function AgendaSection() {
     }
   }
 
+  async function sincronizarStatusEmprestimo(
+    emprestimoId: number | null,
+    userId: string
+  ) {
+    if (!emprestimoId) return
+
+    const { data, error } = await supabase
+      .from('Parcelas')
+      .select('status')
+      .eq('emprestimo_id', emprestimoId)
+      .eq('user_id', userId)
+
+    if (error) {
+      console.warn('Erro ao sincronizar empréstimo:', error.message)
+      return
+    }
+
+    const statusParcelas = (data ?? []).map((item) =>
+      normalizarStatus(item.status)
+    )
+
+    const todasPagas =
+      statusParcelas.length > 0 &&
+      statusParcelas.every(
+        (status) => status === 'pago' || status === 'paga'
+      )
+
+    const possuiRenegociada = statusParcelas.some(
+      (status) => status === 'renegociado'
+    )
+
+    const novoStatus = todasPagas
+      ? 'quitado'
+      : possuiRenegociada
+        ? 'renegociado'
+        : 'ativo'
+
+    const { error: erroAtualizacao } = await supabase
+      .from('Emprestimos')
+      .update({ status: novoStatus })
+      .eq('id', emprestimoId)
+      .eq('user_id', userId)
+
+    if (erroAtualizacao) {
+      console.warn(
+        'Erro ao atualizar status do empréstimo:',
+        erroAtualizacao.message
+      )
+    }
+  }
+
+  function abrirLembreteWhatsApp(parcela: Parcela) {
+    const cliente = pegarCliente(parcela)
+    const telefone = cliente?.telefone?.replace(/\D/g, '')
+
+    if (!telefone) {
+      alert('Este cliente não possui telefone cadastrado.')
+      return
+    }
+
+    const nome = cliente?.nome || 'cliente'
+    const situacao = descobrirSituacao(parcela)
+
+    const introducao =
+      situacao === 'atrasado'
+        ? `Olá, ${nome}! Tudo bem? Passando para lembrar que a parcela nº ${parcela.numero_parcela}, no valor de ${formatarDinheiro(parcela.valor)}, venceu em ${formatarData(parcela.data_vencimento)}.`
+        : `Olá, ${nome}! Tudo bem? Passando para lembrar que a parcela nº ${parcela.numero_parcela}, no valor de ${formatarDinheiro(parcela.valor)}, vence em ${formatarData(parcela.data_vencimento)}.`
+
+    const mensagem = `${introducao}\n\nQuando realizar o pagamento, por favor me avise. Obrigada!`
+    const url = `https://wa.me/55${telefone}?text=${encodeURIComponent(
+      mensagem
+    )}`
+
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
   async function registrarPagamento(parcela: Parcela) {
     const cliente = pegarCliente(parcela)
 
@@ -354,6 +430,10 @@ export default function AgendaSection() {
       return
     }
 
+    await sincronizarStatusEmprestimo(
+      parcela.emprestimo_id,
+      userId
+    )
     await carregarParcelas()
     setProcessandoId(null)
   }
@@ -386,6 +466,10 @@ export default function AgendaSection() {
       return
     }
 
+    await sincronizarStatusEmprestimo(
+      parcela.emprestimo_id,
+      userId
+    )
     await carregarParcelas()
     setProcessandoId(null)
   }
@@ -417,6 +501,10 @@ export default function AgendaSection() {
       return
     }
 
+    await sincronizarStatusEmprestimo(
+      parcela.emprestimo_id,
+      userId
+    )
     await carregarParcelas()
     setProcessandoId(null)
   }
@@ -778,6 +866,18 @@ export default function AgendaSection() {
                   </div>
 
                   <div style={actionsStyle}>
+                    {situacao !== 'cancelado' && (
+                      <button
+                        type="button"
+                        style={messageButtonStyle}
+                        onClick={() => abrirLembreteWhatsApp(parcela)}
+                        title="Enviar lembrete pelo WhatsApp"
+                      >
+                        <span aria-hidden="true">💬</span>
+                        Lembrete
+                      </button>
+                    )}
+
                     {situacao === 'pago' ? (
                       <button
                         type="button"
@@ -1146,6 +1246,20 @@ const primaryButtonStyle: React.CSSProperties = {
   color: '#ffffff',
   cursor: 'pointer',
   fontWeight: 800,
+}
+
+const messageButtonStyle: React.CSSProperties = {
+  padding: '11px 14px',
+  borderRadius: '12px',
+  border: '1px solid #238b50',
+  background: '#176b3d',
+  color: '#ffffff',
+  cursor: 'pointer',
+  fontWeight: 800,
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '7px',
 }
 
 const secondaryButtonStyle: React.CSSProperties = {
