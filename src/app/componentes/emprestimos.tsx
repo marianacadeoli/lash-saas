@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+
 type Cliente = {
   id: number
   nome: string
@@ -60,6 +61,7 @@ const formInicial: FormEmprestimo = {
 export default function EmprestimosSection() {
   const supabase = createClient()
 
+  const [drawerAberto, setDrawerAberto] = useState(false)
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [emprestimos, setEmprestimos] = useState<Emprestimo[]>([])
   const [parcelas, setParcelas] = useState<Parcela[]>([])
@@ -217,12 +219,13 @@ export default function EmprestimosSection() {
     }))
   }
 
-  function limparFormulario() {
-    setForm(formInicial)
-    setEditandoId(null)
-    setDatasParcelas([])
-    setMostrarEdicao(false)
-  }
+function limparFormulario() {
+  setForm(formInicial)
+  setEditandoId(null)
+  setDatasParcelas([])
+  setMostrarEdicao(false)
+  setDrawerAberto(false) // <- ESTA LINHA É O QUE FECHA O MODAL
+}
 
   function adicionarMes(data: Date, meses: number) {
     const novaData = new Date(data)
@@ -446,44 +449,41 @@ export default function EmprestimosSection() {
     }
   }
 
-  function editarEmprestimo(emprestimo: Emprestimo) {
-    const parcelasDoEmprestimo = parcelas
-      .filter((parcela) => parcela.emprestimo_id === emprestimo.id)
-      .sort((a, b) => a.numero_parcela - b.numero_parcela)
+function editarEmprestimo(emprestimo: Emprestimo) {
+  const parcelasDoEmprestimo = parcelas
+    .filter((parcela) => parcela.emprestimo_id === emprestimo.id)
+    .sort((a, b) => a.numero_parcela - b.numero_parcela)
 
-    setEditandoId(emprestimo.id)
-    setForm({
-      clienteId: String(emprestimo.cliente_id),
-      valorEmprestado: String(emprestimo.valor_emprestado),
-      taxaJuros: String(emprestimo.taxa_juros),
-      quantidadeParcelas: String(emprestimo.quantidade_parcelas),
-      dataEmprestimo: emprestimo.data_emprestimo,
-      primeiroVencimento: emprestimo.primeiro_vencimento,
-      observacoes: emprestimo.observacoes ?? '',
-    })
+  setEditandoId(emprestimo.id)
 
-    setDatasParcelas(
-      parcelasDoEmprestimo.length > 0
-        ? parcelasDoEmprestimo.map(
-            (parcela) =>
-              parcela.data_vencimento ??
-              parcela.vencimento ??
-              ''
-          )
-        : gerarDatasMensais(
-            emprestimo.primeiro_vencimento,
-            emprestimo.quantidade_parcelas
-          )
-    )
+  setForm({
+    clienteId: String(emprestimo.cliente_id),
+    valorEmprestado: String(emprestimo.valor_emprestado),
+    taxaJuros: String(emprestimo.taxa_juros),
+    quantidadeParcelas: String(emprestimo.quantidade_parcelas),
+    dataEmprestimo: emprestimo.data_emprestimo,
+    primeiroVencimento: emprestimo.primeiro_vencimento,
+    observacoes: emprestimo.observacoes ?? '',
+  })
 
-    setMostrarEdicao(true)
+  setDatasParcelas(
+    parcelasDoEmprestimo.length > 0
+      ? parcelasDoEmprestimo.map(
+          (parcela) =>
+            parcela.data_vencimento ??
+            parcela.vencimento ??
+            ''
+        )
+      : gerarDatasMensais(
+          emprestimo.primeiro_vencimento,
+          emprestimo.quantidade_parcelas
+        )
+  )
 
-    requestAnimationFrame(() => {
-      document
-        .getElementById('formulario-emprestimo')
-        ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    })
-  }
+  setMostrarEdicao(true)
+  setDrawerAberto(true)
+}
+
 
   async function excluirEmprestimo(id: number) {
     const confirmou = window.confirm(
@@ -672,14 +672,27 @@ export default function EmprestimosSection() {
 
   return (
     <div style={pageContainerStyle}>
-      <div style={pageHeaderStyle}>
-        <div>
-          <h1 style={{ margin: 0, marginBottom: '8px' }}>Empréstimos</h1>
-          <p style={subtitleStyle}>
-            Cadastre empréstimos, acompanhe parcelas e registre pagamentos.
-          </p>
-        </div>
-      </div>
+   <div style={pageHeaderStyle}>
+  <div>
+    <h1 style={{ margin: 0, marginBottom: '8px' }}>
+      Empréstimos
+    </h1>
+
+    <p style={subtitleStyle}>
+      Cadastre empréstimos, acompanhe parcelas e registre pagamentos.
+    </p>
+  </div>
+
+  <button
+    onClick={() => {
+      limparFormulario()
+      setDrawerAberto(true)
+    }}
+    style={primaryButtonStyle}
+  >
+    + Novo empréstimo
+  </button>
+</div>
 
       <div style={summaryGridStyle}>
         <ResumoCard
@@ -694,13 +707,18 @@ export default function EmprestimosSection() {
         <ResumoCard titulo="Parcelas atrasadas" valor={String(resumo.atrasados)} />
       </div>
 
-      <section
-        id="formulario-emprestimo"
-        style={{
-          ...formCardStyle,
-          ...(editandoId ? editingFormCardStyle : {}),
-        }}
-      >
+{drawerAberto && (
+  <div
+    style={modalOverlayStyle}
+    onClick={() => limparFormulario()}
+  >
+    <div
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        ...modalStyle,
+        ...(editandoId ? editingFormCardStyle : {}),
+      }}
+    >
         {editandoId && mostrarEdicao && (
           <div style={editingBannerStyle}>
             <div>
@@ -721,22 +739,25 @@ export default function EmprestimosSection() {
             </button>
           </div>
         )}
-        <div style={sectionHeaderStyle}>
-          <div>
-            <h2 style={sectionTitleStyle}>
-              {editandoId ? 'Editar empréstimo' : 'Novo empréstimo'}
-            </h2>
-            <p style={sectionDescriptionStyle}>
-              Informe os dados para calcular o total e gerar as parcelas.
-            </p>
-          </div>
+<div style={sectionHeaderStyle}>
+  <div>
+    <h2 style={sectionTitleStyle}>
+      {editandoId ? 'Editar empréstimo' : 'Novo empréstimo'}
+    </h2>
 
-          {editandoId && (
-            <button onClick={limparFormulario} style={secondaryButtonStyle}>
-              Cancelar edição
-            </button>
-          )}
-        </div>
+    <p style={sectionDescriptionStyle}>
+      Informe os dados para calcular o total e gerar as parcelas.
+    </p>
+  </div>
+
+  <button
+    type="button"
+    onClick={limparFormulario}
+    style={modalCloseButtonStyle}
+  >
+    ✕
+  </button>
+</div>
 
         <div style={formGridStyle}>
           <label style={labelStyle}>
@@ -907,8 +928,10 @@ export default function EmprestimosSection() {
                 ? 'Salvar alterações'
                 : 'Cadastrar empréstimo'}
           </button>
-        </div>
-      </section>
+      </div>
+    </div>
+  </div>
+)}
 
       <section style={listSectionStyle}>
         <div style={filtersStyle}>
@@ -928,7 +951,6 @@ export default function EmprestimosSection() {
             <option value="ativo">Ativos</option>
             <option value="atrasado">Atrasados</option>
             <option value="quitado">Quitados</option>
-            <option value="renegociado">Renegociados</option>
           </select>
         </div>
 
@@ -942,6 +964,33 @@ export default function EmprestimosSection() {
               const parcelasDoEmprestimo = parcelas.filter(
                 (parcela) => parcela.emprestimo_id === emprestimo.id
               )
+
+const possuiParcelaAtrasada = parcelasDoEmprestimo.some((parcela) => {
+  const vencimento =
+    parcela.data_vencimento ?? parcela.vencimento
+
+  return (
+    parcela.status !== 'pago' &&
+    parcela.status !== 'paga' &&
+    parcela.status !== 'renegociado' &&
+    new Date(`${vencimento}T23:59:59`) < new Date()
+  )
+})
+
+const todasPagas =
+  parcelasDoEmprestimo.length > 0 &&
+  parcelasDoEmprestimo.every(
+    (parcela) =>
+      parcela.status === 'pago' ||
+      parcela.status === 'paga' 
+  )
+
+const statusEmprestimo: Emprestimo['status'] =
+  todasPagas
+    ? 'quitado'
+    : possuiParcelaAtrasada
+      ? 'atrasado'
+      : 'ativo'
 
               const parcelasResolvidas = parcelasDoEmprestimo.filter(
                 (parcela) =>
@@ -985,20 +1034,20 @@ export default function EmprestimosSection() {
                         <h3 style={clientNameStyle}>
                           {emprestimo.cliente?.nome ?? 'Cliente não encontrado'}
                         </h3>
-                        <span style={mutedTextStyle}>
-                          Empréstimo #{emprestimo.id}
-                        </span>
+                      <span style={mutedTextStyle}>
+  Criado em {formatarData(emprestimo.data_emprestimo)}
+</span>
                       </div>
                     </div>
 
-                    <span
-                      style={{
-                        ...statusBadgeStyle,
-                        ...statusStyle(emprestimo.status),
-                      }}
-                    >
-                      {nomeStatus(emprestimo.status)}
-                    </span>
+                  <span
+  style={{
+    ...statusBadgeStyle,
+    ...statusStyle(statusEmprestimo),
+  }}
+>
+  {nomeStatus(statusEmprestimo)}
+</span>
                   </div>
 
                   <div style={loanInfoGridStyle}>
@@ -1034,45 +1083,56 @@ export default function EmprestimosSection() {
                     />
                   </div>
 
-                  <div style={nextPaymentStyle}>
-                    <div>
-                      <span style={previewLabelStyle}>Próxima parcela</span>
-                      <strong style={{ display: 'block', marginTop: '4px' }}>
-                        {proximaParcela
-                          ? `${formatarData(proximaParcela.data_vencimento ?? proximaParcela.vencimento ?? '')} — ${formatarMoeda(
-                              proximaParcela.valor
-                            )}`
-                          : emprestimo.status === 'renegociado'
-                            ? 'Aguardando nova negociação'
-                            : 'Empréstimo quitado'}
-                      </strong>
-                    </div>
+             <div
+  style={{
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: '16px',
+    marginTop: '14px',
+  }}
+>
+  <div style={{ flex: 1 }}>
+    <span style={previewLabelStyle}>Próxima parcela</span>
 
-                    <div style={actionsStyle}>
-                      <button
-                        onClick={() =>
-                          setDetalhesId(aberto ? null : emprestimo.id)
-                        }
-                        style={secondaryButtonStyle}
-                      >
-                        {aberto ? 'Ocultar parcelas' : 'Ver parcelas'}
-                      </button>
+    <strong style={{ display: 'block', marginTop: '4px' }}>
+      {proximaParcela
+        ? `${formatarData(proximaParcela.data_vencimento ?? proximaParcela.vencimento ?? '')} — ${formatarMoeda(proximaParcela.valor)}`
+      : statusEmprestimo === 'quitado'
+          ? 'Aguardando nova negociação'
+          : 'Empréstimo quitado'}
+    </strong>
+  </div>
 
-                      <button
-                        onClick={() => editarEmprestimo(emprestimo)}
-                        style={secondaryButtonStyle}
-                      >
-                        Editar
-                      </button>
+  <div
+    style={{
+      display: 'flex',
+      gap: '10px',
+      alignItems: 'center',
+    }}
+  >
+    <button
+      onClick={() => setDetalhesId(aberto ? null : emprestimo.id)}
+      style={secondaryButtonStyle}
+    >
+      {aberto ? 'Ocultar parcelas' : 'Ver parcelas'}
+    </button>
 
-                      <button
-                        onClick={() => excluirEmprestimo(emprestimo.id)}
-                        style={dangerButtonStyle}
-                      >
-                        Excluir
-                      </button>
-                    </div>
-                  </div>
+    <button
+      onClick={() => editarEmprestimo(emprestimo)}
+      style={secondaryButtonStyle}
+    >
+      Editar
+    </button>
+
+    <button
+      onClick={() => excluirEmprestimo(emprestimo.id)}
+      style={dangerButtonStyle}
+    >
+      Excluir
+    </button>
+  </div>
+</div>
 
                   {aberto && (
                     <div style={installmentsWrapperStyle}>
@@ -1191,8 +1251,8 @@ function statusStyle(status: Emprestimo['status']) {
       color: '#9ed8ff',
     },
     quitado: {
-      background: '#173d2b',
-      borderColor: '#2f9c65',
+      background: '#4ab04a',
+      borderColor: '#4ab04a',
       color: '#a7efc8',
     },
     atrasado: {
@@ -1259,7 +1319,6 @@ function installmentStatusStyle(parcela: Parcela) {
     color: '#ffe49b',
   }
 }
-
 const pageContainerStyle: React.CSSProperties = {
   width: '100%',
   maxWidth: '1180px',
@@ -1276,7 +1335,7 @@ const pageHeaderStyle: React.CSSProperties = {
 }
 
 const subtitleStyle: React.CSSProperties = {
-  color: '#b4b4b4',
+  color: '#CBD5E1',
   lineHeight: 1.6,
   marginTop: 0,
 }
@@ -1290,26 +1349,27 @@ const summaryGridStyle: React.CSSProperties = {
 }
 
 const summaryCardStyle: React.CSSProperties = {
-  background: '#211926',
-  border: '1px solid #493650',
+  background: '#0D1B2E',
+  border: '1px solid #1F3A5F',
   borderRadius: '15px',
   padding: '17px',
 }
 
 const summaryLabelStyle: React.CSSProperties = {
   display: 'block',
-  color: '#aaa1ad',
+  color: '#94A3B8',
   fontSize: '12px',
   marginBottom: '8px',
 }
 
 const summaryValueStyle: React.CSSProperties = {
   fontSize: '22px',
+  color: '#F8FAFC',
 }
 
 const editingFormCardStyle: React.CSSProperties = {
-  border: '2px solid #c13bd5',
-  boxShadow: '0 0 0 4px rgba(193,59,213,0.10)',
+  border: '2px solid #2563EB',
+  boxShadow: '0 0 0 4px rgba(37, 99, 235, 0.20)',
 }
 
 const editingBannerStyle: React.CSSProperties = {
@@ -1321,28 +1381,28 @@ const editingBannerStyle: React.CSSProperties = {
   marginBottom: '18px',
   padding: '13px 14px',
   borderRadius: '12px',
-  background: '#3b1843',
-  border: '1px solid #a94abb',
+  background: '#132641',
+  border: '1px solid #28538B',
 }
 
 const editingBannerTitleStyle: React.CSSProperties = {
   display: 'block',
-  color: '#ffffff',
+  color: '#F8FAFC',
   fontSize: '15px',
 }
 
 const editingBannerTextStyle: React.CSSProperties = {
   display: 'block',
   marginTop: '3px',
-  color: '#e5c8e9',
+  color: '#CBD5E1',
   fontSize: '12px',
 }
 
 const editingCloseButtonStyle: React.CSSProperties = {
-  border: '1px solid #c77ed2',
+  border: '1px solid #1F3A5F',
   borderRadius: '9px',
-  background: '#5a2762',
-  color: '#ffffff',
+  background: '#162E4A',
+  color: '#F8FAFC',
   padding: '8px 11px',
   cursor: 'pointer',
   fontWeight: 700,
@@ -1352,8 +1412,8 @@ const installmentDatesSectionStyle: React.CSSProperties = {
   marginTop: '17px',
   padding: '15px',
   borderRadius: '13px',
-  background: '#211925',
-  border: '1px solid #4c3852',
+  background: '#0D1B2E',
+  border: '1px solid #1F3A5F',
 }
 
 const installmentDatesHeaderStyle: React.CSSProperties = {
@@ -1368,11 +1428,12 @@ const installmentDatesHeaderStyle: React.CSSProperties = {
 const installmentDatesTitleStyle: React.CSSProperties = {
   margin: 0,
   fontSize: '15px',
+  color: '#F8FAFC',
 }
 
 const installmentDatesDescriptionStyle: React.CSSProperties = {
   margin: '4px 0 0',
-  color: '#aaa0ad',
+  color: '#94A3B8',
   fontSize: '12px',
 }
 
@@ -1385,35 +1446,37 @@ const installmentDatesGridStyle: React.CSSProperties = {
 const emptyInstallmentDatesStyle: React.CSSProperties = {
   padding: '13px',
   borderRadius: '10px',
-  border: '1px dashed #5b465f',
-  color: '#aaa0ad',
+  border: '1px dashed #28538B',
+  color: '#94A3B8',
   fontSize: '12px',
   textAlign: 'center',
 }
 
 const formCardStyle: React.CSSProperties = {
-  background: '#171717',
-  border: '1px solid #2d2d2d',
+  background: '#0D1B2E',
+  border: '1px solid #1F3A5F',
   borderRadius: '18px',
   padding: '20px',
 }
 
 const sectionHeaderStyle: React.CSSProperties = {
   display: 'flex',
-  alignItems: 'flex-start',
-  justifyContent: 'space-between',
+  alignItems: 'center',
+ justifyContent: 'space-between',
   gap: '14px',
   marginBottom: '18px',
+  position: 'relative',
 }
 
 const sectionTitleStyle: React.CSSProperties = {
   margin: 0,
   fontSize: '20px',
+  color: '#F8FAFC',
 }
 
 const sectionDescriptionStyle: React.CSSProperties = {
   margin: '5px 0 0',
-  color: '#919198',
+  color: '#94A3B8',
   fontSize: '13px',
 }
 
@@ -1427,7 +1490,7 @@ const labelStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   gap: '7px',
-  color: '#cfcfd4',
+  color: '#CBD5E1',
   fontSize: '12px',
   fontWeight: 600,
 }
@@ -1437,9 +1500,9 @@ const inputStyle: React.CSSProperties = {
   boxSizing: 'border-box',
   padding: '11px 12px',
   borderRadius: '10px',
-  background: '#101010',
-  color: '#fff',
-  border: '1px solid #383838',
+  background: '#132641',
+  color: '#F8FAFC',
+  border: '1px solid #1F3A5F',
   outline: 'none',
 }
 
@@ -1450,13 +1513,13 @@ const previewStyle: React.CSSProperties = {
   gap: '14px',
   marginTop: '16px',
   padding: '15px',
-  background: '#201724',
-  border: '1px solid #51345b',
+  background: '#132641',
+  border: '1px solid #28538B',
   borderRadius: '13px',
 }
 
 const previewLabelStyle: React.CSSProperties = {
-  color: '#aaa0ad',
+  color: '#94A3B8',
   fontSize: '11px',
 }
 
@@ -1464,32 +1527,33 @@ const previewValueStyle: React.CSSProperties = {
   display: 'block',
   marginTop: '5px',
   fontSize: '18px',
+  color: '#F8FAFC',
 }
 
 const primaryButtonStyle: React.CSSProperties = {
   border: 0,
   borderRadius: '10px',
-  background: '#c13bd5',
-  color: '#fff',
+  background: '#2563EB',
+  color: '#ffffff',
   padding: '12px 16px',
   fontWeight: 700,
   cursor: 'pointer',
 }
 
 const secondaryButtonStyle: React.CSSProperties = {
-  border: '1px solid #55515a',
+  border: '1px solid #28538B',
   borderRadius: '9px',
-  background: '#252327',
-  color: '#fff',
+  background: '#132641',
+  color: '#F8FAFC',
   padding: '9px 11px',
   cursor: 'pointer',
 }
 
 const dangerButtonStyle: React.CSSProperties = {
-  border: '1px solid #6e3439',
+  border: '1px solid #ef4444',
   borderRadius: '9px',
-  background: '#3b2023',
-  color: '#ffb5ba',
+  background: 'rgba(239, 68, 68, 0.15)',
+  color: '#fca5a5',
   padding: '9px 11px',
   cursor: 'pointer',
 }
@@ -1511,15 +1575,15 @@ const loanListStyle: React.CSSProperties = {
 }
 
 const loanCardStyle: React.CSSProperties = {
-  background: '#2b1d33',
-  border: '1px solid #6f3d7a',
+  background: '#1a3663',
+  border: '1px solid #1F3A5F',
   borderRadius: '17px',
   padding: '17px',
 }
 
 const loanTopStyle: React.CSSProperties = {
   display: 'flex',
-  justifyContent: 'space-between',
+ justifyContent: 'space-between',
   alignItems: 'center',
   gap: '14px',
 }
@@ -1536,8 +1600,9 @@ const avatarStyle: React.CSSProperties = {
   borderRadius: '12px',
   display: 'grid',
   placeItems: 'center',
-  background: '#8b4a97',
-  border: '1px solid #b46bc2',
+  background: '#132641',
+  border: '1px solid #28538B',
+  color: '#60A5FA',
   fontWeight: 800,
   fontSize: '17px',
 }
@@ -1545,10 +1610,11 @@ const avatarStyle: React.CSSProperties = {
 const clientNameStyle: React.CSSProperties = {
   margin: 0,
   fontSize: '17px',
+  color: '#F8FAFC',
 }
 
 const mutedTextStyle: React.CSSProperties = {
-  color: '#b8abbc',
+  color: '#94A3B8',
   fontSize: '11px',
 }
 
@@ -1568,23 +1634,23 @@ const loanInfoGridStyle: React.CSSProperties = {
 }
 
 const infoItemStyle: React.CSSProperties = {
-  background: '#36253e',
-  border: '1px solid #5c4163',
+  background: '#132641',
+  border: '1px solid #1F3A5F',
   borderRadius: '11px',
   padding: '10px 11px',
 }
 
 const progressHeaderStyle: React.CSSProperties = {
-  display: 'flex',
+ display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
+  columnGap: '12px',
   marginTop: '14px',
   marginBottom: '7px',
 }
-
 const progressTrackStyle: React.CSSProperties = {
   height: '7px',
-  background: '#1c1520',
+  background: '#1A3152',
   borderRadius: '999px',
   overflow: 'hidden',
 }
@@ -1592,14 +1658,14 @@ const progressTrackStyle: React.CSSProperties = {
 const progressBarStyle: React.CSSProperties = {
   height: '100%',
   borderRadius: '999px',
-  background: '#ce4fe0',
+  background: '#4ab04a',
   transition: 'width 0.25s ease',
 }
 
 const nextPaymentStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'space-between',
+ justifyContent: 'space-between',
   gap: '15px',
   flexWrap: 'wrap',
   marginTop: '14px',
@@ -1607,8 +1673,10 @@ const nextPaymentStyle: React.CSSProperties = {
 
 const actionsStyle: React.CSSProperties = {
   display: 'flex',
-  flexWrap: 'wrap',
-  gap: '8px',
+  alignItems: 'center',
+  justifyContent: 'flex-start',
+  gap: '10px',
+  marginLeft: '0',
 }
 
 const installmentsWrapperStyle: React.CSSProperties = {
@@ -1616,7 +1684,7 @@ const installmentsWrapperStyle: React.CSSProperties = {
   gap: '8px',
   marginTop: '15px',
   paddingTop: '15px',
-  borderTop: '1px solid #5f4667',
+  borderTop: '1px solid #1F3A5F',
 }
 
 const installmentStyle: React.CSSProperties = {
@@ -1625,15 +1693,15 @@ const installmentStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: '12px',
   padding: '10px 11px',
-  background: '#36253e',
-  border: '1px solid #5c4163',
+  background: '#132641',
+  border: '1px solid #1F3A5F',
   borderRadius: '11px',
 }
 
 const installmentDateStyle: React.CSSProperties = {
   display: 'block',
   marginTop: '3px',
-  color: '#b7aabd',
+  color: '#94A3B8',
   fontSize: '11px',
 }
 
@@ -1646,34 +1714,87 @@ const smallBadgeStyle: React.CSSProperties = {
 }
 
 const reopenButtonStyle: React.CSSProperties = {
-  border: '1px solid #8b6b2f',
+  border: '1px solid #f59e0b',
   borderRadius: '8px',
-  background: '#4a3a17',
-  color: '#ffe49b',
+  background: 'rgba(245, 158, 11, 0.15)',
+  color: '#fbbf24',
   padding: '8px 10px',
   cursor: 'pointer',
 }
 
 const payButtonStyle: React.CSSProperties = {
-  border: '1px solid #9756a3',
-  borderRadius: '8px',
-  background: '#754080',
+  background: '#0b5f2a',
   color: '#fff',
+  borderRadius: '8px',
   padding: '8px 10px',
   cursor: 'pointer',
+  fontWeight: 600,
 }
 
 const emptyStateStyle: React.CSSProperties = {
   padding: '34px',
   textAlign: 'center',
-  background: '#171717',
-  border: '1px dashed #3a3a3a',
+  background: '#0D1B2E',
+  border: '1px dashed #28538B',
   borderRadius: '15px',
-  color: '#92929a',
+  color: '#94A3B8',
 }
 
 const emptyInstallmentStyle: React.CSSProperties = {
   padding: '16px',
   textAlign: 'center',
-  color: '#b3a7b8',
+  color: '#94A3B8',
+}
+
+const modalOverlayStyle: React.CSSProperties = {
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+
+  background: 'rgba(7,20,38,.85)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+
+  padding: '24px',
+  zIndex: 999999,
+}
+
+const modalStyle: React.CSSProperties = {
+   position: 'relative',
+  width: '100%',
+  maxWidth: '1120px',
+  maxHeight: '95vh',
+  overflowY: 'auto',
+  background: '#0D1B2E',
+  border: '1px solid #1F3A5F',
+  borderRadius: '18px',
+  padding: '24px',
+  boxShadow: '0 20px 60px rgba(0,0,0,.55)',
+}
+
+const modalCloseButtonStyle: React.CSSProperties = {
+ position: 'absolute',
+right: '5px',
+
+  width: '46px',
+  height: '46px',
+  borderRadius: '50%',
+  border: '1px solid #1F3A5F',
+  background: '#132641',
+  color: '#F8FAFC',
+
+  cursor: 'pointer',
+  fontSize: '22px',
+
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+
+  zIndex: 10,
 }

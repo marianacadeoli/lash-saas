@@ -1,16 +1,17 @@
-import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import Hero from './componentes/hero'
+import Features from './componentes/Features'
+import Plans from './componentes/Plans'
+import CTA from './componentes/CTA'
+import Footer from './componentes/Footer'
 
-export default async function HomePage() {
-  const supabase = await createClient()
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
-
-  redirect('/dashboard')
+export default function HomePage() {
+  return (
+    <>
+      <Hero />
+      <Features />
+      <Plans />
+      <CTA />
+      <Footer />
+    </>
+  )
 }

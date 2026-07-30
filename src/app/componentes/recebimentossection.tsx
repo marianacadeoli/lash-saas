@@ -3,30 +3,53 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
-type Agendamento = {
+type Parcela = {
   id: number
-  data: string
-  hora_inicio: string
-  hora_fim: string
+  numero_parcela: number
+  total_parcelas?: number
   valor: number
   status: string
-  Clientes?: {
-    nome: string
-  }
-  Servicos?: {
-    nome: string
-  }
+  data_pagamento: string | null
+  data_vencimento: string
+
+Clientes?: {
+  nome: string
+}
+
+Emprestimos?: {
+  quantidade_parcelas: number
+}
 }
 
 export default function RecebimentosSection() {
   const supabase = createClient()
 
-  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([])
-  const [filtro, setFiltro] = useState<'mes' | 'semana' | 'hoje'>('mes')
+const [parcelas, setParcelas] =
+  useState<Parcela[]>([])
+const hoje = new Date()
 
-  useEffect(() => {
-    carregarGanhos()
-  }, [])
+const primeiroDia = new Date(
+  hoje.getFullYear(),
+  hoje.getMonth(),
+  1
+)
+  .toISOString()
+  .slice(0, 10)
+
+const ultimoDia = new Date(
+  hoje.getFullYear(),
+  hoje.getMonth() + 1,
+  0
+)
+  .toISOString()
+  .slice(0, 10)
+
+const [dataInicial, setDataInicial] = useState(primeiroDia)
+const [dataFinal, setDataFinal] = useState(ultimoDia)
+
+useEffect(() => {
+  carregarRecebimentos()
+}, [])
 
   async function pegarUserId() {
     const {
@@ -36,67 +59,51 @@ export default function RecebimentosSection() {
     return session?.user.id
   }
 
-  async function carregarGanhos() {
+  async function carregarRecebimentos() {
     const userId = await pegarUserId()
     if (!userId) return
 
-    const { data, error } = await supabase
-      .from('Agendamentos')
-      .select(`
-        *,
-        Clientes (
-          nome
-        ),
-        Servicos (
-          nome
-        )
-      `)
-      .eq('user_id', userId)
-      .eq('status', 'feito')
-      .order('data', { ascending: false })
-      .order('hora_inicio', { ascending: false })
-
+const { data, error } = await supabase
+  .from('Parcelas')
+  .select(`
+    *,
+    Clientes (
+      nome
+    ),
+    Emprestimos!emprestimo_id (
+      quantidade_parcelas
+    )
+  `)
+  .eq('user_id', userId)
+  .eq('status', 'pago')
+  .order('data_pagamento', { ascending: false })
     if (error) {
       console.log('ERRO AO CARREGAR GANHOS:', error)
       return
     }
 
-    setAgendamentos((data as Agendamento[]) || [])
-  }
+setParcelas((data as Parcela[]) || [])
+}
 
-  function estaNoFiltro(dataIso: string) {
-    const hoje = new Date()
-    const data = new Date(dataIso + 'T00:00:00')
-
-    if (filtro === 'hoje') {
-      return data.toDateString() === hoje.toDateString()
-    }
-
-    if (filtro === 'semana') {
-      const seteDiasAtras = new Date()
-      seteDiasAtras.setDate(hoje.getDate() - 7)
-      return data >= seteDiasAtras && data <= hoje
-    }
+const parcelasFiltradas = useMemo(() => {
+  return parcelas.filter((item) => {
+    if (!item.data_pagamento) return false
 
     return (
-      data.getMonth() === hoje.getMonth() &&
-      data.getFullYear() === hoje.getFullYear()
+      item.data_pagamento >= dataInicial &&
+      item.data_pagamento <= dataFinal
     )
-  }
+  })
+}, [parcelas, dataInicial, dataFinal])
 
-  const agendamentosFiltrados = useMemo(() => {
-    return agendamentos.filter((item) => estaNoFiltro(item.data))
-  }, [agendamentos, filtro])
-
-  const total = agendamentosFiltrados.reduce(
+const total = parcelasFiltradas.reduce(
     (soma, item) => soma + Number(item.valor),
     0
   )
-
-  const ticketMedio =
-    agendamentosFiltrados.length > 0
-      ? total / agendamentosFiltrados.length
-      : 0
+const ticketMedio =
+  parcelasFiltradas.length > 0
+    ? total / parcelasFiltradas.length
+    : 0
 
   function formatarMoeda(valor: number) {
     return valor.toLocaleString('pt-BR', {
@@ -111,91 +118,139 @@ export default function RecebimentosSection() {
 
   return (
     <div>
-    <h1 style={{ margin: 0, marginBottom: '8px' }}>Ganhos</h1>
+<div
+  style={{
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 26,
+  }}
+>
+  <div>
+    <h1 style={{ margin: 0, marginBottom: 8 }}>
+      Recebimentos
+    </h1>
 
-      <p style={subtitleStyle}>
-        Acompanhe seus ganhos com base nos atendimentos marcados como feitos.
-      </p>
+    <p style={subtitleStyle}>
+      Acompanhe todos os pagamentos recebidos das parcelas dos empréstimos.
+    </p>
+  </div>
 
-      <div style={filtersStyle}>
-        <button
-          style={filtro === 'hoje' ? activeFilterStyle : filterButtonStyle}
-          onClick={() => setFiltro('hoje')}
-        >
-          Hoje
-        </button>
+  <button
+    onClick={carregarRecebimentos}
+    style={secondaryButtonStyle}
+  >
+    Atualizar
+  </button>
+</div>
 
-        <button
-          style={filtro === 'semana' ? activeFilterStyle : filterButtonStyle}
-          onClick={() => setFiltro('semana')}
-        >
-          Últimos 7 dias
-        </button>
+<div style={filtersStyle}>
+  <input
+    type="date"
+    value={dataInicial}
+    onChange={(e) => setDataInicial(e.target.value)}
+    style={inputStyle}
+  />
 
-        <button
-          style={filtro === 'mes' ? activeFilterStyle : filterButtonStyle}
-          onClick={() => setFiltro('mes')}
-        >
-          Este mês
-        </button>
-      </div>
+  <input
+    type="date"
+    value={dataFinal}
+    onChange={(e) => setDataFinal(e.target.value)}
+    style={inputStyle}
+  />
+</div>
 
-      <div style={cardsGridStyle}>
-        <div style={cardStyle}>
-          <span style={labelStyle}>Total recebido</span>
-          <strong style={numberStyle}>{formatarMoeda(total)}</strong>
-        </div>
+   <div style={cardsGridStyle}>
+  <div style={cardStyle}>
+    <span style={labelStyle}>Total recebido</span>
+    <strong style={numberStyle}>
+      {formatarMoeda(total)}
+    </strong>
+  </div>
 
-        <div style={cardStyle}>
-          <span style={labelStyle}>Atendimentos feitos</span>
-          <strong style={numberStyle}>{agendamentosFiltrados.length}</strong>
-        </div>
+  <div style={cardStyle}>
+    <span style={labelStyle}>Parcelas recebidas</span>
+    <strong style={numberStyle}>
+      {parcelasFiltradas.length}
+    </strong>
+  </div>
 
-        <div style={cardStyle}>
-          <span style={labelStyle}>Ticket médio</span>
-          <strong style={numberStyle}>{formatarMoeda(ticketMedio)}</strong>
-        </div>
-      </div>
-
+  <div style={cardStyle}>
+    <span style={labelStyle}>Ticket médio</span>
+    <strong style={numberStyle}>
+      {formatarMoeda(ticketMedio)}
+    </strong>
+  </div>
+</div>
       <div style={sectionCardStyle}>
-        <h2 style={{ marginTop: 0 }}>Histórico de ganhos</h2>
+        <h2 style={{ marginTop: 0 }}> Histórico de recebimentos </h2>
 
-        {agendamentosFiltrados.length === 0 ? (
+       {parcelasFiltradas.length === 0 ? (
           <p style={subtitleStyle}>
-            Nenhum atendimento feito nesse período.
+      Nenhum recebimento encontrado nesse período.
           </p>
         ) : (
-          <div style={{ display: 'grid', gap: '12px' }}>
-            {agendamentosFiltrados.map((item) => (
-              <div key={item.id} style={itemStyle}>
-                <div>
-                  <strong>
-                    {formatarData(item.data)} — {item.hora_inicio} às {item.hora_fim}
-                  </strong>
+<div style={{ display: 'grid', gap: '12px' }}>
+  {parcelasFiltradas.map((item) => (
+  
+        <div key={item.id} style={itemStyle}>
 
-                  <p style={mutedStyle}>
-                    {item.Clientes?.nome || 'Cliente'}
-                  </p>
+  <div style={avatarStyle}>
+    👤
+  </div>
 
-                  <p style={mutedStyle}>
-                    {item.Servicos?.nome || 'Serviço'}
-                  </p>
-                </div>
+  <div style={clientStyle}>
+<strong
+  style={clientNameStyle}
+  title={item.Clientes?.nome}
+>
+  {item.Clientes?.nome}
+</strong>
+  </div>
 
-                <strong style={{ fontSize: '18px' }}>
-                  {formatarMoeda(Number(item.valor))}
-                </strong>
-              </div>
-            ))}
+  <div style={columnStyle}>
+    <span style={smallLabelStyle}>
+      📅 Recebido em
+    </span>
+
+    <strong>
+      {formatarData(item.data_pagamento!)}
+    </strong>
+  </div>
+
+  <div style={dividerStyle} />
+
+  <div style={columnStyle}>
+    <span style={smallLabelStyle}>
+      💳 Parcela
+    </span>
+
+<strong>
+  {item.numero_parcela} de{' '}
+  {item.Emprestimos?.quantidade_parcelas ?? '-'}
+</strong>
+  </div>
+
+  <div style={dividerStyle} />
+
+  <span style={paidBadgeStyle}>
+    ✔ Pago
+  </span>
+
+  <div style={valueBadgeStyle}>
+    {formatarMoeda(item.valor)}
+  </div>
+
+</div>
+))}
           </div>
         )}
       </div>
     </div>
   )
 }
-
 const subtitleStyle: React.CSSProperties = {
-  color: '#b4b4b4',
+    color: '#F8FAFC',
   lineHeight: 1.6,
 }
 
@@ -206,22 +261,6 @@ const filtersStyle: React.CSSProperties = {
   marginTop: '20px',
 }
 
-const filterButtonStyle: React.CSSProperties = {
-  padding: '10px 14px',
-  borderRadius: '999px',
-  border: '1px solid #333',
-  background: '#151515',
-  color: 'white',
-  cursor: 'pointer',
-  fontWeight: 700,
-}
-
-const activeFilterStyle: React.CSSProperties = {
-  ...filterButtonStyle,
-  background: '#d946ef',
-  border: '1px solid #d946ef',
-}
-
 const cardsGridStyle: React.CSSProperties = {
   marginTop: '24px',
   display: 'grid',
@@ -230,42 +269,130 @@ const cardsGridStyle: React.CSSProperties = {
 }
 
 const cardStyle: React.CSSProperties = {
-  background: '#101010',
-  border: '1px solid #2a2a2a',
+  background: '#0D1B2E',
+  border: '1px solid #1F3A5F',
   borderRadius: '18px',
   padding: '18px',
 }
-
 const labelStyle: React.CSSProperties = {
-  display: 'block',
-  color: '#a1a1aa',
+   display: 'block',
+  color: '#94A3B8',
   marginBottom: '10px',
 }
 
 const numberStyle: React.CSSProperties = {
   fontSize: '24px',
+  color: '#F8FAFC',
 }
 
 const sectionCardStyle: React.CSSProperties = {
   marginTop: '24px',
-  background: '#101010',
-  border: '1px solid #2a2a2a',
+  background: '#0D1B2E',
+  border: '1px solid #1F3A5F',
   borderRadius: '18px',
   padding: '18px',
 }
 
 const itemStyle: React.CSSProperties = {
-  background: '#151515',
-  border: '1px solid #2a2a2a',
-  borderRadius: '16px',
-  padding: '16px',
-  display: 'flex',
-  justifyContent: 'space-between',
-  gap: '16px',
-  flexWrap: 'wrap',
+  background: '#132641',
+  border: '1px solid #1F3A5F',
+  borderRadius: '14px',
+  padding: '18px 22px',
+  display: 'grid',
+  gridTemplateColumns:
+    '48px 280px 170px 1px 130px 1px 90px 150px',
+  alignItems: 'center',
+  columnGap: '22px',
 }
 
-const mutedStyle: React.CSSProperties = {
-  color: '#b4b4b4',
-  margin: '6px 0',
+const smallLabelStyle: React.CSSProperties = {
+ color: '#94A3B8',
+  fontSize: '13px',
+  display: 'block',
+  marginBottom: '6px',
+}
+
+const paidBadgeStyle: React.CSSProperties = {
+  width: 90,
+  height: 38,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: 'rgba(46, 125, 50, 0.18)',
+  color: '#81c784',
+  border: '1px solid #2e7d32',
+  borderRadius: '8px',
+  fontWeight: 700,
+  fontSize: 14,
+}
+
+const valueBadgeStyle: React.CSSProperties = {
+  width: 140,
+  height: 52,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  background: '#0D1B2E',
+  color: '#F8FAFC',
+  border: '1px solid #2563EB',
+  borderRadius: '8px',
+  fontWeight: 700,
+  fontSize: '18px',
+}
+
+const avatarStyle: React.CSSProperties = {
+  width: 48,
+  height: 48,
+  borderRadius: '50%',
+  background: '#132641',
+  border: '1px solid #28538B',
+  color: '#60A5FA',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: 20,
+}
+
+const clientStyle: React.CSSProperties = {
+  overflow: 'hidden',
+}
+
+const clientNameStyle: React.CSSProperties = {
+  fontSize: 18,
+  fontWeight: 600,
+  color: '#F8FAFC',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+}
+const columnStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '4px',
+}
+
+const dividerStyle: React.CSSProperties = {
+   width: 1,
+  alignSelf: 'stretch',
+  background: '#1F3A5F',
+}
+
+const secondaryButtonStyle: React.CSSProperties = {
+  padding: '11px 16px',
+  borderRadius: '12px',
+  border: '1px solid #2563EB',
+  background: '#2563EB',
+  color: '#ffffff',
+  cursor: 'pointer',
+  fontWeight: 700,
+}
+
+const inputStyle: React.CSSProperties = {
+  padding: '11px 14px',
+  borderRadius: '10px',
+  border: '1px solid #1F3A5F',
+  background: '#132641',
+  color: '#F8FAFC',
+  fontSize: '14px',
+  outline: 'none',
 }

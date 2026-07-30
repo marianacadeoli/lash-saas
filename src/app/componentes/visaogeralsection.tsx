@@ -23,6 +23,13 @@ type Parcela = {
   Clientes?: Cliente | Cliente[] | null
 }
 
+type Emprestimo = {
+  id: number
+  valor_emprestado: number
+  valor_total: number
+  quantidade_parcelas: number
+}
+
 type SituacaoParcela =
   | 'pago'
   | 'atrasado'
@@ -36,6 +43,7 @@ export default function VisaoGeralSection() {
   const hoje = new Date().toLocaleDateString('sv-SE')
 
   const [parcelas, setParcelas] = useState<Parcela[]>([])
+  const [emprestimos, setEmprestimos] = useState<Emprestimo[]>([])
   const [totalClientes, setTotalClientes] = useState(0)
   const [carregando, setCarregando] = useState(true)
 
@@ -69,28 +77,43 @@ export default function VisaoGeralSection() {
       return
     }
 
-    const [parcelasResponse, clientesResponse] = await Promise.all([
-      supabase
-        .from('Parcelas')
-        .select(`
-          id,
-          cliente_id,
-          emprestimo_id,
-          numero_parcela,
-          valor,
-          data_vencimento,
-          data_pagamento,
-          status,
-          observacoes,
-          user_id,
-          Clientes (
-            id,
-            nome,
-            telefone
-          )
-        `)
-        .eq('user_id', userId)
-        .order('data_vencimento', { ascending: true }),
+   const [
+  parcelasResponse,
+  emprestimosResponse,
+  clientesResponse,
+] = await Promise.all([
+
+  supabase
+  .from('Parcelas')
+  .select(`
+    id,
+    cliente_id,
+    emprestimo_id,
+    numero_parcela,
+    valor,
+    data_vencimento,
+    data_pagamento,
+    status,
+    observacoes,
+    user_id,
+    Clientes (
+      id,
+      nome,
+      telefone
+    )
+  `)
+  .eq('user_id', userId)
+  .order('data_vencimento', { ascending: true }),
+
+  supabase
+  .from('Emprestimos')
+  .select(`
+    id,
+    valor_emprestado,
+    valor_total,
+    quantidade_parcelas
+  `)
+  .eq('user_id', userId),
 
       supabase
         .from('Clientes')
@@ -104,7 +127,13 @@ export default function VisaoGeralSection() {
     } else {
       setParcelas((parcelasResponse.data as Parcela[]) || [])
     }
-
+if (emprestimosResponse.error) {
+  console.error(emprestimosResponse.error)
+} else {
+  setEmprestimos(
+    (emprestimosResponse.data as Emprestimo[]) || []
+  )
+}
     if (clientesResponse.error) {
       console.error('Erro ao carregar clientes:', clientesResponse.error)
       setTotalClientes(0)
@@ -206,10 +235,24 @@ export default function VisaoGeralSection() {
     [parcelasAtrasadas]
   )
 
-  const recebidoNoMes = useMemo(
-    () => somarValores(parcelasPagasNoMes),
-    [parcelasPagasNoMes]
-  )
+const lucroNoMes = useMemo(() => {
+  return parcelasPagasNoMes.reduce((total, parcela) => {
+    const emprestimo = emprestimos.find(
+      (e) => e.id === parcela.emprestimo_id
+    )
+
+    if (!emprestimo) return total
+
+    const capitalParcela =
+      emprestimo.valor_emprestado /
+      emprestimo.quantidade_parcelas
+
+    const lucroParcela =
+      parcela.valor - capitalParcela
+
+    return total + lucroParcela
+  }, 0)
+}, [parcelasPagasNoMes, emprestimos])
 
   const totalConsiderado =
     parcelasPendentes.length + parcelasAtrasadas.length + parcelasPagas.length
@@ -298,9 +341,9 @@ export default function VisaoGeralSection() {
         </div>
 
         <div style={summaryCardStyle}>
-          <span style={summaryLabelStyle}>Recebido no mês</span>
+          <span style={summaryLabelStyle}>Lucro do mês</span>
           <strong style={{ ...summaryValueStyle, color: '#4ade80' }}>
-            {formatarDinheiro(recebidoNoMes)}
+            {formatarDinheiro(lucroNoMes)}
           </strong>
           <span style={summaryDetailStyle}>
             {parcelasPagasNoMes.length}{' '}
@@ -418,10 +461,10 @@ export default function VisaoGeralSection() {
                 <span style={quickLabelStyle}>Ticket médio em aberto</span>
                 <strong style={quickValueStyle}>
                   {formatarDinheiro(
-                    parcelasPendentes.length > 0
-                      ? totalEmAberto / parcelasPendentes.length
-                      : 0
-                  )}
+  parcelasPagasNoMes.length > 0
+    ? lucroNoMes / parcelasPagasNoMes.length
+    : 0
+)}
                 </strong>
               </div>
               <span style={quickBadgeStyle}>Média</span>
@@ -429,11 +472,11 @@ export default function VisaoGeralSection() {
 
             <div style={quickItemStyle}>
               <div>
-                <span style={quickLabelStyle}>Média recebida no mês</span>
+                <span style={quickLabelStyle}>Média de lucro por pagamento</span>
                 <strong style={quickValueStyle}>
                   {formatarDinheiro(
                     parcelasPagasNoMes.length > 0
-                      ? recebidoNoMes / parcelasPagasNoMes.length
+                      ? lucroNoMes / parcelasPagasNoMes.length
                       : 0
                   )}
                 </strong>
@@ -542,7 +585,6 @@ export default function VisaoGeralSection() {
     </div>
   )
 }
-
 const pageContainerStyle: React.CSSProperties = {
   width: '100%',
   maxWidth: '1180px',
@@ -560,10 +602,11 @@ const pageHeaderStyle: React.CSSProperties = {
 const titleStyle: React.CSSProperties = {
   margin: 0,
   marginBottom: '8px',
+  color: '#F8FAFC',
 }
 
 const subtitleStyle: React.CSSProperties = {
-  color: '#b4b4b4',
+  color: '#94A3B8',
   lineHeight: 1.6,
   margin: 0,
 }
@@ -571,8 +614,8 @@ const subtitleStyle: React.CSSProperties = {
 const refreshButtonStyle: React.CSSProperties = {
   padding: '11px 16px',
   borderRadius: '12px',
-  border: '1px solid #333333',
-  background: '#18181b',
+  border: '1px solid #2563EB',
+  background: '#2563EB',
   color: '#ffffff',
   cursor: 'pointer',
   fontWeight: 700,
@@ -589,9 +632,9 @@ const summaryCardStyle: React.CSSProperties = {
   minHeight: '125px',
   padding: '20px',
   borderRadius: '18px',
-  border: '1px solid rgba(217,70,239,0.35)',
+  border: '1px solid #1F3A5F',
   background:
-    'linear-gradient(135deg, rgba(217,70,239,0.14), rgba(88,28,135,0.12))',
+    'linear-gradient(180deg,#11223D 0%, #0D1B2E 100%)',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
@@ -599,25 +642,25 @@ const summaryCardStyle: React.CSSProperties = {
 }
 
 const summaryLabelStyle: React.CSSProperties = {
-  color: '#a1a1aa',
+  color: '#94A3B8',
   fontSize: '14px',
 }
 
 const summaryValueStyle: React.CSSProperties = {
-  color: '#ffffff',
+  color: '#F8FAFC',
   fontSize: '29px',
   lineHeight: 1.1,
 }
 
 const summaryDetailStyle: React.CSSProperties = {
-  color: '#d4d4d8',
+  color: '#CBD5E1',
   fontSize: '13px',
   fontWeight: 700,
 }
 
 const mainGridStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'minmax(0, 1.45fr) minmax(280px, 0.75fr)',
+  gridTemplateColumns: 'minmax(0,1.45fr) minmax(280px,.75fr)',
   gap: '20px',
   marginTop: '24px',
 }
@@ -626,8 +669,8 @@ const panelStyle: React.CSSProperties = {
   marginTop: '24px',
   padding: '22px',
   borderRadius: '20px',
-  border: '1px solid #2a2a2a',
-  background: '#101010',
+  border: '1px solid #1F3A5F',
+  background: '#0D1B2E',
 }
 
 const panelHeaderStyle: React.CSSProperties = {
@@ -641,13 +684,13 @@ const panelHeaderStyle: React.CSSProperties = {
 
 const panelTitleStyle: React.CSSProperties = {
   margin: 0,
-  color: '#ffffff',
+  color: '#F8FAFC',
   fontSize: '20px',
 }
 
 const panelSubtitleStyle: React.CSSProperties = {
   margin: '6px 0 0',
-  color: '#a1a1aa',
+  color: '#94A3B8',
   fontSize: '14px',
   lineHeight: 1.5,
 }
@@ -655,9 +698,9 @@ const panelSubtitleStyle: React.CSSProperties = {
 const percentageHighlightStyle: React.CSSProperties = {
   padding: '7px 11px',
   borderRadius: '999px',
-  border: '1px solid rgba(34,197,94,0.45)',
-  background: 'rgba(34,197,94,0.12)',
-  color: '#4ade80',
+  border: '1px solid rgba(37,99,235,.4)',
+  background: 'rgba(37,99,235,.18)',
+  color: '#60A5FA',
   fontSize: '12px',
   fontWeight: 800,
 }
@@ -671,7 +714,7 @@ const progressLabelRowStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  color: '#d4d4d8',
+  color: '#CBD5E1',
   fontSize: '14px',
   marginBottom: '8px',
 }
@@ -680,7 +723,7 @@ const progressTrackStyle: React.CSSProperties = {
   width: '100%',
   height: '9px',
   borderRadius: '999px',
-  background: '#27272a',
+  background: '#1A3152',
   overflow: 'hidden',
 }
 
@@ -692,7 +735,7 @@ const progressFillStyle: React.CSSProperties = {
 
 const miniCardsGridStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+  gridTemplateColumns: 'repeat(3,minmax(0,1fr))',
   gap: '10px',
   marginTop: '22px',
 }
@@ -700,20 +743,20 @@ const miniCardsGridStyle: React.CSSProperties = {
 const miniCardStyle: React.CSSProperties = {
   padding: '14px',
   borderRadius: '14px',
-  border: '1px solid #292929',
-  background: '#151515',
+  border: '1px solid #1F3A5F',
+  background: '#132641',
   display: 'flex',
   flexDirection: 'column',
   gap: '6px',
 }
 
 const miniCardLabelStyle: React.CSSProperties = {
-  color: '#8f8f97',
+  color: '#94A3B8',
   fontSize: '12px',
 }
 
 const miniCardValueStyle: React.CSSProperties = {
-  color: '#ffffff',
+  color: '#F8FAFC',
   fontSize: '22px',
 }
 
@@ -725,8 +768,8 @@ const quickListStyle: React.CSSProperties = {
 const quickItemStyle: React.CSSProperties = {
   padding: '15px',
   borderRadius: '15px',
-  border: '1px solid #292929',
-  background: '#151515',
+  border: '1px solid #1F3A5F',
+  background: '#132641',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
@@ -735,21 +778,21 @@ const quickItemStyle: React.CSSProperties = {
 
 const quickLabelStyle: React.CSSProperties = {
   display: 'block',
-  color: '#8f8f97',
+  color: '#94A3B8',
   fontSize: '12px',
   marginBottom: '5px',
 }
 
 const quickValueStyle: React.CSSProperties = {
-  color: '#ffffff',
+  color: '#F8FAFC',
   fontSize: '18px',
 }
 
 const quickBadgeStyle: React.CSSProperties = {
   padding: '6px 9px',
   borderRadius: '999px',
-  background: 'rgba(217,70,239,0.12)',
-  color: '#e879f9',
+  background: 'rgba(37,99,235,.20)',
+  color: '#60A5FA',
   fontSize: '11px',
   fontWeight: 800,
   whiteSpace: 'nowrap',
@@ -758,8 +801,8 @@ const quickBadgeStyle: React.CSSProperties = {
 const emptyStateStyle: React.CSSProperties = {
   minHeight: '140px',
   borderRadius: '16px',
-  border: '1px dashed #333333',
-  color: '#a1a1aa',
+  border: '1px dashed #28538B',
+  color: '#94A3B8',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -783,24 +826,24 @@ const tableStyle: React.CSSProperties = {
 const tableHeaderStyle: React.CSSProperties = {
   padding: '12px 14px',
   textAlign: 'left',
-  color: '#8f8f97',
+  color: '#94A3B8',
   fontSize: '12px',
   fontWeight: 700,
-  borderBottom: '1px solid #292929',
+  borderBottom: '1px solid #1F3A5F',
 }
 
 const tableCellStyle: React.CSSProperties = {
   padding: '15px 14px',
-  color: '#d4d4d8',
+  color: '#CBD5E1',
   fontSize: '14px',
-  borderBottom: '1px solid #222222',
+  borderBottom: '1px solid #1A3152',
   verticalAlign: 'middle',
 }
 
 const tableSecondaryTextStyle: React.CSSProperties = {
   display: 'block',
   marginTop: '4px',
-  color: '#8f8f97',
+  color: '#94A3B8',
   fontSize: '12px',
 }
 

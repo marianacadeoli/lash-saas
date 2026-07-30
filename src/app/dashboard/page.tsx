@@ -124,7 +124,7 @@ export default function DashboardPage() {
     if (abaAtual === 'clientes') return <ClientesSection />
     if (abaAtual === 'emprestimos') return <EmprestimosSection />
     if (abaAtual === 'recebimentos') return <RecebimentosSection />
-    if (abaAtual === 'configuracoes') return <ConfiguracoesSection />
+    if (abaAtual === 'configuracoes') return <ConfiguracoesSection assinatura={assinatura} />
     if (abaAtual === 'ajuda') return <AjudaSection />
   }
 
@@ -173,22 +173,22 @@ export default function DashboardPage() {
                   key={item.id}
                   onClick={() => trocarAba(item.id)}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(217,70,239,0.12)'
+                    e.currentTarget.style.background = '#132641'
                     e.currentTarget.style.transform = 'translateX(4px)'
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.background = ativo
-                      ? 'rgba(217,70,239,0.18)'
-                      : 'transparent'
+                       ? '#132641'
+  : 'transparent'
                     e.currentTarget.style.transform = 'translateX(0)'
                   }}
                   style={{
                     ...menuButtonStyle,
-                    background: ativo ? 'rgba(217,70,239,0.18)' : 'transparent',
-                    border: ativo
-                      ? '1px solid rgba(217,70,239,0.75)'
-                      : '1px solid transparent',
-                    color: ativo ? '#fff' : '#d4d4d4',
+                    background: ativo ? '#132641' : 'transparent',
+border: ativo
+  ? '1px solid #2563EB'
+  : '1px solid transparent',
+color: ativo ? '#F8FAFC' : '#CBD5E1',
                   }}
                 >
                   {item.label}
@@ -235,36 +235,34 @@ export default function DashboardPage() {
 }
 
 const mainStyle: React.CSSProperties = {
-  minHeight: '100vh',
+ minHeight: '100vh',
   display: 'flex',
-  background: 'linear-gradient(135deg, #080808 0%, #0d0d12 55%, #13051f 100%)',
-  color: 'white',
+  background: '#071426',
+  color: '#F8FAFC',
   fontFamily: 'Arial, sans-serif',
 }
-
 const loadingStyle: React.CSSProperties = {
   minHeight: '100vh',
   display: 'grid',
   placeItems: 'center',
-  background: '#0b0b0b',
-  color: 'white',
+  background: '#071426',
+  color: '#F8FAFC',
 }
 
 const overlayStyle: React.CSSProperties = {
   position: 'fixed',
   inset: 0,
-  background: 'rgba(0,0,0,0.65)',
+  background: 'rgba(7,20,38,.80)',
   zIndex: 998,
 }
 
 const sidebarStyle: React.CSSProperties = {
-  top: 0,
+   top: 0,
   height: '100vh',
   width: '260px',
   minWidth: '260px',
-  background:
-    'linear-gradient(180deg, rgba(18,18,22,0.98), rgba(10,10,12,0.98))',
-  borderRight: '1px solid rgba(217,70,239,0.16)',
+  background: '#08111F',
+  borderRight: '1px solid #1F3A5F',
   padding: '18px',
   display: 'flex',
   flexDirection: 'column',
@@ -273,8 +271,8 @@ const sidebarStyle: React.CSSProperties = {
   zIndex: 999,
   overflowY: 'auto',
   scrollbarWidth: 'none',
-  boxShadow: '12px 0 40px rgba(0,0,0,0.35)',
-  transition: 'left 0.25s ease',
+  boxShadow: '12px 0 40px rgba(0,0,0,.35)',
+  transition: 'left .25s ease',
 }
 
 const sidebarTopStyle: React.CSSProperties = {
@@ -293,15 +291,15 @@ const brandLogoStyle: React.CSSProperties = {
   height: '40px',
   borderRadius: '50%',
   objectFit: 'cover',
-  border: '1px solid rgba(217,70,239,0.25)',
-  boxShadow: '0 0 18px rgba(217,70,239,0.12)',
+  border: '1px solid #28538B',
+  boxShadow: '0 0 18px rgba(37,99,235,.18)',
 }
 
 const brandFallbackStyle: React.CSSProperties = {
   width: '40px',
   height: '40px',
   borderRadius: '50%',
-  background: '#27272a',
+  background: '#132641',
   display: 'grid',
   placeItems: 'center',
 }
@@ -319,7 +317,7 @@ const navStyle: React.CSSProperties = {
 }
 
 const menuButtonStyle: React.CSSProperties = {
-  width: '100%',
+ width: '100%',
   textAlign: 'left',
   padding: '11px 14px',
   borderRadius: '14px',
@@ -328,7 +326,7 @@ const menuButtonStyle: React.CSSProperties = {
   fontWeight: 700,
   letterSpacing: '-0.2px',
   fontFamily: 'Inter, Arial, sans-serif',
-  transition: 'all 0.25s ease',
+  transition: 'all .25s ease',
 }
 
 const bottomBoxStyle: React.CSSProperties = {
@@ -336,27 +334,27 @@ const bottomBoxStyle: React.CSSProperties = {
 }
 
 const planCardStyle: React.CSSProperties = {
-  background:
-    'linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))',
+  background: '#0D1B2E',
   padding: '14px',
   borderRadius: '16px',
   fontSize: '12.5px',
-  border: '1px solid rgba(255,255,255,0.10)',
+  border: '1px solid #1F3A5F',
   marginBottom: '10px',
 }
 
 const planTextStyle: React.CSSProperties = {
-  margin: '0 0 7px',
+ margin: '0 0 7px',
   lineHeight: 1.4,
+  color: '#CBD5E1',
 }
 
 const logoutButtonStyle: React.CSSProperties = {
   width: '100%',
   padding: '12px',
   borderRadius: '14px',
-  border: '1px solid rgba(255,255,255,0.08)',
-  background: 'linear-gradient(135deg, #2a2a2f, #202024)',
-  color: 'white',
+  border: '1px solid #1F3A5F',
+  background: '#132641',
+  color: '#F8FAFC',
   cursor: 'pointer',
   fontWeight: 800,
   fontSize: '14px',
@@ -376,11 +374,11 @@ const contentInnerStyle: React.CSSProperties = {
 }
 
 const mobileButtonStyle: React.CSSProperties = {
-  marginBottom: '18px',
-  background: '#1f1f1f',
-  border: '1px solid #333',
+ marginBottom: '18px',
+  background: '#132641',
+  border: '1px solid #28538B',
   borderRadius: '14px',
-  color: 'white',
+  color: '#F8FAFC',
   padding: '12px 16px',
   cursor: 'pointer',
   fontWeight: 800,

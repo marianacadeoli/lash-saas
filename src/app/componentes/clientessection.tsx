@@ -38,6 +38,7 @@ export default function ClientesSection() {
 
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [busca, setBusca] = useState('')
+  const [ordenacao, setOrdenacao] = useState('az')
   const [mostrarFormulario, setMostrarFormulario] = useState(false)
 
   const [nome, setNome] = useState('')
@@ -300,18 +301,36 @@ export default function ClientesSection() {
     window.open(url, '_blank')
   }
 
-  const clientesFiltrados = useMemo(() => {
-    return clientes.filter((cliente) => {
-      const termo = busca.toLowerCase()
+const clientesFiltrados = useMemo(() => {
+  const lista = clientes.filter((cliente) => {
+    const termo = busca.toLowerCase()
 
-      return (
-        cliente.nome?.toLowerCase().includes(termo) ||
-        cliente.telefone?.toLowerCase().includes(termo) ||
-        cliente.cpf?.toLowerCase().includes(termo) ||
-        cliente.cidade?.toLowerCase().includes(termo)
+    return (
+      cliente.nome?.toLowerCase().includes(termo) ||
+      cliente.telefone?.toLowerCase().includes(termo) ||
+      cliente.cpf?.toLowerCase().includes(termo) ||
+      cliente.cidade?.toLowerCase().includes(termo)
+    )
+  })
+
+  switch (ordenacao) {
+    case 'za':
+      return [...lista].sort((a, b) =>
+        b.nome.localeCompare(a.nome, 'pt-BR')
       )
-    })
-  }, [clientes, busca])
+
+    case 'recentes':
+      return [...lista].sort((a, b) => b.id - a.id)
+
+    case 'antigos':
+      return [...lista].sort((a, b) => a.id - b.id)
+
+    default:
+      return [...lista].sort((a, b) =>
+        a.nome.localeCompare(b.nome, 'pt-BR')
+      )
+  }
+}, [clientes, busca, ordenacao])
 
   function montarEndereco(cliente: Cliente) {
     const partes = [
@@ -387,142 +406,231 @@ export default function ClientesSection() {
           />
         </div>
 
-        <span style={counterBadgeStyle}>
-          {clientes.length}/{LIMITE_CLIENTES} clientes
-        </span>
+    <select
+  style={ordenacaoSelectStyle}
+  value={ordenacao}
+  onChange={(e) => setOrdenacao(e.target.value)}
+>
+  <option value="az">A → Z</option>
+  <option value="za">Z → A</option>
+  <option value="recentes">Mais recentes</option>
+  <option value="antigos">Mais antigos</option>
+</select>
       </div>
 
-      {mostrarFormulario && (
-        <div style={cardStyle}>
-          <h2 style={{ marginTop: 0 }}>
+{mostrarFormulario && (
+  <div
+    style={modalOverlayStyle}
+    onClick={limparFormulario}
+  >
+    <div
+      style={modalStyle}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div style={sectionHeaderStyle}>
+        <div>
+          <h2 style={sectionTitleModalStyle}>
             {editandoId ? 'Editar cliente' : 'Novo cliente'}
           </h2>
 
-          <h3 style={sectionTitleStyle}>Dados do cliente</h3>
-
-          <div style={gridStyle}>
-            <input
-              style={inputStyle}
-              placeholder="Nome completo"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-            />
-
-            <input
-              style={inputStyle}
-              placeholder="Celular"
-              value={telefone}
-              onChange={(e) => setTelefone(e.target.value)}
-            />
-
-            <input
-              style={inputStyle}
-              placeholder="CPF"
-              value={cpf}
-              onChange={(e) => setCpf(e.target.value)}
-            />
-          </div>
-
-          <h3 style={sectionTitleStyle}>Endereço completo</h3>
-
-          <div style={gridStyle}>
-            <div style={cepFieldWrapperStyle}>
-              <input
-                style={inputStyle}
-                placeholder="CEP"
-                value={cep}
-                inputMode="numeric"
-                maxLength={9}
-                onChange={(e) => setCep(formatarCep(e.target.value))}
-                onBlur={consultarCep}
-              />
-
-              <span style={cepStatusStyle}>
-                {buscandoCep ? 'Buscando endereço...' : 'Preenche automaticamente'}
-              </span>
-            </div>
-
-            <input
-              style={inputStyle}
-              placeholder="Rua"
-              value={rua}
-              onChange={(e) => setRua(e.target.value)}
-            />
-
-            <input
-              style={inputStyle}
-              placeholder="Número"
-              value={numero}
-              onChange={(e) => setNumero(e.target.value)}
-            />
-
-            <input
-              style={inputStyle}
-              placeholder="Complemento"
-              value={complemento}
-              onChange={(e) => setComplemento(e.target.value)}
-            />
-
-            <input
-              style={inputStyle}
-              placeholder="Bairro"
-              value={bairro}
-              onChange={(e) => setBairro(e.target.value)}
-            />
-
-            <input
-              style={inputStyle}
-              placeholder="Cidade"
-              value={cidade}
-              onChange={(e) => setCidade(e.target.value)}
-            />
-
-            <input
-              style={inputStyle}
-              placeholder="Estado"
-              value={estado}
-              onChange={(e) => setEstado(e.target.value)}
-            />
-          </div>
-
-          <h3 style={sectionTitleStyle}>Informações profissionais</h3>
-
-          <div style={gridStyle}>
-            <input
-              style={inputStyle}
-              placeholder="Profissão"
-              value={profissao}
-              onChange={(e) => setProfissao(e.target.value)}
-            />
-
-            <input
-              style={inputStyle}
-              placeholder="Local de trabalho"
-              value={localTrabalho}
-              onChange={(e) => setLocalTrabalho(e.target.value)}
-            />
-          </div>
-
-          <h3 style={sectionTitleStyle}>Observações</h3>
-
-          <textarea
-            style={textareaStyle}
-            placeholder="Ex: prefere pagar por PIX, cobrar após as 18h, cliente antigo..."
-            value={observacoes}
-            onChange={(e) => setObservacoes(e.target.value)}
-          />
-
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '14px' }}>
-            <button style={buttonStyle} onClick={salvarCliente} disabled={carregando || buscandoCep}>
-              {carregando ? 'Salvando...' : editandoId ? 'Salvar alterações' : 'Cadastrar'}
-            </button>
-
-            <button style={secondaryButtonStyle} onClick={limparFormulario}>
-              Cancelar
-            </button>
-          </div>
+          <p style={sectionDescriptionStyle}>
+            Cadastre e organize os dados do cliente.
+          </p>
         </div>
-      )}
+
+        <button
+          type="button"
+          style={modalCloseButtonStyle}
+          onClick={limparFormulario}
+        >
+          ✕
+        </button>
+      </div>
+
+ <div style={gridStyle}>
+  <div>
+    <label style={labelStyle}>Nome completo</label>
+    <input
+      style={inputStyle}
+      placeholder="Ex.: João da Silva"
+      value={nome}
+      onChange={(e) => setNome(e.target.value)}
+    />
+  </div>
+
+  <div>
+    <label style={labelStyle}>Celular</label>
+    <input
+      style={inputStyle}
+      placeholder="Ex.: (16) 99999-9999"
+      value={telefone}
+      onChange={(e) => setTelefone(e.target.value)}
+    />
+  </div>
+
+  <div>
+    <label style={labelStyle}>CPF</label>
+    <input
+      style={inputStyle}
+      placeholder="Ex.: 123.456.789-00"
+      value={cpf}
+      onChange={(e) => setCpf(e.target.value)}
+    />
+  </div>
+</div>
+
+<div style={{ height: '14px' }} />
+
+<div style={gridStyle}>
+  <div>
+    <label style={labelStyle}>CEP</label>
+
+    <div style={cepFieldWrapperStyle}>
+      <input
+        style={inputStyle}
+        placeholder="Ex.: 15990-000"
+        value={cep}
+        inputMode="numeric"
+        maxLength={9}
+        onChange={(e) => setCep(formatarCep(e.target.value))}
+        onBlur={consultarCep}
+      />
+
+      <span style={cepStatusStyle}>
+        {buscandoCep
+          ? 'Buscando endereço...'
+          : 'Preenche automaticamente'}
+      </span>
+    </div>
+  </div>
+
+  <div>
+    <label style={labelStyle}>Rua</label>
+    <input
+      style={inputStyle}
+      placeholder="Ex.: Rua das Flores"
+      value={rua}
+      onChange={(e) => setRua(e.target.value)}
+    />
+  </div>
+
+  <div>
+    <label style={labelStyle}>Número</label>
+    <input
+      style={inputStyle}
+      placeholder="Ex.: 120"
+      value={numero}
+      onChange={(e) => setNumero(e.target.value)}
+    />
+  </div>
+
+  <div>
+    <label style={labelStyle}>Complemento</label>
+    <input
+      style={inputStyle}
+      placeholder="Ex.: Apto 12"
+      value={complemento}
+      onChange={(e) => setComplemento(e.target.value)}
+    />
+  </div>
+
+  <div>
+    <label style={labelStyle}>Bairro</label>
+    <input
+      style={inputStyle}
+      placeholder="Ex.: Centro"
+      value={bairro}
+      onChange={(e) => setBairro(e.target.value)}
+    />
+  </div>
+
+  <div>
+    <label style={labelStyle}>Cidade</label>
+    <input
+      style={inputStyle}
+      placeholder="Ex.: Matão"
+      value={cidade}
+      onChange={(e) => setCidade(e.target.value)}
+    />
+  </div>
+
+  <div>
+    <label style={labelStyle}>Estado</label>
+    <input
+      style={inputStyle}
+      placeholder="Ex.: SP"
+      value={estado}
+      onChange={(e) => setEstado(e.target.value)}
+    />
+  </div>
+</div>
+
+<div style={{ height: '14px' }} />
+
+<div style={{ height: '14px' }} />
+
+<div style={gridStyle}>
+  <input
+    style={inputStyle}
+    placeholder="Profissão"
+    value={profissao}
+    onChange={(e) => setProfissao(e.target.value)}
+  />
+
+  <input
+    style={inputStyle}
+    placeholder="Local de trabalho"
+    value={localTrabalho}
+    onChange={(e) => setLocalTrabalho(e.target.value)}
+  />
+
+  <select
+    style={inputStyle}
+    value={observacoes}
+    onChange={(e) => setObservacoes(e.target.value)}
+  >
+    <option value="">Comportamento do cliente</option>
+    <option value="Cliente novo">🆕 Cliente novo</option>
+    <option value="Paga corretamente">✅ Paga corretamente</option>
+    <option value="Às vezes atrasa">🟡 Às vezes atrasa</option>
+    <option value="Atrasa recorrentemente">🟠 Atrasa recorrentemente</option>
+    <option value="Em observação">👀 Em observação</option>
+    <option value="Negociação em andamento">🤝 Negociação em andamento</option>
+    <option value="Cobrança judicial">⚖️ Cobrança judicial</option>
+    <option value="Não emprestar novamente">⛔ Não emprestar novamente</option>
+  </select>
+</div>
+
+<div
+  style={{
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '12px',
+    marginTop: '28px',
+  }}
+>
+  <button
+    style={secondaryButtonStyle}
+    onClick={limparFormulario}
+  >
+    Cancelar
+  </button>
+
+  <button
+    style={buttonStyle}
+    onClick={salvarCliente}
+    disabled={carregando || buscandoCep}
+  >
+    {carregando
+      ? 'Salvando...'
+      : editandoId
+      ? 'Salvar alterações'
+      : 'Cadastrar cliente'}
+  </button>
+</div>
+    </div>
+  </div>
+)}
 
       <div style={cardStyle}>
         <div style={listHeaderStyle}>
@@ -537,7 +645,7 @@ export default function ClientesSection() {
         {clientesFiltrados.length === 0 ? (
           <p style={subtitleStyle}>Nenhum cliente encontrado.</p>
         ) : (
-          <div style={{ display: 'grid', gap: '12px' }}>
+          <div style={{ display: 'grid', gap: '24px' }}>
             {clientesFiltrados.map((cliente) => (
               <div key={cliente.id} style={clientCardStyle}>
                 <div style={clientHeaderStyle}>
@@ -607,13 +715,14 @@ export default function ClientesSection() {
                   </div>
 
                   {cliente.observacoes && (
-                    <div style={compactObservationStyle}>
-                      <span style={compactLabelStyle}>Observações</span>
-                      <span style={compactTextStyle}>
-                        {cliente.observacoes}
-                      </span>
-                    </div>
-                  )}
+                <div style={compactObservationStyle}>
+    <span style={compactLabelStyle}>Comportamento</span>
+
+    <span style={compactTextStyle}>
+      {cliente.observacoes}
+    </span>
+  </div>
+)}
                 </div>
               </div>
             ))}
@@ -623,6 +732,21 @@ export default function ClientesSection() {
     </div>
   )
 }
+
+const compactInfoRowStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))',
+  gap: '8px',
+  marginTop: '14px',
+}
+
+const detailsRowStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'minmax(0, 1.5fr) minmax(220px, 0.8fr)',
+  gap: '8px',
+  marginTop: '8px',
+}
+
 
 const pageContainerStyle: React.CSSProperties = {
   width: '100%',
@@ -639,7 +763,7 @@ const topBarStyle: React.CSSProperties = {
 }
 
 const subtitleStyle: React.CSSProperties = {
-  color: '#b4b4b4',
+  color: '#94A3B8',
   lineHeight: 1.6,
   marginTop: 0,
 }
@@ -655,9 +779,8 @@ const summaryCardStyle: React.CSSProperties = {
   minHeight: '122px',
   padding: '20px',
   borderRadius: '18px',
-  border: '1px solid rgba(217,70,239,0.35)',
-  background:
-    'linear-gradient(135deg, rgba(217,70,239,0.14), rgba(88,28,135,0.12))',
+  border: '1px solid #1F3A5F',
+  background: 'linear-gradient(180deg,#11223D 0%, #0D1B2E 100%)',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
@@ -665,18 +788,18 @@ const summaryCardStyle: React.CSSProperties = {
 }
 
 const summaryLabelStyle: React.CSSProperties = {
-  color: '#a1a1aa',
+  color: '#94A3B8',
   fontSize: '14px',
 }
 
 const summaryValueStyle: React.CSSProperties = {
-  color: '#ffffff',
+  color: '#F8FAFC',
   fontSize: '30px',
   lineHeight: 1,
 }
 
 const summaryDetailStyle: React.CSSProperties = {
-  color: '#d4d4d8',
+  color: '#CBD5E1',
   fontSize: '13px',
   fontWeight: 700,
 }
@@ -700,7 +823,7 @@ const searchIconStyle: React.CSSProperties = {
   left: '15px',
   top: '50%',
   transform: 'translateY(-50%)',
-  color: '#8f8f97',
+  color: '#60A5FA',
   fontSize: '20px',
   pointerEvents: 'none',
 }
@@ -709,9 +832,9 @@ const searchInputStyle: React.CSSProperties = {
   width: '100%',
   padding: '14px 16px 14px 44px',
   borderRadius: '14px',
-  border: '1px solid #333',
-  background: '#0f0f0f',
-  color: '#ffffff',
+  border: '1px solid #1F3A5F',
+  background: '#132641',
+  color: '#F8FAFC',
   fontSize: '15px',
   boxSizing: 'border-box',
 }
@@ -719,17 +842,17 @@ const searchInputStyle: React.CSSProperties = {
 const counterBadgeStyle: React.CSSProperties = {
   padding: '10px 13px',
   borderRadius: '999px',
-  border: '1px solid rgba(217,70,239,0.35)',
-  background: 'rgba(217,70,239,0.10)',
-  color: '#e879f9',
+  border: '1px solid #2563EB',
+  background: 'rgba(37,99,235,.18)',
+  color: '#60A5FA',
   fontSize: '13px',
   fontWeight: 800,
 }
 
 const cardStyle: React.CSSProperties = {
   marginTop: '24px',
-  background: '#101010',
-  border: '1px solid #2a2a2a',
+  background: '#0D1B2E',
+  border: '1px solid #1F3A5F',
   borderRadius: '20px',
   padding: '22px',
 }
@@ -743,27 +866,28 @@ const listHeaderStyle: React.CSSProperties = {
 }
 
 const sectionTitleStyle: React.CSSProperties = {
-  marginTop: '22px',
+ marginTop: '18px',
   marginBottom: '12px',
   fontSize: '15px',
-  color: '#f5f5f5',
+  color: '#F8FAFC',
 }
 
 const gridStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
   gap: '12px',
 }
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
-  padding: '13px 14px',
-  borderRadius: '14px',
-  border: '1px solid #333',
-  background: '#0f0f0f',
-  color: 'white',
-  fontSize: '15px',
   boxSizing: 'border-box',
+  padding: '11px 12px',
+  borderRadius: '10px',
+  background: '#132641',
+  color: '#F8FAFC',
+  border: '1px solid #1F3A5F',
+  outline: 'none',
+   fontSize: '14px',
 }
 
 const textareaStyle: React.CSSProperties = {
@@ -779,56 +903,53 @@ const cepFieldWrapperStyle: React.CSSProperties = {
 }
 
 const cepStatusStyle: React.CSSProperties = {
-  color: '#8f8f97',
+  color: '#94A3B8',
   fontSize: '11px',
   paddingLeft: '3px',
 }
 
 const buttonStyle: React.CSSProperties = {
-  padding: '13px 16px',
-  borderRadius: '14px',
-  border: 'none',
-  background: '#d946ef',
-  color: 'white',
+  border: 0,
+  borderRadius: '10px',
+  background: '#2563EB',
+  color: '#fff',
+  padding: '12px 16px',
+  fontWeight: 700,
   cursor: 'pointer',
-  fontWeight: 800,
 }
 
 const secondaryButtonStyle: React.CSSProperties = {
-  padding: '10px 12px',
-  borderRadius: '12px',
-  border: '1px solid #3f3f46',
-  background: '#27272a',
-  color: 'white',
+  border: '1px solid #1F3A5F',
+  borderRadius: '9px',
+  background: '#132641',
+  color: '#F8FAFC',
+  padding: '9px 11px',
   cursor: 'pointer',
-  fontWeight: 700,
 }
 
 const whatsButtonStyle: React.CSSProperties = {
-  padding: '10px 12px',
-  borderRadius: '12px',
-  border: 'none',
-  background: '#22c55e',
-  color: 'white',
+  border: '1px solid #16A34A',
+  borderRadius: '9px',
+  background: 'rgba(22,163,74,.15)',
+  color: '#86EFAC',
+  padding: '9px 11px',
   cursor: 'pointer',
-  fontWeight: 700,
 }
 
 const dangerButtonStyle: React.CSSProperties = {
-  padding: '10px 12px',
-  borderRadius: '12px',
-  border: 'none',
-  background: '#dc2626',
-  color: 'white',
+  border: '1px solid #DC2626',
+  borderRadius: '9px',
+  background: 'rgba(220,38,38,.15)',
+  color: '#FCA5A5',
+  padding: '9px 11px',
   cursor: 'pointer',
-  fontWeight: 700,
 }
 
 const clientCardStyle: React.CSSProperties = {
-  background: '#2b1d33',
-  border: '1px solid #6f3d7a',
-  borderRadius: '16px',
-  padding: '16px',
+   background: '#060c11',
+  borderRadius: '18px',
+  padding: '30px',
+  border: '1px solid #1c354b',
 }
 
 const clientHeaderStyle: React.CSSProperties = {
@@ -850,8 +971,8 @@ const avatarStyle: React.CSSProperties = {
   width: '40px',
   height: '40px',
   borderRadius: '12px',
-  background: '#8b4a97',
-  border: '1px solid #b46bc2',
+  background: '#2563EB',
+  border: '1px solid #60A5FA',
   color: '#ffffff',
   display: 'flex',
   alignItems: 'center',
@@ -863,30 +984,23 @@ const avatarStyle: React.CSSProperties = {
 
 const clientNameStyle: React.CSSProperties = {
   display: 'block',
-  color: '#ffffff',
+  color: '#F8FAFC',
   fontSize: '17px',
   marginBottom: '3px',
 }
 
 const clientPhoneStyle: React.CSSProperties = {
-  color: '#a1a1aa',
+  color: '#94A3B8',
   fontSize: '13px',
-}
-
-const compactInfoRowStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))',
-  gap: '8px',
-  marginTop: '14px',
 }
 
 const compactInfoItemStyle: React.CSSProperties = {
   minWidth: 0,
   padding: '10px 11px',
   borderRadius: '11px',
-  border: '1px solid #5c4163',
-  background: '#36253e',
-  color: '#ffffff',
+  border: '1px solid #1F3A5F',
+  background: '#0B1828',
+  color: '#F8FAFC',
   display: 'flex',
   flexDirection: 'column',
   gap: '4px',
@@ -894,23 +1008,16 @@ const compactInfoItemStyle: React.CSSProperties = {
 }
 
 const compactLabelStyle: React.CSSProperties = {
-  color: '#8f8f97',
+  color: '#94A3B8',
   fontSize: '11px',
   fontWeight: 600,
-}
-
-const detailsRowStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'minmax(0, 1.5fr) minmax(220px, 0.8fr)',
-  gap: '8px',
-  marginTop: '8px',
 }
 
 const compactDetailStyle: React.CSSProperties = {
   padding: '10px 11px',
   borderRadius: '11px',
-  border: '1px solid #5c4163',
-  background: '#36253e',
+  border: '1px solid #1F3A5F',
+  background: '#0B1828',
   display: 'flex',
   flexDirection: 'column',
   gap: '4px',
@@ -920,8 +1027,8 @@ const compactDetailStyle: React.CSSProperties = {
 const compactObservationStyle: React.CSSProperties = {
   padding: '10px 11px',
   borderRadius: '11px',
-  border: '1px solid #725977',
-  background: '#403047',
+  border: '1px solid #1F3A5F',
+  background: '#0B1828',
   display: 'flex',
   flexDirection: 'column',
   gap: '4px',
@@ -929,7 +1036,7 @@ const compactObservationStyle: React.CSSProperties = {
 }
 
 const compactTextStyle: React.CSSProperties = {
-  color: '#d4d4d8',
+  color: '#CBD5E1',
   fontSize: '13px',
   lineHeight: 1.45,
   overflowWrap: 'anywhere',
@@ -940,4 +1047,90 @@ const actionsStyle: React.CSSProperties = {
   gap: '7px',
   flexWrap: 'wrap',
   alignItems: 'center',
+}
+
+const modalOverlayStyle: React.CSSProperties = {
+  position: 'fixed',
+  inset: 0,
+  background: 'rgba(0,0,0,.75)',
+  backdropFilter: 'blur(10px)',
+  WebkitBackdropFilter: 'blur(10px)',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  padding: '24px',
+  zIndex: 9999,
+}
+
+const modalStyle: React.CSSProperties = {
+ position: 'relative',
+  width: '100%',
+  maxWidth: '1120px',
+  maxHeight: '95vh',
+  overflowY: 'auto',
+  background: '#0D1B2E',
+  border: '1px solid #1F3A5F',
+  borderRadius: '18px',
+  padding: '24px',
+  boxShadow: '0 20px 60px rgba(0,0,0,.55)',
+}
+
+const sectionHeaderStyle: React.CSSProperties = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'flex-start',
+  marginBottom: '24px',
+}
+
+const sectionTitleModalStyle: React.CSSProperties = {
+  margin: 0,
+  fontSize: '18px',
+  fontWeight: 700,
+  color: '#F8FAFC',
+}
+
+const sectionDescriptionStyle: React.CSSProperties = {
+  marginTop: '6px',
+  color: '#94A3B8',
+  fontSize: '14px',
+  lineHeight: 1.5,
+}
+
+const modalCloseButtonStyle: React.CSSProperties = {
+  width: '46px',
+  height: '46px',
+  borderRadius: '50%',
+  border: '1px solid #1F3A5F',
+  background: '#132641',
+  color: '#F8FAFC',
+  cursor: 'pointer',
+  fontSize: '22px',
+}
+
+const ordenacaoSelectStyle: React.CSSProperties = {
+  padding: '11px 14px',
+  borderRadius: '12px',
+  border: '1px solid #1F3A5F',
+  background: '#132641',
+  color: '#F8FAFC',
+  fontSize: '14px',
+  cursor: 'pointer',
+  outline: 'none',
+  minWidth: '180px',
+}
+
+const sectionCardStyle: React.CSSProperties = {
+  marginTop: '18px',
+  padding: 0,
+  border: 'none',
+  background: 'transparent',
+}
+
+const labelStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '7px',
+  color: '#CBD5E1',
+  fontSize: '12px',
+  fontWeight: 600,
 }

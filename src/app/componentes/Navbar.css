@@ -1,0 +1,138 @@
+.navbar{
+    position:fixed;
+    top:20px;
+    left:50%;
+    transform:translateX(-50%);
+
+    width:92%;
+    max-width:1450px;
+    height:78px;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:0 28px;
+
+    background:rgba(8,17,31,.72);
+    backdrop-filter:blur(18px);
+
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:22px;
+
+    box-shadow:
+        0 20px 60px rgba(0,0,0,.35);
+
+    z-index:999;
+}
+
+.logo{
+    display:flex;
+    align-items:center;
+    gap:14px;
+}
+
+.logoIcon{
+    width:48px;
+    height:48px;
+
+    border-radius:14px;
+
+    background:linear-gradient(135deg,#2563EB,#60A5FA);
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    color:white;
+    font-size:22px;
+    font-weight:800;
+
+    box-shadow:0 0 30px rgba(37,99,235,.35);
+}
+
+.logo span{
+    font-size:34px;
+    font-weight:800;
+    letter-spacing:-1px;
+}
+
+nav{
+    display:flex;
+    align-items:center;
+    gap:8px;
+
+    padding:8px;
+
+    border-radius:999px;
+
+    background:rgba(255,255,255,.03);
+
+    border:1px solid rgba(255,255,255,.06);
+}
+
+nav a{
+
+    padding:12px 22px;
+
+    border-radius:999px;
+
+    text-decoration:none;
+
+    color:#CBD5E1;
+
+    font-weight:600;
+
+    transition:.25s;
+}
+
+nav a:hover{
+    background:rgba(37,99,235,.18);
+    color:white;
+    transform:translateY(-2px);
+}
+
+.btnPrimary{
+
+    background:#B7FF1F;
+
+    color:#071426;
+
+    padding:16px 28px;
+
+    border-radius:16px;
+
+    font-weight:800;
+
+    text-decoration:none;
+
+    transition:.3s;
+
+    box-shadow:0 0 40px rgba(183,255,31,.25);
+}
+
+.btnPrimary:hover{
+
+    transform:translateY(-3px);
+
+    box-shadow:0 15px 45px rgba(183,255,31,.35);
+
+}
+
+nav a.active{
+
+    background:linear-gradient(135deg,#2563EB,#3B82F6);
+
+    color:white;
+
+    box-shadow:
+        0 10px 25px rgba(37,99,235,.30);
+
+}
+
+.navbar.scrolled{
+    background:rgba(8,17,31,.92);
+    border-color:rgba(255,255,255,.08);
+    box-shadow:
+        0 20px 70px rgba(0,0,0,.55);
+}

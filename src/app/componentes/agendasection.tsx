@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
+
 type Cliente = {
   id: number
   nome: string
@@ -692,14 +693,14 @@ export default function AgendaSection() {
                   ...dayButtonStyle,
 
                   background: ativo
-                    ? 'linear-gradient(135deg, rgba(217,70,239,0.30), rgba(88,28,135,0.25))'
-                    : '#111111',
+     ? 'linear-gradient(135deg, rgba(37, 99, 235, 0.28), rgba(19, 38, 65, 0.95))'
+  : '#0c1828',
 
                   border: ativo
-                    ? '1px solid rgba(217,70,239,0.80)'
-                    : diaAtual
-                      ? '1px solid rgba(255,255,255,0.35)'
-                      : '1px solid #2a2a2a',
+                   ? '1px solid #2563EB'
+  : diaAtual
+    ? '1px solid #60d1fa'
+    : '1px solid #193251',
                 }}
               >
                 <strong style={dayNumberStyle}>
@@ -903,7 +904,7 @@ const pageHeaderStyle: React.CSSProperties = {
 }
 
 const subtitleStyle: React.CSSProperties = {
-  color: '#b4b4b4',
+  color: '#94A3B8',
   lineHeight: 1.6,
   marginTop: 0,
 }
@@ -911,8 +912,8 @@ const subtitleStyle: React.CSSProperties = {
 const refreshButtonStyle: React.CSSProperties = {
   padding: '11px 16px',
   borderRadius: '12px',
-  border: '1px solid #333333',
-  background: '#18181b',
+  border: '1px solid #2563EB',
+  background: '#2563EB',
   color: '#ffffff',
   cursor: 'pointer',
   fontWeight: 700,
@@ -929,9 +930,9 @@ const summaryCardStyle: React.CSSProperties = {
   minHeight: '125px',
   padding: '20px',
   borderRadius: '18px',
-  border: '1px solid rgba(217,70,239,0.35)',
+  border: '1px solid #1F3A5F',
   background:
-    'linear-gradient(135deg, rgba(217,70,239,0.14), rgba(88,28,135,0.12))',
+    'linear-gradient(180deg,#11223D 0%, #0D1B2E 100%)',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
@@ -939,18 +940,18 @@ const summaryCardStyle: React.CSSProperties = {
 }
 
 const summaryLabelStyle: React.CSSProperties = {
-  color: '#a1a1aa',
+  color: '#94A3B8',
   fontSize: '14px',
 }
 
 const summaryValueStyle: React.CSSProperties = {
-  color: '#ffffff',
+  color: '#F8FAFC',
   fontSize: '30px',
   lineHeight: 1,
 }
 
 const summaryDetailStyle: React.CSSProperties = {
-  color: '#d4d4d8',
+  color: '#CBD5E1',
   fontSize: '14px',
   fontWeight: 700,
 }
@@ -959,9 +960,8 @@ const calendarCardStyle: React.CSSProperties = {
   marginTop: '24px',
   padding: '18px',
   borderRadius: '20px',
-  border: '1px solid rgba(217,70,239,0.28)',
-  background:
-    'linear-gradient(135deg, rgba(217,70,239,0.10), rgba(88,28,135,0.08))',
+  border: '1px solid #1F3A5F',
+  background: '#0D1B2E',
 }
 
 const calendarHeaderStyle: React.CSSProperties = {
@@ -975,12 +975,13 @@ const calendarHeaderStyle: React.CSSProperties = {
 const calendarNavButtonStyle: React.CSSProperties = {
   width: '38px',
   height: '38px',
-  borderRadius: '11px',
-  border: '1px solid rgba(217,70,239,0.35)',
-  background: '#151515',
-  color: '#ffffff',
+  borderRadius: '9px',
+  border: '1px solid #2563EB',
+  background: '#132641',
+  color: '#60A5FA',
   cursor: 'pointer',
   fontSize: '22px',
+  fontWeight: 700,
 }
 
 const legendStyle: React.CSSProperties = {
@@ -995,7 +996,7 @@ const legendItemStyle: React.CSSProperties = {
   display: 'inline-flex',
   alignItems: 'center',
   gap: '7px',
-  color: '#a1a1aa',
+  color: '#94A3B8',
   fontSize: '13px',
 }
 
@@ -1007,20 +1008,20 @@ const legendDotStyle: React.CSSProperties = {
 
 const weekGridStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
+  gridTemplateColumns: 'repeat(7,minmax(0,1fr))',
   gap: '6px',
   marginBottom: '6px',
 }
 
 const weekDayStyle: React.CSSProperties = {
-  color: '#a1a1aa',
+  color: '#94A3B8',
   fontSize: '13px',
   textAlign: 'center',
 }
 
 const calendarGridStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
+  gridTemplateColumns: 'repeat(7,minmax(0,1fr))',
   gap: '6px',
 }
 
@@ -1028,9 +1029,11 @@ const dayButtonStyle: React.CSSProperties = {
   minHeight: '62px',
   padding: '8px',
   borderRadius: '12px',
-  color: '#ffffff',
+  color: '#F8FAFC',
   cursor: 'pointer',
   position: 'relative',
+  background: '#132641',
+  border: '1px solid #1F3A5F',
 }
 
 const dayNumberStyle: React.CSSProperties = {
@@ -1060,7 +1063,7 @@ const quantityBadgeStyle: React.CSSProperties = {
   height: '18px',
   padding: '0 5px',
   borderRadius: '999px',
-  background: '#d946ef',
+  background: '#2563EB',
   color: '#ffffff',
   display: 'inline-flex',
   alignItems: 'center',
@@ -1073,8 +1076,8 @@ const listCardStyle: React.CSSProperties = {
   marginTop: '24px',
   padding: '22px',
   borderRadius: '20px',
-  border: '1px solid #2a2a2a',
-  background: '#101010',
+  border: '1px solid #1F3A5F',
+  background: '#0D1B2E',
 }
 
 const listHeaderStyle: React.CSSProperties = {
@@ -1088,8 +1091,8 @@ const listHeaderStyle: React.CSSProperties = {
 const emptyStateStyle: React.CSSProperties = {
   minHeight: '140px',
   borderRadius: '16px',
-  border: '1px dashed #333333',
-  color: '#a1a1aa',
+  border: '1px dashed #28538B',
+  color: '#94A3B8',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -1107,8 +1110,8 @@ const installmentListStyle: React.CSSProperties = {
 const installmentCardStyle: React.CSSProperties = {
   padding: '20px',
   borderRadius: '18px',
-  border: '1px solid #2a2a2a',
-  background: '#151515',
+  border: '1px solid #1F3A5F',
+  background: '#132641',
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
@@ -1130,14 +1133,14 @@ const installmentHeaderStyle: React.CSSProperties = {
 
 const clientNameStyle: React.CSSProperties = {
   display: 'block',
-  color: '#ffffff',
+  color: '#F8FAFC',
   fontSize: '18px',
 }
 
 const phoneStyle: React.CSSProperties = {
   marginTop: '4px',
   marginBottom: 0,
-  color: '#a1a1aa',
+  color: '#94A3B8',
   fontSize: '14px',
 }
 
@@ -1151,7 +1154,7 @@ const statusBadgeStyle: React.CSSProperties = {
 
 const installmentInfoGridStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))',
+  gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))',
   gap: '10px',
   marginTop: '16px',
 }
@@ -1159,27 +1162,27 @@ const installmentInfoGridStyle: React.CSSProperties = {
 const infoBoxStyle: React.CSSProperties = {
   padding: '12px',
   borderRadius: '13px',
-  background: '#101010',
-  border: '1px solid #292929',
+  background: '#0D1B2E',
+  border: '1px solid #1F3A5F',
   display: 'flex',
   flexDirection: 'column',
   gap: '5px',
 }
 
 const infoLabelStyle: React.CSSProperties = {
-  color: '#8f8f97',
+  color: '#94A3B8',
   fontSize: '12px',
 }
 
 const infoValueStyle: React.CSSProperties = {
-  color: '#ffffff',
+  color: '#F8FAFC',
   fontSize: '14px',
 }
 
 const observationStyle: React.CSSProperties = {
   marginTop: '14px',
   marginBottom: 0,
-  color: '#b4b4b4',
+  color: '#CBD5E1',
   fontSize: '14px',
 }
 
@@ -1190,23 +1193,23 @@ const actionsStyle: React.CSSProperties = {
 }
 
 const primaryButtonStyle: React.CSSProperties = {
-  padding: '11px 15px',
-  borderRadius: '12px',
-  border: 'none',
-  background: '#d946ef',
-  color: '#ffffff',
+  border: 0,
+  borderRadius: '10px',
+  background: '#2563EB',
+  color: '#fff',
+  padding: '12px 16px',
+  fontWeight: 700,
   cursor: 'pointer',
-  fontWeight: 800,
 }
 
 const messageButtonStyle: React.CSSProperties = {
-  padding: '11px 14px',
-  borderRadius: '12px',
-  border: '1px solid #238b50',
-  background: '#176b3d',
-  color: '#ffffff',
+  border: '1px solid #16A34A',
+  borderRadius: '9px',
+  background: 'rgba(22,163,74,.15)',
+  color: '#86EFAC',
+  padding: '9px 11px',
   cursor: 'pointer',
-  fontWeight: 800,
+  fontWeight: 700,
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -1214,11 +1217,11 @@ const messageButtonStyle: React.CSSProperties = {
 }
 
 const secondaryButtonStyle: React.CSSProperties = {
-  padding: '11px 15px',
-  borderRadius: '12px',
-  border: '1px solid #3f3f46',
-  background: '#27272a',
-  color: '#ffffff',
+  border: '1px solid #1F3A5F',
+  borderRadius: '9px',
+  background: '#132641',
+  color: '#F8FAFC',
+  padding: '9px 11px',
   cursor: 'pointer',
   fontWeight: 700,
 }

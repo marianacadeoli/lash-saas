@@ -2,7 +2,7 @@
 
 export default function AjudaSection() {
   function abrirWhatsapp() {
-    window.open('https://wa.me/5511999999999', '_blank')
+    window.open('https://wa.me/5516997010388', '_blank')
   }
 
   function enviarEmail() {
@@ -64,7 +64,7 @@ export default function AjudaSection() {
 /* ESTILO */
 
 const subtitleStyle = {
-  color: '#b4b4b4',
+  color: '#CBD5E1',
   marginTop: '8px'
 }
 
@@ -72,8 +72,8 @@ const cardStyle = {
   marginTop: '20px',
   padding: '20px',
   borderRadius: '16px',
-  background: '#101010',
-  border: '1px solid #2a2a2a'
+  background: '#0D1B2E',
+  border: '1px solid #1F3A5F'
 }
 
 const buttonsContainer = {
@@ -83,7 +83,7 @@ const buttonsContainer = {
 }
 
 const whatsappButton = {
-  padding: '12px 16px',
+   padding: '12px 16px',
   borderRadius: '12px',
   border: 'none',
   background: '#22c55e',
@@ -95,9 +95,9 @@ const whatsappButton = {
 const emailButton = {
   padding: '12px 16px',
   borderRadius: '12px',
-  border: 'none',
-  background: '#27272a',
-  color: 'white',
+  border: '1px solid #28538B',
+  background: '#132641',
+  color: '#F8FAFC',
   cursor: 'pointer',
   fontWeight: 'bold'
 }
@@ -107,6 +107,6 @@ const faqItem = {
 }
 
 const mutedStyle = {
-  color: '#b4b4b4',
+  color: '#94A3B8',
   marginTop: '4px'
 }
