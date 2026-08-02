@@ -1,0 +1,369 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+.registerPage{
+    min-height:100vh;
+
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+
+padding:30px 24px 45px;
+
+    background:
+        radial-gradient(circle at top left,#153C73 0%,transparent 45%),
+        radial-gradient(circle at bottom right,#2A0F56 0%,transparent 45%),
+        #071426;
+}
+
+.registerCard{
+    width:min(1100px, 92vw);
+    max-width:700px;   /* antes era 520 ou 560 */
+    padding:20px 55px 32px;
+
+    background:rgba(8,18,34,.90);
+
+    border:1px solid rgba(255,255,255,.06);
+
+    border-radius:28px;
+
+    backdrop-filter:blur(18px);
+
+    box-shadow:0 30px 70px rgba(0,0,0,.45);
+}
+
+.registerLogo{
+    width:120px;
+    display:block;
+    margin:0 auto 8px;
+}
+
+.registerCard h1{
+    font-size:38px;
+    margin:0;
+    line-height:1.1;
+}
+
+.registerHeader{
+    text-align:left;
+    margin-bottom:18px;
+}
+
+.registerBadge{
+    display:inline-flex;
+    align-items:center;
+
+    margin:10px 0 20px;
+
+    padding:10px 18px;
+
+    font-size:14px;
+}
+
+.formGrid{
+
+    display:grid;
+
+    grid-template-columns:1fr 1fr;
+
+    gap:26px 34px;
+}
+
+.formRow{
+
+    display:flex;
+
+    gap:34px;
+}
+
+.formRow .inputGroup{
+
+    flex:1;
+}
+
+.inputGroup input{
+
+    height:58px;
+
+    padding:0 22px;
+
+    font-size:17px;
+}
+
+.section{
+
+    margin-top:40px;
+}
+
+.registerHeader h1{
+    margin-top:0;
+    margin-bottom:8px;
+}
+
+.registerSubtitle{
+
+    color:#94A3B8;
+
+    font-size:15px;
+}
+
+.registerForm{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.inputGroup{
+
+    display:flex;
+
+    flex-direction:column;
+    gap:8px;
+}
+
+.inputGroup label{
+
+    color:#fff;
+
+    font-size:14px;
+
+    font-weight:600;
+}
+
+.inputGroup input,
+.inputGroup select{
+
+    width:100%;
+    height:52px;
+
+    padding:0 16px;
+
+    border-radius:14px;
+
+    border:1px solid rgba(255,255,255,.08);
+
+    background:#0B1528;
+
+    color:#fff;
+
+    font-size:14px;
+
+    transition:.25s;
+}
+
+.inputGroup input::placeholder{
+
+    color:#71829C;
+}
+
+.inputGroup input:focus,
+.inputGroup select:focus{
+
+    outline:none;
+
+    border-color:#3B82F6;
+
+    box-shadow:0 0 0 4px rgba(59,130,246,.18);
+}
+
+.buttonsRow{
+
+    display:flex;
+
+    gap:14px;
+
+    margin-top:10px;
+}
+
+.registerButton{
+    width:100%;
+    height:60px;
+
+    border:none;
+    border-radius:16px;
+
+    background:linear-gradient(180deg,#3B82F6,#2563EB);
+
+    color:#fff;
+
+    font-size:18px;
+    font-weight:700;
+
+    cursor:pointer;
+
+    margin-top:10px;
+}
+
+.registerButton{
+
+    border:none;
+
+    color:#fff;
+
+    background:linear-gradient(180deg,#3B82F6,#2563EB);
+
+    box-shadow:0 15px 35px rgba(37,99,235,.35);
+}
+
+.registerButton:hover{
+
+    transform:translateY(-2px);
+}
+
+.secondaryButton{
+
+    background:transparent;
+
+    border:1px solid #29476E;
+
+    color:#fff;
+}
+
+.secondaryButton:hover{
+
+    background:#132640;
+}
+
+.freeTrial{
+
+    background:rgba(37,99,235,.12);
+
+    border:1px solid rgba(59,130,246,.25);
+
+    border-radius:18px;
+
+    padding:18px;
+
+    margin-bottom:12px;
+}
+
+.inputGroup:last-of-type{
+    margin-bottom:12px;
+}
+
+.freeTrial h3{
+
+    color:#fff;
+
+    margin-bottom:8px;
+}
+
+.freeTrial p{
+
+    color:#D2E2F8;
+
+    margin-bottom:6px;
+}
+
+.freeTrial small{
+
+    color:#8EA3C4;
+
+    line-height:1.6;
+}
+
+.checkbox{
+    display:flex;
+    align-items:center;
+    gap:10px;
+
+    margin-bottom:8px;
+
+    color:#D5E3F8;
+    font-size:14px;
+}
+
+.checkbox input{
+
+    accent-color:#2563EB;
+
+    width:18px;
+
+    height:18px;
+
+    margin-top:2px;
+}
+
+.errorBox{
+
+    background:rgba(220,38,38,.12);
+
+    border:1px solid rgba(220,38,38,.30);
+
+    color:#FCA5A5;
+
+    padding:14px;
+
+    border-radius:14px;
+}
+
+.successBox{
+
+    background:rgba(34,197,94,.12);
+
+    border:1px solid rgba(34,197,94,.30);
+
+    color:#86EFAC;
+
+    padding:14px;
+
+    border-radius:14px;
+}
+
+.registerFooter{
+
+    margin-top:14px;
+
+    text-align:center;
+
+    color:#94A3B8;
+}
+
+.registerFooter a{
+
+    margin-left:6px;
+
+    color:#60A5FA;
+
+    text-decoration:none;
+
+    font-weight:700;
+}
+
+.registerFooter a:hover{
+
+    color:#fff;
+}
+
+@media(max-width:600px){
+
+.registerCard{
+
+    padding:22px;
+}
+
+.registerHeader h1{
+
+    font-size:30px;
+}
+
+.stepLine{
+
+    width:30px;
+}
+
+.buttonsRow{
+
+    flex-direction:column;
+}
+
+.registerButton,
+.secondaryButton{
+
+    width:100%;
+}
+
+}

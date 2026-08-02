@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import './hero.css'
 
 export default function Hero() {
@@ -7,15 +8,47 @@ export default function Hero() {
     <section className="hero">
 
       <header className="navbar">
-        <div className="logo">
-          <div className="logoIcon">C</div>
-          <span>CredCore</span>
-        </div>
+<div className="logo">
+  <Image
+    src="/logo.png"
+    alt="PainelEmprest"
+    width={380}
+    height={95}
+    className="logoImage"
+    priority
+  />
+</div>
 
         <nav>
           <a href="#recursos">Recursos</a>
           <a href="#planos">Planos</a>
+          <div className="supportMenu">
+
+  <button className="supportButton">
+    Suporte
+  </button>
+
+  <div className="supportDropdown">
+
+    <a
+      href="https://wa.me/5516997010388"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="supportItem"
+    >
+      <div className="supportIcon">💬</div>
+
+      <div>
+        <strong>Falar pelo WhatsApp</strong>
+        <small>Atendimento imediato</small>
+      </div>
+    </a>
+
+  </div>
+
+</div>
           <a href="/login">Entrar</a>
+         
         </nav>
 
         <a href="/register" className="btnPrimary">

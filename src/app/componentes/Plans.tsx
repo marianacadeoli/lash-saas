@@ -5,6 +5,7 @@ import './plans.css'
 export default function Plans() {
   return (
     <section className="plans" id="planos">
+      
 
       <div className="plansLeft">
 
@@ -13,74 +14,62 @@ export default function Plans() {
         </span>
 
         <h2>
-          Um único plano.
+          Tudo o que você precisa
           <br />
-          Todas as funcionalidades.
+          por um único preço.
         </h2>
 
         <p>
-          Sem limitações, sem módulos extras e sem surpresas. Você paga um único
-          valor e tem acesso a todos os recursos da plataforma.
+          Organize clientes, empréstimos, parcelas e recebimentos em uma única plataforma.
+          Sem limitações, sem módulos extras e sem cobranças escondidas.
         </p>
 
-        <ul>
-          <li>✓ 7 dias grátis</li>
-          <li>✓ Sem fidelidade</li>
-          <li>✓ Clientes ilimitados</li>
-          <li>✓ Empréstimos ilimitados</li>
-          <li>✓ Atualizações gratuitas</li>
-        </ul>
+        <div className="plansBenefits">
+          <div>✓ 7 dias grátis</div>
+          <div>✓ Sem fidelidade</div>
+          <div>✓ Clientes ilimitados</div>
+          <div>✓ Empréstimos ilimitados</div>
+          <div>✓ Atualizações gratuitas</div>
+        </div>
 
       </div>
 
-      <div className="plansCards">
+      <div className="planCard">
 
-        <div className="planCard featured">
+        <span className="popular">
+          MAIS ESCOLHIDO
+        </span>
 
-          <span className="planType">
-            Plano Profissional
-          </span>
+        <h3>Plano Profissional</h3>
 
-          <div className="price">
-
-            <span>R$</span>
-
-            <strong>69,90</strong>
-
-            <small>/mês</small>
-
-          </div>
-
-          <p>
-            Tudo o que você precisa para administrar sua carteira de empréstimos
-            em uma única plataforma.
-          </p>
-
-          <ul>
-
-            <li>✓ Clientes ilimitados</li>
-
-            <li>✓ Gestão de empréstimos</li>
-
-            <li>✓ Controle de parcelas</li>
-
-            <li>✓ Recebimentos</li>
-
-            <li>✓ Dashboard completo</li>
-
-            <li>✓ Relatórios financeiros</li>
-
-            <li>✓ Backup automático</li>
-
-            <li>✓ Suporte especializado</li>
-
-          </ul>
-
-          <button>
-            Começar grátis
-          </button>
-
+        <div className="price">
+          <span>R$</span>
+          <strong>69,90</strong>
+          <small>/mês</small>
         </div>
+
+        <p>
+          Tudo o que você precisa para administrar sua carteira de empréstimos.
+        </p>
+
+        <ul>
+          <li>✓ Clientes ilimitados</li>
+          <li>✓ Gestão de empréstimos</li>
+          <li>✓ Controle de parcelas</li>
+          <li>✓ Recebimentos</li>
+          <li>✓ Visão Geral</li>
+          <li>✓ Aviso de atraso de parcela</li>
+          <li>✓ Backup automático</li>
+          <li>✓ Suporte especializado</li>
+        </ul>
+
+        <button className="planButton">
+          Começar teste grátis
+        </button>
+
+        <small className="planFooter">
+          Sem cartão • 7 dias grátis • Cancele quando quiser
+        </small>
 
       </div>
 

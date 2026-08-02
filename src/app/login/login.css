@@ -1,0 +1,291 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+.loginPage{
+    min-height:100vh;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    padding:30px;
+
+    background:
+        radial-gradient(circle at top left,#153C73 0%,transparent 45%),
+        radial-gradient(circle at bottom right,#2A0F56 0%,transparent 45%),
+        #071426;
+}
+
+/* CARD */
+
+.loginCard{
+
+    width:100%;
+    max-width:470px;
+
+    padding:30px;
+
+    border-radius:24px;
+
+    background:rgba(10,17,32,.82);
+
+    backdrop-filter:blur(24px);
+
+    border:1px solid rgba(255,255,255,.06);
+
+    box-shadow:
+        0 35px 80px rgba(0,0,0,.45);
+}
+
+/* LOGO */
+
+.loginLogo{
+
+    width:165px;
+    height:auto;
+
+    display:block;
+
+    margin:0 auto 18px;
+}
+
+/* BADGE */
+
+.loginBadge{
+
+    display:inline-flex;
+
+    align-items:center;
+
+    padding:8px 16px;
+
+    border-radius:999px;
+
+    background:#143256;
+
+    color:#60A5FA;
+
+    font-size:13px;
+
+    font-weight:600;
+
+    margin-bottom:18px;
+}
+
+/* TITULOS */
+
+.loginCard h1{
+
+    font-size:38px;
+
+    line-height:1.05;
+
+    margin-bottom:12px;
+
+    color:#fff;
+}
+
+.loginSubtitle{
+
+    color:#94A3B8;
+
+    font-size:16px;
+
+    line-height:1.6;
+
+    margin-bottom:24px;
+}
+
+/* FORM */
+
+.loginForm{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:18px;
+}
+
+.inputGroup{
+
+    display:flex;
+
+    flex-direction:column;
+
+    gap:8px;
+}
+
+.inputGroup label{
+
+    color:#fff;
+
+    font-size:14px;
+
+    font-weight:600;
+}
+
+.inputGroup input{
+
+    width:100%;
+
+    height:54px;
+
+    padding:0 18px;
+
+    border-radius:14px;
+
+    border:1px solid #233A5F;
+
+    background:#0D1728;
+
+    color:#fff;
+
+    font-size:15px;
+
+    transition:.25s;
+}
+
+.inputGroup input::placeholder{
+
+    color:#71829C;
+}
+
+.inputGroup input:focus{
+
+    outline:none;
+
+    border-color:#3B82F6;
+
+    box-shadow:
+        0 0 0 4px rgba(59,130,246,.18);
+}
+
+/* ERRO */
+
+.errorBox{
+
+    padding:14px;
+
+    border-radius:14px;
+
+    background:rgba(220,38,38,.12);
+
+    border:1px solid rgba(220,38,38,.25);
+
+    color:#FCA5A5;
+
+    font-size:14px;
+}
+
+/* BOTÃO */
+
+.loginButton{
+
+    width:100%;
+
+    height:56px;
+
+    margin-top:4px;
+
+    border:none;
+
+    border-radius:14px;
+
+    cursor:pointer;
+
+    color:#fff;
+
+    font-size:17px;
+
+    font-weight:700;
+
+    background:linear-gradient(
+        180deg,
+        #3B82F6,
+        #2563EB);
+
+    box-shadow:
+        0 15px 30px rgba(37,99,235,.35);
+
+    transition:.3s;
+}
+
+.loginButton:hover{
+
+    transform:translateY(-3px);
+
+    box-shadow:
+        0 22px 45px rgba(37,99,235,.45);
+}
+
+/* LINKS */
+
+.loginFooter{
+
+    margin-top:24px;
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+}
+
+.loginFooter a{
+
+    color:#60A5FA;
+
+    text-decoration:none;
+
+    font-weight:600;
+
+    font-size:14px;
+
+    transition:.25s;
+}
+
+.loginFooter a:hover{
+
+    color:#fff;
+}
+
+/* RESPONSIVO */
+
+@media (max-width:650px){
+
+    .loginPage{
+
+        padding:20px;
+    }
+
+    .loginCard{
+
+        padding:24px;
+    }
+
+    .loginLogo{
+
+        width:145px;
+    }
+
+    .loginCard h1{
+
+        font-size:32px;
+    }
+
+    .loginSubtitle{
+
+        font-size:15px;
+    }
+
+    .loginFooter{
+
+        flex-direction:column;
+
+        gap:16px;
+    }
+}

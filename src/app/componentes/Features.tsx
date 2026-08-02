@@ -73,7 +73,7 @@ const features = [
 
 export default function Features() {
   return (
-    <section className="features">
+   <section className="features" id="recursos">
 
       <div className="topInfo">
 

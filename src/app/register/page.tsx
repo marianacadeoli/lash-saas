@@ -2,334 +2,260 @@
 
 import { FormEvent, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import './register.css'
 
 export default function RegisterPage() {
-  const router = useRouter()
-  const supabase = createClient()
 
-  const [nome, setNome] = useState('')
-  const [email, setEmail] = useState('')
-  const [senha, setSenha] = useState('')
-  const [confirmarSenha, setConfirmarSenha] = useState('')
-  const [carregando, setCarregando] = useState(false)
-  const [erro, setErro] = useState('')
-  const [sucesso, setSucesso] = useState('')
+    const router = useRouter()
+    const supabase = createClient()
 
-  async function handleRegister(e: FormEvent) {
-    e.preventDefault()
-    setErro('')
-    setSucesso('')
+    const [step, setStep] = useState(1)
 
-    if (!nome || !email || !senha || !confirmarSenha) {
-      setErro('Preencha todos os campos.')
-      return
+    // Etapa 1
+    const [email, setEmail] = useState('')
+    const [confirmarEmail, setConfirmarEmail] = useState('')
+    const [senha, setSenha] = useState('')
+    const [confirmarSenha, setConfirmarSenha] = useState('')
+
+    // Etapa 2
+    const [tipoCadastro, setTipoCadastro] = useState('pf')
+    const [nome, setNome] = useState('')
+    const [cpf, setCpf] = useState('')
+    const [telefone, setTelefone] = useState('')
+
+    const [erro, setErro] = useState('')
+    const [sucesso, setSucesso] = useState('')
+    const [carregando, setCarregando] = useState(false)
+
+    const [aceitouLgpd, setAceitouLgpd] = useState(false)
+    const [aceitouTermos, setAceitouTermos] = useState(false)
+
+    async function handleRegister(e: FormEvent) {
+
+        e.preventDefault()
+
+        setErro('')
+        setSucesso('')
+
+        if (email !== confirmarEmail) {
+            setErro('Os e-mails não coincidem.')
+            return
+        }
+
+        if (senha !== confirmarSenha) {
+            setErro('As senhas não coincidem.')
+            return
+        }
+
+        if (!aceitouLgpd || !aceitouTermos) {
+            setErro('Você precisa aceitar os termos.')
+            return
+        }
+
+        try {
+
+            setCarregando(true)
+
+            const { error } = await supabase.auth.signUp({
+
+                email,
+                password: senha,
+
+                options: {
+
+                    data: {
+
+                        nome,
+                        telefone,
+                        cpf,
+                        tipoCadastro
+
+                    }
+
+                }
+
+            })
+
+            if (error) {
+
+                setErro(error.message)
+                return
+
+            }
+
+            setSucesso('Conta criada com sucesso!')
+
+            setTimeout(() => {
+
+                router.push('/login')
+
+            }, 2000)
+
+        } finally {
+
+            setCarregando(false)
+
+        }
+
     }
 
-    if (senha.length < 6) {
-      setErro('A senha deve ter pelo menos 6 caracteres.')
-      return
-    }
+    return (
 
-    if (senha !== confirmarSenha) {
-      setErro('As senhas não coincidem.')
-      return
-    }
+        <main className="registerPage">
 
-    try {
-      setCarregando(true)
+            <div className="registerCard">
 
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password: senha,
-        options: {
-          data: {
-            nome,
-          },
-        },
-      })
+                <Image
+                    src="/logo.png"
+                    alt="PainelEmprest"
+                    width={200}
+                    height={60}
+                    className="registerLogo"
+                />
 
-      console.log('CADASTRO DATA:', data)
-      console.log('CADASTRO ERROR:', error)
+                <h1>Criar Conta</h1>
 
-      if (error) {
-        setErro(error.message)
-        return
-      }
+                <span className="registerBadge">
 
-      setSucesso('Conta criada com sucesso! Agora você já pode entrar.')
+                    Teste grátis por 7 dias — sem cobrança agora
 
-      setTimeout(() => {
-        router.push('/login')
-      }, 1800)
-    } catch (err) {
-      console.log('CADASTRO EXCEPTION:', err)
-      setErro('Não foi possível conectar ao Supabase.')
-    } finally {
-      setCarregando(false)
-    }
-  }
+                </span>
 
-  return (
-    <main
-      style={{
-        minHeight: '100vh',
-        background:
-          'linear-gradient(135deg, #050816 0%, #111827 35%, #3b0764 100%)',
-        color: '#fff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-        fontFamily: 'Arial, sans-serif',
-      }}
+<form className="registerForm" onSubmit={handleRegister}>
+
+    <div className="inputGroup">
+        <label>Nome Completo *</label>
+
+        <input
+            type="text"
+            placeholder="Ex: João da Silva"
+            value={nome}
+            onChange={(e)=>setNome(e.target.value)}
+        />
+    </div>
+
+    <div className="inputGroup">
+        <label>E-mail *</label>
+
+        <input
+            type="email"
+            placeholder="exemplo@email.com"
+            value={email}
+            onChange={(e)=>setEmail(e.target.value)}
+        />
+    </div>
+
+    <div className="inputGroup">
+        <label>Confirmar E-mail *</label>
+
+        <input
+            type="email"
+            placeholder="Repita seu e-mail"
+            value={confirmarEmail}
+            onChange={(e)=>setConfirmarEmail(e.target.value)}
+        />
+    </div>
+
+    <div className="inputGroup">
+        <label>CPF *</label>
+
+        <input
+            type="text"
+            placeholder="000.000.000-00"
+            value={cpf}
+            onChange={(e)=>setCpf(e.target.value)}
+        />
+    </div>
+
+    <div className="inputGroup">
+        <label>Senha *</label>
+
+        <input
+            type="password"
+            placeholder="••••••••"
+            value={senha}
+            onChange={(e)=>setSenha(e.target.value)}
+        />
+    </div>
+
+    <div className="inputGroup">
+        <label>Confirmar Senha *</label>
+
+        <input
+            type="password"
+            placeholder="Repita a senha"
+            value={confirmarSenha}
+            onChange={(e)=>setConfirmarSenha(e.target.value)}
+        />
+    </div>
+
+    <label className="checkbox">
+
+        <input
+            type="checkbox"
+            checked={aceitouLgpd}
+            onChange={(e)=>setAceitouLgpd(e.target.checked)}
+        />
+
+        Li e aceito a Política de Privacidade (LGPD)
+
+    </label>
+
+    <label className="checkbox">
+
+        <input
+            type="checkbox"
+            checked={aceitouTermos}
+            onChange={(e)=>setAceitouTermos(e.target.checked)}
+        />
+
+        Li e aceito os Termos de Uso
+
+    </label>
+
+    {erro && (
+        <div className="errorBox">
+            {erro}
+        </div>
+    )}
+
+    {sucesso && (
+        <div className="successBox">
+            {sucesso}
+        </div>
+    )}
+
+    <button
+        type="submit"
+        className="registerButton"
+        disabled={carregando}
     >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '500px',
-          background: 'rgba(10,10,18,0.88)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: '24px',
-          padding: '32px',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
-          backdropFilter: 'blur(8px)',
-        }}
-      >
-        <div style={{ marginBottom: '24px' }}>
-          <p
-            style={{
-              margin: '0 0 10px 0',
-              color: '#a3e635',
-              fontWeight: 700,
-              fontSize: '14px',
-              letterSpacing: '0.4px',
-            }}
-          >
-            To Pet Hub
-          </p>
+        {carregando
+            ? 'Criando conta...'
+            : 'Criar conta gratuitamente'}
+    </button>
 
-          <h1
-            style={{
-              margin: '0 0 10px 0',
-              fontSize: '34px',
-              lineHeight: 1.1,
-            }}
-          >
-            Criar conta
-          </h1>
+</form>
 
-          <p style={{ margin: 0, color: 'rgba(255,255,255,0.72)' }}>
-            Comece a organizar sua agenda, clientes e serviços.
-          </p>
-        </div>
+<div className="registerFooter">
 
-        <form onSubmit={handleRegister} style={{ display: 'grid', gap: '14px' }}>
-          <div>
-            <label
-              htmlFor="nome"
-              style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontSize: '14px',
-                fontWeight: 700,
-              }}
-            >
-              Nome
-            </label>
+    <span>
+        Já possui uma conta?
+    </span>
 
-            <input
-              id="nome"
-              type="text"
-              placeholder="Seu nome"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '14px 16px',
-                borderRadius: '14px',
-                border: '1px solid rgba(255,255,255,0.12)',
-                background: '#0b1120',
-                color: '#fff',
-                outline: 'none',
-                fontSize: '15px',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
+    <Link href="/login">
+        Entrar
+    </Link>
 
-          <div>
-            <label
-              htmlFor="email"
-              style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontSize: '14px',
-                fontWeight: 700,
-              }}
-            >
-              E-mail
-            </label>
+</div>
 
-            <input
-              id="email"
-              type="email"
-              placeholder="seuemail@gmail.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '14px 16px',
-                borderRadius: '14px',
-                border: '1px solid rgba(255,255,255,0.12)',
-                background: '#0b1120',
-                color: '#fff',
-                outline: 'none',
-                fontSize: '15px',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
+</div>
 
-          <div>
-            <label
-              htmlFor="senha"
-              style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontSize: '14px',
-                fontWeight: 700,
-              }}
-            >
-              Senha
-            </label>
+</main>
 
-            <input
-              id="senha"
-              type="password"
-              placeholder="Crie uma senha"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '14px 16px',
-                borderRadius: '14px',
-                border: '1px solid rgba(255,255,255,0.12)',
-                background: '#0b1120',
-                color: '#fff',
-                outline: 'none',
-                fontSize: '15px',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
+)
 
-          <div>
-            <label
-              htmlFor="confirmarSenha"
-              style={{
-                display: 'block',
-                marginBottom: '8px',
-                fontSize: '14px',
-                fontWeight: 700,
-              }}
-            >
-              Confirmar senha
-            </label>
-
-            <input
-              id="confirmarSenha"
-              type="password"
-              placeholder="Repita sua senha"
-              value={confirmarSenha}
-              onChange={(e) => setConfirmarSenha(e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '14px 16px',
-                borderRadius: '14px',
-                border: '1px solid rgba(255,255,255,0.12)',
-                background: '#0b1120',
-                color: '#fff',
-                outline: 'none',
-                fontSize: '15px',
-                boxSizing: 'border-box',
-              }}
-            />
-          </div>
-
-          {erro && (
-            <div
-              style={{
-                background: 'rgba(220,38,38,0.12)',
-                border: '1px solid rgba(220,38,38,0.35)',
-                color: '#fca5a5',
-                padding: '12px 14px',
-                borderRadius: '14px',
-                fontSize: '14px',
-              }}
-            >
-              {erro}
-            </div>
-          )}
-
-          {sucesso && (
-            <div
-              style={{
-                background: 'rgba(34,197,94,0.12)',
-                border: '1px solid rgba(34,197,94,0.35)',
-                color: '#86efac',
-                padding: '12px 14px',
-                borderRadius: '14px',
-                fontSize: '14px',
-              }}
-            >
-              {sucesso}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={carregando}
-            style={{
-              marginTop: '6px',
-              background: '#a3e635',
-              color: '#111827',
-              border: 'none',
-              borderRadius: '14px',
-              padding: '15px 16px',
-              fontWeight: 800,
-              fontSize: '16px',
-              cursor: 'pointer',
-              opacity: carregando ? 0.7 : 1,
-            }}
-          >
-            {carregando ? 'Criando conta...' : 'Criar conta'}
-          </button>
-        </form>
-
-        <div
-          style={{
-            marginTop: '22px',
-            fontSize: '14px',
-          }}
-        >
-          <Link
-            href="/login"
-            style={{
-              color: '#a3e635',
-              textDecoration: 'none',
-              fontWeight: 700,
-            }}
-          >
-            Já tenho conta
-          </Link>
-        </div>
-      </div>
-    </main>
-  )
 }

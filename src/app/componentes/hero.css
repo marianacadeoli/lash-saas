@@ -1,22 +1,165 @@
 .hero{
     min-height:100vh;
     background:#071426;
-    color:white;
-    padding:20px 8% 40px;
+    color:#fff;
+    padding:0 8%;
+    display:flex;
+    align-items:center;
 }
 
 .navbar{
-    display:flex;
-    justify-content:space-between;
+    position:fixed;
+    top:20px;
+    left:50%;
+    transform:translateX(-50%);
+
+    width:92%;
+    max-width:1450px;
+    height:86px;
+
+    display:grid;
+    grid-template-columns:220px 1fr 220px;
+
     align-items:center;
+
+    padding:0 34px;
+
+    background:rgba(7,20,38,.78);
+    backdrop-filter:blur(20px);
+
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:22px;
+
+    z-index:1000;
+}
+
+.supportMenu{
+    position:relative;
+    display:flex;
+    align-items:center;
+}
+
+.supportButton{
+    background:none;
+    border:none;
+    color:#CBD5E1;
+    font-size:16px;
+    font-weight:600;
+    padding:12px 18px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.supportButton:hover{
+    background:rgba(37,99,235,.16);
+    color:#fff;
+}
+
+.supportDropdown{
+    position:absolute;
+    top:52px;
+    left:50%;
+    transform:translateX(-50%);
+    width:270px;
+    padding:10px;
+    background:rgba(13,24,41,.95);
+    backdrop-filter:blur(24px);
+    border:1px solid rgba(255,255,255,.06);
+    border-radius:16px;
+    box-shadow:0 18px 50px rgba(0,0,0,.45);
+    opacity:0;
+    visibility:hidden;
+    transition:.25s;
+    z-index:999;
+}
+
+.supportMenu:hover .supportDropdown{
+    opacity:1;
+    visibility:visible;
+    top:60px;
+}
+
+.supportItem{
+    display:flex;
+    align-items:center;
+    gap:12px;
+
+    padding:10px 12px;
+
+    border-radius:12px;
+
+    transition:.25s;
+}
+
+.supportItem:hover{
+    background:rgba(255,255,255,.05);
+    transform:translateX(4px);
+}
+
+.supportDropdown::before{
+    content:"";
+
+    position:absolute;
+
+    top:-6px;
+    left:50%;
+
+    transform:translateX(-50%) rotate(45deg);
+
+    width:12px;
+    height:12px;
+
+    background:#0F1D31;
+
+    border-left:1px solid rgba(255,255,255,.06);
+    border-top:1px solid rgba(255,255,255,.06);
+}
+
+.supportIcon{
+    width:38px;
+    height:38px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    border-radius:10px;
+
+    background:rgba(37,99,235,.12);
+
+    color:#60A5FA;
+
+    font-size:18px;
+
+    flex-shrink:0;
+}
+
+.supportItem strong{
+    display:block;
+    font-size:15px;
+    font-weight:600;
+    margin-bottom:2px;
+}
+
+.supportItem small{
+    display:block;
+    font-size:12px;
+    color:#8FA7C4;
 }
 
 .logo{
     display:flex;
     align-items:center;
-    gap:12px;
-    font-size:24px;
-    font-weight:700;
+    justify-content:flex-start;
+    height:82px;
+}
+
+.logoImage{
+    width:320px;
+    max-width:none;
+    height:auto;
+    transform:translateY(10px);
 }
 
 .logoIcon{
@@ -32,20 +175,41 @@
 
 nav{
     display:flex;
-    gap:35px;
+    justify-content:center;
+    align-items:center;
+    gap:55px;
+    width:100%;
+}
+
+.navbar .btnPrimary{
+    justify-self:end;
 }
 
 nav a{
     color:#CBD5E1;
     text-decoration:none;
+    font-weight:600;
+    padding:12px 18px;
+    border-radius:999px;
+    transition:.3s ease;
+}
+
+nav a:hover{
+    color:#fff;
+    background:rgba(37,99,235,.18);
 }
 
 .heroContent{
-    margin-top:40px;
+    width:100%;
     display:grid;
-    grid-template-columns:1fr 1fr;
+    grid-template-columns:0.95fr .75fr;
     align-items:center;
     gap:90px;
+    padding-top:90px;
+}
+
+html{
+    scroll-behavior:smooth;
 }
 
 .badge{
@@ -60,13 +224,12 @@ nav a{
 .heroLeft h1{
     font-size:58px;
     line-height:1.05;
-    margin-bottom:24px;
-    max-width:620px;
+    margin-bottom:20px;
 }
 
 .heroLeft p{
-    font-size:19px;
-    max-width:600px;
+    font-size:20px;
+    line-height:1.6;
 }
 
 .buttons{
@@ -76,12 +239,21 @@ nav a{
 }
 
 .btnPrimary{
-    background:#2563EB;
-    color:white;
-    padding:16px 28px;
+    background:linear-gradient(180deg,#3B82F6,#2563EB);
+    color:#fff;
+    padding:16px 30px;
     border-radius:14px;
     text-decoration:none;
     font-weight:700;
+    transition:.35s;
+    box-shadow:
+    0 15px 35px rgba(37,99,235,.28);
+}
+
+.btnPrimary:hover{
+    transform:translateY(-3px);
+    box-shadow:
+    0 22px 45px rgba(37,99,235,.45);
 }
 
 .btnSecondary{
@@ -110,10 +282,13 @@ nav a{
 
 .card{
     position:absolute;
-    background:#132641;
-    border:1px solid #28538B;
-    border-radius:20px;
-    padding:25px;
+    background:rgba(18,38,64,.95);
+    backdrop-filter:blur(18px);
+    border:1px solid rgba(96,165,250,.18);
+    border-radius:22px;
+    padding:24px 28px;
+    box-shadow:
+    0 15px 35px rgba(0,0,0,.35);
 }
 
 .card small{
