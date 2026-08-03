@@ -1,5 +1,5 @@
 'use client'
-
+export const dynamic = 'force-dynamic'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -34,7 +34,7 @@ type Configuracao = {
 
 export default function DashboardPage() {
   const router = useRouter()
-  const supabase = createClient()
+  const [supabase] = useState(() => createClient())
 
   const [carregandoPagina, setCarregandoPagina] = useState(true)
   const [assinatura, setAssinatura] = useState<Assinatura | null>(null)
