@@ -42,6 +42,8 @@ next-env.d.ts
 
 .open-next/
 .next/
+.wrangler/
+
 .env
 .env.local
 .env.production
