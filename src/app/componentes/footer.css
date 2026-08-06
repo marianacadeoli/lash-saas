@@ -60,13 +60,73 @@ color:white;
 }
 
 .copy{
+    padding-top:18px;
+    font-size:13px;
+}
 
-padding-top:30px;
+.footerLogo{
+    width:220px;
+    height:auto;
+    margin-bottom:18px;
+}
 
-border-top:1px solid rgba(255,255,255,.06);
+/* ===========================
+   MOBILE
+=========================== */
 
-text-align:center;
+@media (max-width:768px){
 
-color:#7C8798;
+.footer{
+    padding:50px 24px 25px;
+}
+
+.footerGrid{
+    display:flex;
+    flex-direction:column;
+    gap:32px;
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.footerBrand p{
+    max-width:320px;
+    margin:0 auto;
+}
+
+.footer h2{
+
+    font-size:32px;
+}
+
+.footer h3{
+    margin-bottom:12px;
+}
+
+.footer a,
+.footer p{
+    margin-bottom:8px;
+    line-height:1.5;
+}
+
+.copy{
+
+    font-size:14px;
+    line-height:1.6;
+
+    padding-top:24px;
+}
+
+.footerBrand{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+}
+
+.footerLogo{
+    width:170px;
+    height:auto;
+    margin-bottom:18px;
+}
 
 }

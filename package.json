@@ -4,9 +4,10 @@
   "private": true,
 "scripts": {
   "dev": "next dev",
-  "build": "opennextjs-cloudflare build",
-  "preview": "opennextjs-cloudflare preview",
+  "build": "next build",
+  "cf:build": "opennextjs-cloudflare build",
   "deploy": "opennextjs-cloudflare deploy",
+  "preview": "opennextjs-cloudflare preview",
   "lint": "eslint"
 },
   "dependencies": {

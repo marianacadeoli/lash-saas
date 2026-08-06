@@ -12,7 +12,6 @@ export default function CTA() {
 
           <h2>
             Pronto para organizar sua
-            <br />
             carteira de empréstimos?
           </h2>
 

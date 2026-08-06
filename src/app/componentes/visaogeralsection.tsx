@@ -41,11 +41,15 @@ type SituacaoParcela =
 export default function VisaoGeralSection() {
   const supabase = useMemo(() => createClient(), [])
   const hoje = new Date().toLocaleDateString('sv-SE')
+  
 
-  const [parcelas, setParcelas] = useState<Parcela[]>([])
-  const [emprestimos, setEmprestimos] = useState<Emprestimo[]>([])
-  const [totalClientes, setTotalClientes] = useState(0)
-  const [carregando, setCarregando] = useState(true)
+const [parcelas, setParcelas] = useState<Parcela[]>([])
+const [emprestimos, setEmprestimos] = useState<Emprestimo[]>([])
+const [totalClientes, setTotalClientes] = useState(0)
+const [carregando, setCarregando] = useState(true)
+
+
+const [mesSelecionado, setMesSelecionado] = useState(new Date())
 
   useEffect(() => {
     carregarDados()
@@ -203,9 +207,8 @@ if (emprestimosResponse.error) {
   )
 
   const parcelasPagasNoMes = useMemo(() => {
-    const agora = new Date()
-    const ano = agora.getFullYear()
-    const mes = agora.getMonth()
+  const ano = mesSelecionado.getFullYear()
+  const mes = mesSelecionado.getMonth()
 
     return parcelasPagas.filter((parcela) => {
       if (!parcela.data_pagamento) return false
@@ -214,7 +217,7 @@ if (emprestimosResponse.error) {
 
       return data.getFullYear() === ano && data.getMonth() === mes
     })
-  }, [parcelasPagas])
+ }, [parcelasPagas, mesSelecionado])
 
   const proximosVencimentos = useMemo(() => {
     return parcelas
@@ -284,6 +287,40 @@ const lucroNoMes = useMemo(() => {
     return 'Pendente'
   }
 
+  function voltarMes() {
+  const data = new Date(mesSelecionado)
+  data.setMonth(data.getMonth() - 1)
+  setMesSelecionado(data)
+}
+
+function avancarMes() {
+  const data = new Date(mesSelecionado)
+  data.setMonth(data.getMonth() + 1)
+
+  const hoje = new Date()
+
+  if (
+    data.getFullYear() > hoje.getFullYear() ||
+    (
+      data.getFullYear() === hoje.getFullYear() &&
+      data.getMonth() > hoje.getMonth()
+    )
+  ) {
+    return
+  }
+
+  setMesSelecionado(data)
+}
+
+const hojeAtual = new Date()
+
+const podeAvancar =
+  mesSelecionado.getFullYear() < hojeAtual.getFullYear() ||
+  (
+    mesSelecionado.getFullYear() === hojeAtual.getFullYear() &&
+    mesSelecionado.getMonth() < hojeAtual.getMonth()
+  )
+
   function corSituacao(parcela: Parcela) {
     const situacao = descobrirSituacao(parcela)
 
@@ -296,60 +333,128 @@ const lucroNoMes = useMemo(() => {
     return '#38bdf8'
   }
 
-  return (
-    <div style={pageContainerStyle}>
-      <div style={pageHeaderStyle}>
-        <div>
-          <h1 style={titleStyle}>Visão Geral</h1>
+return (
+  <div style={pageContainerStyle}>
 
-          <p style={subtitleStyle}>
-            Acompanhe os principais números e os próximos recebimentos.
-          </p>
-        </div>
+<div style={pageHeaderStyle}>
+  <div>
+    <h1 style={titleStyle}>Visão Geral</h1>
 
-        <button
-          type="button"
-          style={refreshButtonStyle}
-          onClick={carregarDados}
-          disabled={carregando}
-        >
-          {carregando ? 'Atualizando...' : 'Atualizar'}
-        </button>
-      </div>
+    <p style={subtitleStyle}>
+      Acompanhe os principais indicadores da carteira.
+    </p>
+  </div>
 
-      <div style={summaryGridStyle}>
-        <div style={summaryCardStyle}>
-          <span style={summaryLabelStyle}>Total em aberto</span>
-          <strong style={summaryValueStyle}>
-            {formatarDinheiro(totalEmAberto)}
-          </strong>
-          <span style={summaryDetailStyle}>
-            {parcelasPendentes.length}{' '}
-            {parcelasPendentes.length === 1 ? 'parcela' : 'parcelas'}
-          </span>
-        </div>
+<button
+  type="button"
+  style={refreshButtonStyle}
+  onClick={carregarDados}
+  disabled={carregando}
+>
+  {carregando ? "Atualizando..." : "Atualizar"}
+</button>
+</div>
 
-        <div style={summaryCardStyle}>
-          <span style={summaryLabelStyle}>Valores em atraso</span>
-          <strong style={{ ...summaryValueStyle, color: '#f87171' }}>
-            {formatarDinheiro(totalEmAtraso)}
-          </strong>
-          <span style={summaryDetailStyle}>
-            {parcelasAtrasadas.length}{' '}
-            {parcelasAtrasadas.length === 1 ? 'parcela' : 'parcelas'}
-          </span>
-        </div>
+ <div style={summaryGridStyle}>
+     <div style={summaryCardStyle}>
 
-        <div style={summaryCardStyle}>
-          <span style={summaryLabelStyle}>Lucro do mês</span>
-          <strong style={{ ...summaryValueStyle, color: '#4ade80' }}>
-            {formatarDinheiro(lucroNoMes)}
-          </strong>
-          <span style={summaryDetailStyle}>
-            {parcelasPagasNoMes.length}{' '}
-            {parcelasPagasNoMes.length === 1 ? 'pagamento' : 'pagamentos'}
-          </span>
-        </div>
+ <span style={summaryLabelStyle}>
+  Lucro do mês
+</span>
+
+<div
+  style={{
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 8,
+  }}
+>
+  <button
+    onClick={voltarMes}
+    style={monthButtonStyle}
+  >
+    ◀
+  </button>
+
+  <span
+    style={{
+      color: "#94A3B8",
+      fontSize: 13,
+      fontWeight: 600,
+      minWidth: 120,
+      textAlign: "center",
+    }}
+  >
+    {mesSelecionado.toLocaleDateString("pt-BR", {
+      month: "long",
+      year: "numeric",
+    })}
+  </span>
+
+<button
+  onClick={avancarMes}
+  disabled={!podeAvancar}
+  style={{
+    ...monthButtonStyle,
+    opacity: podeAvancar ? 1 : 0.4,
+    cursor: podeAvancar ? "pointer" : "not-allowed",
+  }}
+>
+  ▶
+</button>
+</div>
+  <strong
+    style={{
+      ...summaryValueStyle,
+      color: "#4ade80",
+    }}
+  >
+    {formatarDinheiro(lucroNoMes)}
+  </strong>
+
+  <span style={summaryDetailStyle}>
+    {parcelasPagasNoMes.length}{" "}
+    {parcelasPagasNoMes.length === 1
+      ? "pagamento"
+      : "pagamentos"}
+  </span>
+
+</div>
+
+<div style={summaryCardStyle}>
+  <span style={summaryLabelStyle}>
+    Total em aberto
+  </span>
+
+  <strong style={summaryValueStyle}>
+    {formatarDinheiro(totalEmAberto)}
+  </strong>
+
+  <span style={summaryDetailStyle}>
+    {parcelasPendentes.length} parcelas
+  </span>
+</div>
+
+<div style={summaryCardStyle}>
+  <span style={summaryLabelStyle}>
+    Em atraso
+  </span>
+
+  <strong
+    style={{
+      ...summaryValueStyle,
+      color: "#ef4444",
+    }}
+  >
+    {formatarDinheiro(totalEmAtraso)}
+  </strong>
+
+  <span style={summaryDetailStyle}>
+    {parcelasAtrasadas.length} parcelas
+  </span>
+</div>
 
         <div style={summaryCardStyle}>
           <span style={summaryLabelStyle}>Clientes cadastrados</span>
@@ -458,7 +563,9 @@ const lucroNoMes = useMemo(() => {
           <div style={quickListStyle}>
             <div style={quickItemStyle}>
               <div>
-                <span style={quickLabelStyle}>Ticket médio em aberto</span>
+               <span style={quickLabelStyle}>
+  Média de lucro por pagamento
+</span>
                 <strong style={quickValueStyle}>
                   {formatarDinheiro(
   parcelasPagasNoMes.length > 0
@@ -472,16 +579,19 @@ const lucroNoMes = useMemo(() => {
 
             <div style={quickItemStyle}>
               <div>
-                <span style={quickLabelStyle}>Média de lucro por pagamento</span>
+               <span style={quickLabelStyle}>
+  Lucro do mês
+</span>
                 <strong style={quickValueStyle}>
-                  {formatarDinheiro(
-                    parcelasPagasNoMes.length > 0
-                      ? lucroNoMes / parcelasPagasNoMes.length
-                      : 0
-                  )}
+           {formatarDinheiro(lucroNoMes)}
                 </strong>
               </div>
-              <span style={quickBadgeStyle}>Mês atual</span>
+            <span style={quickBadgeStyle}>
+  {mesSelecionado.toLocaleDateString("pt-BR", {
+    month: "long",
+    year: "numeric",
+  })}
+</span>
             </div>
 
             <div style={quickItemStyle}>
@@ -845,6 +955,17 @@ const tableSecondaryTextStyle: React.CSSProperties = {
   marginTop: '4px',
   color: '#94A3B8',
   fontSize: '12px',
+}
+
+const monthButtonStyle: React.CSSProperties = {
+  width: 28,
+  height: 28,
+  borderRadius: 8,
+  border: "1px solid #1F3A5F",
+  background: "#132641",
+  color: "#F8FAFC",
+  cursor: "pointer",
+  fontSize: 12,
 }
 
 const statusBadgeStyle: React.CSSProperties = {

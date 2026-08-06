@@ -74,7 +74,7 @@
 
 .planCard::before{
 content:"";
-position:absolute;
+position:relative;
 width:420px;
 height:420px;
 right:-180px;
@@ -183,4 +183,83 @@ text-align:center;
 color:#8EA1B5;
 font-size:13px;
 line-height:1.6;
+}
+
+/* ===========================
+   MOBILE
+=========================== */
+
+@media (max-width:768px){
+
+.plans{
+    grid-template-columns:1fr;
+    gap:50px;
+    padding:90px 24px;
+}
+
+.plansLeft{
+    text-align:left;
+}
+
+.plansLeft h2{
+    font-size:34px;
+    line-height:1.2;
+    margin:18px 0;
+}
+
+.plansLeft p{
+    font-size:16px;
+    line-height:1.6;
+    max-width:100%;
+}
+
+.plansBenefits{
+    gap:12px;
+}
+
+.plansBenefits div{
+    font-size:16px;
+}
+
+.planCard{
+    width:100%;
+    max-width:none;
+    padding:26px;
+    margin:0 auto;
+}
+
+.planCard::before{
+    display:none;
+}
+
+.planCard h3{
+    font-size:30px;
+}
+
+.price strong{
+    font-size:48px;
+}
+
+.price span{
+    font-size:18px;
+}
+
+.price small{
+    font-size:14px;
+}
+
+.planCard li{
+    font-size:15px;
+    line-height:1.5;
+}
+
+.planButton{
+    height:54px;
+    font-size:16px;
+}
+
+.planFooter{
+    font-size:13px;
+}
+
 }

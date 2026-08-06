@@ -1,28 +1,36 @@
 'use client'
 
+import { useState } from 'react'
 import Image from 'next/image'
 import './hero.css'
 
 export default function Hero() {
+
+  const [menuOpen, setMenuOpen] = useState(false)
+  
   return (
+    
     <section className="hero">
 
-      <header className="navbar">
-<div className="logo">
-  <Image
-    src="/logo.png"
-    alt="PainelEmprest"
-    width={380}
-    height={95}
-    className="logoImage"
-    priority
-  />
-</div>
+     {/* ===== HEADER DESKTOP ===== */}
 
-        <nav>
-          <a href="#recursos">Recursos</a>
-          <a href="#planos">Planos</a>
-          <div className="supportMenu">
+<header className="navbar desktopNavbar">
+
+  <div className="logo">
+<Image
+  src="/logo.png"
+  alt="PainelEmprest"
+  width={125}
+  height={32}
+/>
+  </div>
+
+  <nav className="desktopNav">
+
+    <a href="#recursos">Recursos</a>
+    <a href="#planos">Planos</a>
+
+<div className="supportMenu">
 
   <button className="supportButton">
     Suporte
@@ -36,26 +44,67 @@ export default function Hero() {
       rel="noopener noreferrer"
       className="supportItem"
     >
-      <div className="supportIcon">💬</div>
+      <div className="supportIcon">
+        💬
+      </div>
 
       <div>
         <strong>Falar pelo WhatsApp</strong>
         <small>Atendimento imediato</small>
       </div>
+
     </a>
 
   </div>
 
 </div>
-          <a href="/login">Entrar</a>
-         
-        </nav>
 
-        <a href="/register" className="btnPrimary">
-          Começar grátis
-        </a>
-      </header>
+    <a href="/login">Entrar</a>
 
+  </nav>
+
+  <a href="/register" className="btnPrimary">
+    Começar grátis
+  </a>
+
+</header>
+
+{/* ===== HEADER MOBILE ===== */}
+
+<header className="mobileNavbar">
+
+  <button
+    className="menuButton"
+    onClick={() => setMenuOpen(!menuOpen)}
+  >
+    ☰
+  </button>
+
+  <Image
+    src="/logo.png"
+    alt="PainelEmprest"
+    width={170}
+    height={42}
+    className="logoImage"
+  />
+
+  <div className="mobileActions">
+
+    <a href="/login">
+      Entrar
+    </a>
+
+    <a
+      href="/register"
+      className="mobileRegisterTop"
+    >
+      Criar conta
+    </a>
+
+  </div>
+
+</header>
+    
       <div className="heroContent">
 
         <div className="heroLeft">
@@ -74,15 +123,17 @@ export default function Hero() {
             rapidez e segurança.
           </p>
 
-          <div className="buttons">
-            <a href="/register" className="btnPrimary">
-              Começar grátis
-            </a>
+<div className="buttons">
 
-            <a href="#demo" className="btnSecondary">
-              Ver demonstração
-            </a>
-          </div>
+  <a href="/register" className="btnPrimary">
+    Começar grátis
+  </a>
+
+  <a href="#demo" className="btnSecondary">
+    Ver demonstração
+  </a>
+
+</div>
 
           <div className="infos">
             <span>✓ 7 dias grátis</span>
@@ -92,31 +143,81 @@ export default function Hero() {
 
         </div>
 
-        <div className="heroRight">
+<div className="heroRight">
 
-          <div className="dashboardMockup">
+  <div className="dashboardMockup">
 
-            <div className="card card1">
-              <small>Total emprestado</small>
-              <strong>R$ 48.250</strong>
-            </div>
+<Image
+  src="/0112.png"
+  alt="Dashboard"
+  width={700}
+  height={600}
+  className="dashboardImage"
+/>
 
-            <div className="card card2">
-              <small>Recebimentos</small>
-              <strong>R$ 8.450</strong>
-            </div>
+    <div className="card card1">
+      <small>Total emprestado</small>
+      <strong>R$ 48.250</strong>
+    </div>
 
-            <div className="card card3">
-              <small>Clientes</small>
-              <strong>124</strong>
-            </div>
+    <div className="card card2">
+      <small>Recebimentos</small>
+      <strong>R$ 8.450</strong>
+    </div>
 
-          </div>
+    <div className="card card3">
+      <small>Clientes</small>
+      <strong>124</strong>
+    </div>
 
-        </div>
+  </div>
 
-      </div>
+</div>
+</div>
+<div className={`mobileMenu ${menuOpen ? 'open' : ''}`}>
 
-    </section>
-  )
-}
+  <button
+    className="closeMenu"
+    onClick={() => setMenuOpen(false)}
+  >
+    ✕
+  </button>
+
+  <div className="mobileLogo">
+
+    <Image
+      src="/logo.png"
+      alt="PainelEmprest"
+      width={190}
+      height={44}
+    />
+
+  </div>
+
+  <a href="#recursos" onClick={() => setMenuOpen(false)}>
+    Recursos
+  </a>
+
+  <a href="#planos" onClick={() => setMenuOpen(false)}>
+    Planos
+  </a>
+
+  <a
+    href="https://wa.me/5516997010388"
+    target="_blank"
+    onClick={() => setMenuOpen(false)}
+  >
+    Suporte
+  </a>
+
+</div>
+
+{menuOpen && (
+  <div
+    className="overlay"
+    onClick={() => setMenuOpen(false)}
+  />
+)}
+
+</section>
+  )}

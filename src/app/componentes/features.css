@@ -179,3 +179,54 @@ color:#8BD3FF;
 font-weight:600;
 
 }
+
+/* ===========================
+   MOBILE
+=========================== */
+
+@media (max-width: 768px){
+
+.topInfo{
+    grid-template-columns:1fr;
+    margin-bottom:50px;
+    align-items:left;
+}
+
+.features h2{
+    font-size:34px;
+    line-height:1.2;
+    margin-bottom:40px;
+}
+
+.grid{
+    grid-template-columns:1fr;
+    gap:20px;
+}
+
+.featureCard{
+    padding:24px;
+}
+
+.featureCard h3{
+    font-size:22px;
+}
+
+.features{
+    padding:90px 24px;
+}
+
+.icon{
+    width:54px;
+    height:54px;
+    font-size:24px;
+}
+
+.featureCard p{
+    font-size:15px;
+}
+
+.featureCard li{
+    font-size:15px;
+}
+
+}
