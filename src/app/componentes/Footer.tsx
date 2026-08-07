@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import './footer.css'
 
 export default function Footer() {
@@ -11,11 +10,9 @@ export default function Footer() {
 
     <div className="footerBrand">
 
-      <Image
+      <img
         src="/logo.png"
         alt="PainelEmprest"
-        width={220}
-        height={55}
         className="footerLogo"
       />
 
