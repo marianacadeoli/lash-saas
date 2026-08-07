@@ -17,7 +17,7 @@ export default function Hero() {
 <header className="navbar desktopNavbar">
 
   <div className="logo">
-<img
+<Image
   src="/logo.png"
   alt="PainelEmprest"
   width={190}
