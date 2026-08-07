@@ -16,13 +16,14 @@ export default function Hero() {
 
 <header className="navbar desktopNavbar">
 
-  <div className="logo">
-<Image
-  src="/logo.png"
-  alt="PainelEmprest"
-  width={190}
-  height={44}
-/>
+ <div className="logo">
+    <Image
+      src="/logo.png"
+      alt="PainelEmprest"
+      width={190}
+      height={44}
+      className="logoImage"
+    />
   </div>
 
   <nav className="desktopNav">
