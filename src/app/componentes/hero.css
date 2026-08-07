@@ -156,10 +156,9 @@
 }
 
 .logoImage{
-    width:320px;
-    max-width:none;
-    height:auto;
-    transform:translateY(10px);
+  width:190px;
+  height:auto;
+  display:block;
 }
 
 .logoIcon{

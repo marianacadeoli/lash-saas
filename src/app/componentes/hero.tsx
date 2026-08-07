@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import './hero.css'
 
 export default function Hero() {
@@ -17,13 +16,11 @@ export default function Hero() {
 <header className="navbar desktopNavbar">
 
  <div className="logo">
-    <Image
-      src="/logo.png"
-      alt="PainelEmprest"
-      width={190}
-      height={44}
-      className="logoImage"
-    />
+<img
+  src="/logo.png"
+  alt="PainelEmprest"
+  className="logoImage"
+/>
   </div>
 
   <nav className="desktopNav">
@@ -81,13 +78,11 @@ export default function Hero() {
     ☰
   </button>
 
-  <Image
-    src="/logo.png"
-    alt="PainelEmprest"
-    width={170}
-    height={42}
-    className="logoImage"
-  />
+<img
+  src="/logo.png"
+  alt="PainelEmprest"
+  className="logoImage"
+/>
 
   <div className="mobileActions">
 
@@ -148,7 +143,7 @@ export default function Hero() {
 
   <div className="dashboardMockup">
 
-<Image
+<img
   src="/0112.png"
   alt="Dashboard"
   width={700}
@@ -186,12 +181,11 @@ export default function Hero() {
 
   <div className="mobileLogo">
 
-    <Image
-      src="/logo.png"
-      alt="PainelEmprest"
-      width={190}
-      height={44}
-    />
+<img
+  src="/logo.png"
+  alt="PainelEmprest"
+  className="logoImage"
+/>
 
   </div>
 
