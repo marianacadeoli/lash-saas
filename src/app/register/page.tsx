@@ -2,7 +2,6 @@
 
 import { FormEvent, useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import './register.css'
@@ -108,7 +107,7 @@ export default function RegisterPage() {
 
             <div className="registerCard">
 
-                <Image
+                <img
                     src="/logo.png"
                     alt="PainelEmprest"
                     width={200}
