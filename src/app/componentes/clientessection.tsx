@@ -348,7 +348,25 @@ const clientesFiltrados = useMemo(() => {
 
   return (
     <div style={pageContainerStyle}>
-      <div style={pageHeaderStyle}>
+      {/* Cabeçalho no mesmo padrão do Empréstimos e correção do bloco Endereço/Comportamento no mobile */}
+      <style>{`
+        @media (max-width: 640px) {
+          .lash-page-header {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .lash-page-header button {
+            width: 100%;
+          }
+
+          .lash-details-row {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
+
+      <div style={pageHeaderStyle} className="lash-page-header">
         <div>
           <h1 style={{ margin: 0, marginBottom: '8px' }}>Clientes</h1>
           <p style={subtitleStyle}>
@@ -645,7 +663,7 @@ const clientesFiltrados = useMemo(() => {
         {clientesFiltrados.length === 0 ? (
           <p style={subtitleStyle}>Nenhum cliente encontrado.</p>
         ) : (
-          <div style={{ display: 'grid', gap: '24px' }}>
+          <div style={{ display: 'grid', gap: '12px' }}>
             {clientesFiltrados.map((cliente) => (
               <div key={cliente.id} style={clientCardStyle}>
                 <div style={clientHeaderStyle}>
@@ -706,7 +724,7 @@ const clientesFiltrados = useMemo(() => {
                   </span>
                 </div>
 
-              <div style={detailsRowStyle}>
+              <div style={detailsRowStyle} className="lash-details-row">
 
   <div style={compactDetailStyle}>
     <span style={compactLabelStyle}>Endereço</span>
@@ -739,26 +757,26 @@ const clientesFiltrados = useMemo(() => {
 const compactInfoRowStyle: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-  gap: '8px',
-  marginTop: '14px',
+  gap: '6px',
+  marginTop: '10px',
 }
 
 const detailsRowStyle: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'minmax(0, 1.5fr) minmax(220px, 0.8fr)',
-  gap: '8px',
-  marginTop: '8px',
+  gap: '6px',
+  marginTop: '6px',
 }
 
 const compactDetailStyle: React.CSSProperties = {
   minWidth: 0,
-  padding: '10px 11px',
-  borderRadius: '11px',
+  padding: '8px 9px',
+  borderRadius: '9px',
   border: '1px solid #1F3A5F',
   background: '#0B1828',
   display: 'flex',
   flexDirection: 'column',
-  gap: '4px',
+  gap: '3px',
   overflow: 'hidden',
   boxSizing: 'border-box',
 }
@@ -1021,16 +1039,16 @@ const clientIdentityStyle: React.CSSProperties = {
 }
 
 const avatarStyle: React.CSSProperties = {
-  width: '40px',
-  height: '40px',
-  borderRadius: '12px',
+  width: '34px',
+  height: '34px',
+  borderRadius: '10px',
   background: '#2563EB',
   border: '1px solid #60A5FA',
   color: '#ffffff',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  fontSize: '16px',
+  fontSize: '14px',
   fontWeight: 900,
   flexShrink: 0,
 }
@@ -1038,44 +1056,44 @@ const avatarStyle: React.CSSProperties = {
 const clientNameStyle: React.CSSProperties = {
   display: 'block',
   color: '#F8FAFC',
-  fontSize: '17px',
-  marginBottom: '3px',
+  fontSize: '15px',
+  marginBottom: '2px',
 }
 
 const clientPhoneStyle: React.CSSProperties = {
   color: '#94A3B8',
-  fontSize: '13px',
+  fontSize: '12px',
 }
 
 const compactInfoItemStyle: React.CSSProperties = {
   minWidth: 0,
-  padding: '9px 10px',
-  borderRadius: '10px',
+  padding: '7px 8px',
+  borderRadius: '9px',
   border: '1px solid #1F3A5F',
   background: '#0B1828',
   color: '#F8FAFC',
   display: 'flex',
   flexDirection: 'column',
-  gap: '3px',
-  fontSize: '12px',
+  gap: '2px',
+  fontSize: '11px',
   overflow: 'hidden',
   boxSizing: 'border-box',
 }
 
 const compactLabelStyle: React.CSSProperties = {
   color: '#94A3B8',
-  fontSize: '11px',
+  fontSize: '10px',
   fontWeight: 600,
 }
 
 const compactObservationStyle: React.CSSProperties = {
-  padding: '9px 10px',
-  borderRadius: '10px',
+  padding: '8px 9px',
+  borderRadius: '9px',
   border: '1px solid #1F3A5F',
   background: '#0B1828',
   display: 'flex',
   flexDirection: 'column',
-  gap: '4px',
+  gap: '3px',
   minWidth: 0,
   overflow: 'hidden',
   boxSizing: 'border-box',
@@ -1083,15 +1101,15 @@ const compactObservationStyle: React.CSSProperties = {
 
 const compactTextStyle: React.CSSProperties = {
   color: '#CBD5E1',
-  fontSize: '13px',
-  lineHeight: 1.45,
+  fontSize: '12px',
+  lineHeight: 1.4,
   overflowWrap: 'anywhere',
 }
 
 const clientCardStyle: React.CSSProperties = {
   background: '#060C11',
-  borderRadius: '14px',
-  padding: '12px',
+  borderRadius: '13px',
+  padding: '10px',
   border: '1px solid #1C354B',
   width: '100%',
   boxSizing: 'border-box',

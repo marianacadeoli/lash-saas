@@ -1192,27 +1192,24 @@ const parcelasAbertas = detalhesId === emprestimo.id
             aberto ? null : emprestimo.id
           )
         }}
-        style={{
-          width: '30px',
-          height: '30px',
-          padding: 0,
-          borderRadius: '8px',
-          border: '1px solid #28538B',
-          background: '#132641',
-          color: '#F8FAFC',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '15px',
-        }}
+        style={chevronButtonStyle}
         aria-label={
           aberto
             ? 'Recolher empréstimo'
             : 'Expandir empréstimo'
         }
+        aria-expanded={aberto}
       >
-        {aberto ? '⌃' : '⌄'}
+        <span
+          style={{
+            display: 'inline-block',
+            lineHeight: 1,
+            transition: 'transform 0.2s ease',
+            transform: aberto ? 'rotate(180deg)' : 'rotate(0deg)',
+          }}
+        >
+          ⌄
+        </span>
       </button>
 
     </div>
@@ -1898,6 +1895,23 @@ const statusBadgeStyle: React.CSSProperties = {
   fontSize: '11px',
   fontWeight: 700,
   whiteSpace: 'nowrap',
+}
+
+const chevronButtonStyle: React.CSSProperties = {
+  width: '30px',
+  height: '30px',
+  padding: 0,
+  borderRadius: '8px',
+  border: '1px solid #28538B',
+  background: '#132641',
+  color: '#F8FAFC',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '15px',
+  lineHeight: 1,
+  flexShrink: 0,
 }
 
 const loanInfoGridStyle: React.CSSProperties = {
