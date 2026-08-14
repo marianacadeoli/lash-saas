@@ -118,11 +118,50 @@ const ticketMedio =
 
   return (
     <div>
+      {/* Regras de responsividade para mobile */}
+      <style>{`
+        @media (max-width: 640px) {
+          .lash-header {
+            flex-direction: column;
+            align-items: stretch !important;
+          }
+
+          .lash-header button {
+            width: 100%;
+          }
+
+          .lash-filters input {
+            flex: 1 1 140px;
+          }
+
+          .lash-item {
+            grid-template-columns: 1fr !important;
+            row-gap: 10px !important;
+            padding: 16px !important;
+          }
+
+          .lash-divider {
+            display: none !important;
+          }
+
+          .lash-paid-badge {
+            width: 100% !important;
+          }
+
+          .lash-value-badge {
+            width: 100% !important;
+          }
+        }
+      `}</style>
+
 <div
+  className="lash-header"
   style={{
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
+    flexWrap: 'wrap',
+    gap: '14px',
     marginBottom: 26,
   }}
 >
@@ -144,19 +183,19 @@ const ticketMedio =
   </button>
 </div>
 
-<div style={filtersStyle}>
+<div style={filtersStyle} className="lash-filters">
   <input
     type="date"
     value={dataInicial}
     onChange={(e) => setDataInicial(e.target.value)}
-    style={inputStyle}
+    style={{ ...inputStyle, flex: '1 1 160px' }}
   />
 
   <input
     type="date"
     value={dataFinal}
     onChange={(e) => setDataFinal(e.target.value)}
-    style={inputStyle}
+    style={{ ...inputStyle, flex: '1 1 160px' }}
   />
 </div>
 
@@ -193,7 +232,7 @@ const ticketMedio =
 <div style={{ display: 'grid', gap: '12px' }}>
   {parcelasFiltradas.map((item) => (
   
-        <div key={item.id} style={itemStyle}>
+        <div key={item.id} style={itemStyle} className="lash-item">
 
   <div style={avatarStyle}>
     👤
@@ -218,7 +257,7 @@ const ticketMedio =
     </strong>
   </div>
 
-  <div style={dividerStyle} />
+  <div style={dividerStyle} className="lash-divider" />
 
   <div style={columnStyle}>
     <span style={smallLabelStyle}>
@@ -231,13 +270,13 @@ const ticketMedio =
 </strong>
   </div>
 
-  <div style={dividerStyle} />
+  <div style={dividerStyle} className="lash-divider" />
 
-  <span style={paidBadgeStyle}>
+  <span style={paidBadgeStyle} className="lash-paid-badge">
     ✔ Pago
   </span>
 
-  <div style={valueBadgeStyle}>
+  <div style={valueBadgeStyle} className="lash-value-badge">
     {formatarMoeda(item.valor)}
   </div>
 
@@ -303,6 +342,9 @@ const itemStyle: React.CSSProperties = {
     '48px 280px 170px 1px 130px 1px 90px 150px',
   alignItems: 'center',
   columnGap: '22px',
+  width: '100%',
+  boxSizing: 'border-box',
+  overflow: 'hidden',
 }
 
 const smallLabelStyle: React.CSSProperties = {

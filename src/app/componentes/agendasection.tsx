@@ -42,10 +42,31 @@ export default function AgendaSection() {
   const [mesAtual, setMesAtual] = useState(() => new Date())
   const [carregando, setCarregando] = useState(true)
   const [processandoId, setProcessandoId] = useState<number | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     carregarParcelas()
   }, [])
+
+  useEffect(() => {
+  function handleResize() {
+    setIsMobile(window.innerWidth < 768)
+  }
+
+  handleResize()
+
+  window.addEventListener('resize', handleResize)
+
+  return () => {
+    window.removeEventListener('resize', handleResize)
+  }
+}, [])
+
+const calendarGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
+  gap: '7px',
+}
 
   async function pegarUserId() {
     const {
@@ -512,6 +533,43 @@ export default function AgendaSection() {
 
   return (
     <div style={pageContainerStyle}>
+      {/* Deixa o calendário mais compacto e arredondado no mobile */}
+      <style>{`
+        @media (max-width: 640px) {
+          .lash-calendar-card {
+            padding: 14px !important;
+            border-radius: 18px !important;
+          }
+
+          .lash-calendar-header h2 {
+            font-size: 16px !important;
+          }
+
+          .lash-legend {
+            gap: 10px !important;
+            margin-bottom: 12px !important;
+          }
+
+          .lash-legend span {
+            font-size: 11px !important;
+          }
+
+          .lash-week-day {
+            font-size: 11px !important;
+          }
+
+          .lash-day-button {
+            min-height: 48px !important;
+            border-radius: 11px !important;
+            padding: 6px !important;
+          }
+
+          .lash-day-number {
+            font-size: 13px !important;
+          }
+        }
+      `}</style>
+
       <div style={pageHeaderStyle}>
         <div>
           <h1 style={{ margin: 0, marginBottom: '8px' }}>
@@ -522,85 +580,83 @@ export default function AgendaSection() {
             Acompanhe parcelas, pagamentos previstos e valores em atraso.
           </p>
         </div>
-
-        <button
-          type="button"
-          style={refreshButtonStyle}
-          onClick={carregarParcelas}
-          disabled={carregando}
-        >
-          {carregando ? 'Atualizando...' : 'Atualizar'}
-        </button>
       </div>
 
-      <div style={summaryGridStyle}>
-        <div style={summaryCardStyle}>
-          <span style={summaryLabelStyle}>Vencem hoje</span>
+  <div
+  style={{
+    ...summaryGridStyle,
+    gridTemplateColumns: isMobile
+      ? '1fr 1fr'
+      : 'repeat(4, minmax(0, 1fr))',
+  }}
+>
+  <div style={summaryCardStyle}>
+    <span style={summaryLabelStyle}>Vencem hoje</span>
 
-          <strong style={summaryValueStyle}>
-            {parcelasVencendoHoje.length}
-          </strong>
+    <strong style={summaryValueStyle}>
+      {parcelasVencendoHoje.length}
+    </strong>
 
-          <span style={summaryDetailStyle}>
-            {formatarDinheiro(valorEsperadoHoje)}
-          </span>
-        </div>
+    <span style={summaryDetailStyle}>
+      {formatarDinheiro(valorEsperadoHoje)}
+    </span>
+  </div>
 
-        <div style={summaryCardStyle}>
-          <span style={summaryLabelStyle}>Parcelas em atraso</span>
+  <div style={summaryCardStyle}>
+    <span style={summaryLabelStyle}>Parcelas em atraso</span>
 
-          <strong style={summaryValueStyle}>
-            {parcelasAtrasadas.length}
-          </strong>
+    <strong style={summaryValueStyle}>
+      {parcelasAtrasadas.length}
+    </strong>
 
-          <span
-            style={{
-              ...summaryDetailStyle,
-              color: '#f87171',
-            }}
-          >
-            {formatarDinheiro(valorAtrasado)}
-          </span>
-        </div>
+    <span
+      style={{
+        ...summaryDetailStyle,
+        color: '#f87171',
+      }}
+    >
+      {formatarDinheiro(valorAtrasado)}
+    </span>
+  </div>
 
-        <div style={summaryCardStyle}>
-          <span style={summaryLabelStyle}>Pagas no mês</span>
+  <div style={summaryCardStyle}>
+    <span style={summaryLabelStyle}>Pagas no mês</span>
 
-          <strong style={summaryValueStyle}>
-            {parcelasPagasNoMes.length}
-          </strong>
+    <strong style={summaryValueStyle}>
+      {parcelasPagasNoMes.length}
+    </strong>
 
-          <span
-            style={{
-              ...summaryDetailStyle,
-              color: '#4ade80',
-            }}
-          >
-            {formatarDinheiro(valorRecebidoMes)}
-          </span>
-        </div>
+    <span
+      style={{
+        ...summaryDetailStyle,
+        color: '#4ade80',
+      }}
+    >
+      {formatarDinheiro(valorRecebidoMes)}
+    </span>
+  </div>
 
-        <div style={summaryCardStyle}>
-          <span style={summaryLabelStyle}>Data selecionada</span>
+  <div style={summaryCardStyle}>
+    <span style={summaryLabelStyle}>Data selecionada</span>
 
-          <strong
-            style={{
-              ...summaryValueStyle,
-              fontSize: '20px',
-            }}
-          >
-            {formatarData(dataSelecionada)}
-          </strong>
+    <strong
+      style={{
+        ...summaryValueStyle,
+        fontSize: '20px',
+      }}
+    >
+      {formatarData(dataSelecionada)}
+    </strong>
 
-          <span style={summaryDetailStyle}>
-            {parcelasDoDia.length}{' '}
-            {parcelasDoDia.length === 1 ? 'parcela' : 'parcelas'}
-          </span>
-        </div>
-      </div>
+    <span style={summaryDetailStyle}>
+      {parcelasDoDia.length}{' '}
+      {parcelasDoDia.length === 1 ? 'parcela' : 'parcelas'}
+    </span>
+  </div>
+</div>
 
-      <div style={calendarCardStyle}>
-        <div style={calendarHeaderStyle}>
+      <div style={calendarCardStyle} className="lash-calendar-card">
+        <div style={calendarHeaderStyle} className="lash-calendar-header">
           <button
             type="button"
             style={calendarNavButtonStyle}
@@ -632,7 +688,7 @@ export default function AgendaSection() {
           </button>
         </div>
 
-        <div style={legendStyle}>
+        <div style={legendStyle} className="lash-legend">
           <span style={legendItemStyle}>
             <span
               style={{
@@ -667,7 +723,7 @@ export default function AgendaSection() {
         <div style={weekGridStyle}>
           {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(
             (dia) => (
-              <span key={dia} style={weekDayStyle}>
+              <span key={dia} style={weekDayStyle} className="lash-week-day">
                 {dia}
               </span>
             )
@@ -688,12 +744,13 @@ export default function AgendaSection() {
               <button
                 type="button"
                 key={dataDia}
+                className="lash-day-button"
                 onClick={() => selecionarDia(dataDia)}
                 style={{
                   ...dayButtonStyle,
 
                   background: ativo
-     ? 'linear-gradient(135deg, rgba(37, 99, 235, 0.28), rgba(19, 38, 65, 0.95))'
+     ? 'linear-gradient(135deg, rgba(37, 99, 235, 0.32), rgba(19, 38, 65, 0.95))'
   : '#0c1828',
 
                   border: ativo
@@ -701,9 +758,13 @@ export default function AgendaSection() {
   : diaAtual
     ? '1px solid #60d1fa'
     : '1px solid #193251',
+
+                  boxShadow: ativo
+                    ? '0 0 0 3px rgba(37, 99, 235, 0.18)'
+                    : 'none',
                 }}
               >
-                <strong style={dayNumberStyle}>
+                <strong style={dayNumberStyle} className="lash-day-number">
                   {Number(dataDia.split('-')[2])}
                 </strong>
 
@@ -909,16 +970,6 @@ const subtitleStyle: React.CSSProperties = {
   marginTop: 0,
 }
 
-const refreshButtonStyle: React.CSSProperties = {
-  padding: '11px 16px',
-  borderRadius: '12px',
-  border: '1px solid #2563EB',
-  background: '#2563EB',
-  color: '#ffffff',
-  cursor: 'pointer',
-  fontWeight: 700,
-}
-
 const summaryGridStyle: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
@@ -958,10 +1009,10 @@ const summaryDetailStyle: React.CSSProperties = {
 
 const calendarCardStyle: React.CSSProperties = {
   marginTop: '24px',
-  padding: '18px',
-  borderRadius: '20px',
+  padding: '22px',
+  borderRadius: '24px',
   border: '1px solid #1F3A5F',
-  background: '#0D1B2E',
+  background: 'linear-gradient(180deg,#101F36 0%, #0D1B2E 100%)',
 }
 
 const calendarHeaderStyle: React.CSSProperties = {
@@ -969,27 +1020,28 @@ const calendarHeaderStyle: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'space-between',
   gap: '12px',
-  marginBottom: '12px',
+  marginBottom: '16px',
 }
 
 const calendarNavButtonStyle: React.CSSProperties = {
   width: '38px',
   height: '38px',
-  borderRadius: '9px',
+  borderRadius: '11px',
   border: '1px solid #2563EB',
   background: '#132641',
   color: '#60A5FA',
   cursor: 'pointer',
-  fontSize: '22px',
+  fontSize: '20px',
   fontWeight: 700,
+  transition: 'background 0.15s ease',
 }
 
 const legendStyle: React.CSSProperties = {
   display: 'flex',
-  gap: '16px',
+  gap: '18px',
   alignItems: 'center',
   flexWrap: 'wrap',
-  marginBottom: '14px',
+  marginBottom: '16px',
 }
 
 const legendItemStyle: React.CSSProperties = {
@@ -1009,50 +1061,59 @@ const legendDotStyle: React.CSSProperties = {
 const weekGridStyle: React.CSSProperties = {
   display: 'grid',
   gridTemplateColumns: 'repeat(7,minmax(0,1fr))',
-  gap: '6px',
-  marginBottom: '6px',
+  gap: '7px',
+  marginBottom: '8px',
 }
 
 const weekDayStyle: React.CSSProperties = {
-  color: '#94A3B8',
-  fontSize: '13px',
+  color: '#5C7794',
+  fontSize: '12px',
+  fontWeight: 700,
+  textTransform: 'uppercase',
+  letterSpacing: '0.03em',
   textAlign: 'center',
 }
 
-const calendarGridStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(7,minmax(0,1fr))',
-  gap: '6px',
-}
-
 const dayButtonStyle: React.CSSProperties = {
-  minHeight: '62px',
-  padding: '8px',
-  borderRadius: '12px',
+  minHeight: '64px',
+  padding: '9px',
+  borderRadius: '14px',
   color: '#F8FAFC',
   cursor: 'pointer',
   position: 'relative',
-  background: '#132641',
-  border: '1px solid #1F3A5F',
-}
+  background: '#0c1828',
+  border: '1px solid #193251',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'flex-start',
+  fontSize: '14px',
+  transition: 'transform 0.12s ease, box-shadow 0.12s ease',
+};
 
 const dayNumberStyle: React.CSSProperties = {
   display: 'block',
+  width: '100%',
+  textAlign: 'center',
   fontSize: '15px',
-}
+  lineHeight: '18px',
+  fontWeight: 700,
+};
 
 const dayIndicatorsStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'center',
-  gap: '4px',
-  marginTop: '7px',
-}
+  alignItems: 'center',
+  gap: '5px',
+  marginTop: '10px',
+};
 
 const smallIndicatorStyle: React.CSSProperties = {
   display: 'inline-block',
   width: '7px',
   height: '7px',
   borderRadius: '50%',
+  boxShadow: '0 0 0 2px rgba(0,0,0,0.25)',
 }
 
 const quantityBadgeStyle: React.CSSProperties = {

@@ -4,14 +4,10 @@ import './Navbar.css'
 
 export default function Navbar() {
   return (
-    <header className="navbar">
-      <div className="logo">
-        <div className="logoCircle">C</div>
-
-        <div>
-          <h2>CredCore</h2>
-          <span>Gestão de empréstimos</span>
-        </div>
+    <header>
+      <div>
+        <h2>CredCore</h2>
+        <span>Gestão de empréstimos</span>
       </div>
 
       <nav>

@@ -72,11 +72,27 @@ export default function EmprestimosSection() {
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [detalhesId, setDetalhesId] = useState<number | null>(null)
+  const [emprestimoAbertoId, setEmprestimoAbertoId] = useState<number | null>(null)
   const [datasParcelas, setDatasParcelas] = useState<string[]>([])
   const [mostrarEdicao, setMostrarEdicao] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
     void carregarDados()
+  }, [])
+
+  useEffect(() => {
+    function handleResize() {
+      setIsMobile(window.innerWidth < 768)
+    }
+
+    handleResize()
+
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
   }, [])
 
   useEffect(() => {
@@ -672,7 +688,70 @@ function editarEmprestimo(emprestimo: Emprestimo) {
 
   return (
     <div style={pageContainerStyle}>
-   <div style={pageHeaderStyle}>
+      {/* Regras de responsividade só para os pontos que quebravam no mobile */}
+      <style>{`
+        @media (max-width: 640px) {
+          .lash-page-header {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .lash-page-header button {
+            width: 100%;
+          }
+
+          .lash-modal {
+  width: 100% !important;
+  max-width: 100% !important;
+  max-height: calc(100dvh - 20px) !important;
+  padding: 16px !important;
+  border-radius: 14px !important;
+  box-sizing: border-box !important;
+}
+
+          .lash-filters {
+            grid-template-columns: 1fr !important;
+          }
+
+          .lash-loan-top {
+            flex-wrap: wrap;
+            row-gap: 10px;
+          }
+
+          .lash-next-payment {
+            flex-direction: column;
+            align-items: stretch !important;
+          }
+
+          .lash-actions-row {
+            width: 100%;
+            flex-wrap: wrap;
+          }
+
+          .lash-actions-row button {
+            flex: 1 1 calc(50% - 5px);
+            text-align: center;
+          }
+
+.lash-installment {
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 7px;
+  padding: 8px !important;
+}
+
+.lash-installment > span {
+  justify-self: end;
+}
+
+.lash-installment > button {
+  grid-column: 1 / -1;
+  width: 100%;
+  padding: 7px 9px !important;
+}
+        }
+      `}</style>
+
+   <div style={pageHeaderStyle} className="lash-page-header">
   <div>
     <h1 style={{ margin: 0, marginBottom: '8px' }}>
       Empréstimos
@@ -712,33 +791,15 @@ function editarEmprestimo(emprestimo: Emprestimo) {
     style={modalOverlayStyle}
     onClick={() => limparFormulario()}
   >
-    <div
-      onClick={(e) => e.stopPropagation()}
-      style={{
-        ...modalStyle,
-        ...(editandoId ? editingFormCardStyle : {}),
-      }}
-    >
-        {editandoId && mostrarEdicao && (
-          <div style={editingBannerStyle}>
-            <div>
-              <strong style={editingBannerTitleStyle}>
-                Editando empréstimo #{editandoId}
-              </strong>
-              <span style={editingBannerTextStyle}>
-                Altere os campos abaixo e clique em “Salvar alterações”.
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={limparFormulario}
-              style={editingCloseButtonStyle}
-            >
-              Fechar edição
-            </button>
-          </div>
-        )}
+<div
+  className="lash-modal"
+  onClick={(e) => e.stopPropagation()}
+  style={{
+    ...modalStyle,
+    ...(editandoId ? editingFormCardStyle : {}),
+  }}
+>
+  
 <div style={sectionHeaderStyle}>
   <div>
     <h2 style={sectionTitleStyle}>
@@ -753,28 +814,54 @@ function editarEmprestimo(emprestimo: Emprestimo) {
   <button
     type="button"
     onClick={limparFormulario}
-    style={modalCloseButtonStyle}
+style={{
+  ...modalCloseButtonStyle,
+  transform: 'translateY(-22px)',
+  width: '32px',
+  height: '32px',
+  minWidth: '32px',
+  minHeight: '32px',
+  fontSize: '16px',
+}}
   >
     ✕
   </button>
 </div>
 
         <div style={formGridStyle}>
-          <label style={labelStyle}>
-            Cliente
-            <select
-              value={form.clienteId}
-              onChange={(e) => atualizarForm('clienteId', e.target.value)}
-              style={inputStyle}
-            >
-              <option value="">Selecione um cliente</option>
-              {clientes.map((cliente) => (
-                <option key={cliente.id} value={cliente.id}>
-                  {cliente.nome}
-                </option>
-              ))}
-            </select>
-          </label>
+<label style={labelStyle}>
+  Cliente
+
+  {editandoId ? (
+    <div
+      style={{
+        ...inputStyle,
+        display: 'flex',
+        alignItems: 'center',
+        minHeight: '40px',
+        boxSizing: 'border-box',
+      }}
+    >
+      {clientes.find(
+        (cliente) => String(cliente.id) === form.clienteId
+      )?.nome ?? 'Cliente'}
+    </div>
+  ) : (
+    <select
+      value={form.clienteId}
+      onChange={(e) => atualizarForm('clienteId', e.target.value)}
+      style={inputStyle}
+    >
+      <option value="">Selecione um cliente</option>
+
+      {clientes.map((cliente) => (
+        <option key={cliente.id} value={cliente.id}>
+          {cliente.nome}
+        </option>
+      ))}
+    </select>
+  )}
+</label>
 
           <label style={labelStyle}>
             Valor emprestado
@@ -934,7 +1021,7 @@ function editarEmprestimo(emprestimo: Emprestimo) {
 )}
 
       <section style={listSectionStyle}>
-        <div style={filtersStyle}>
+        <div style={filtersStyle} className="lash-filters">
           <input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
@@ -1019,173 +1106,355 @@ const statusEmprestimo: Emprestimo['status'] =
                   parcela.status !== 'renegociado'
               )
 
-              const aberto = detalhesId === emprestimo.id
+             const aberto = emprestimoAbertoId === emprestimo.id
+const parcelasAbertas = detalhesId === emprestimo.id
 
               return (
-                <article key={emprestimo.id} style={loanCardStyle}>
-                  <div style={loanTopStyle}>
-                    <div style={clientIdentityStyle}>
-                      <div style={avatarStyle}>
-                        {emprestimo.cliente?.nome?.charAt(0).toUpperCase() ??
-                          '?'}
-                      </div>
+<article key={emprestimo.id} style={loanCardStyle}>
 
-                      <div>
-                        <h3 style={clientNameStyle}>
-                          {emprestimo.cliente?.nome ?? 'Cliente não encontrado'}
-                        </h3>
-                      <span style={mutedTextStyle}>
-  Criado em {formatarData(emprestimo.data_emprestimo)}
-</span>
-                      </div>
-                    </div>
-
-                  <span
-  style={{
-    ...statusBadgeStyle,
-    ...statusStyle(statusEmprestimo),
-  }}
->
-  {nomeStatus(statusEmprestimo)}
-</span>
-                  </div>
-
-                  <div style={loanInfoGridStyle}>
-                    <InfoItem
-                      titulo="Valor emprestado"
-                      valor={formatarMoeda(emprestimo.valor_emprestado)}
-                    />
-                    <InfoItem
-                      titulo="Juros"
-                      valor={`${emprestimo.taxa_juros}%`}
-                    />
-                    <InfoItem
-                      titulo="Valor total"
-                      valor={formatarMoeda(emprestimo.valor_total)}
-                    />
-                    <InfoItem
-                      titulo="Parcelas"
-                      valor={`${parcelasPagas} de ${emprestimo.quantidade_parcelas}`}
-                    />
-                  </div>
-
-                  <div style={progressHeaderStyle}>
-                    <span style={mutedTextStyle}>Progresso do pagamento</span>
-                    <strong>{Math.round(progresso)}%</strong>
-                  </div>
-
-                  <div style={progressTrackStyle}>
-                    <div
-                      style={{
-                        ...progressBarStyle,
-                        width: `${Math.min(progresso, 100)}%`,
-                      }}
-                    />
-                  </div>
-
-             <div
-  style={{
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: '16px',
-    marginTop: '14px',
-  }}
->
-  <div style={{ flex: 1 }}>
-    <span style={previewLabelStyle}>Próxima parcela</span>
-
-    <strong style={{ display: 'block', marginTop: '4px' }}>
-      {proximaParcela
-        ? `${formatarData(proximaParcela.data_vencimento ?? proximaParcela.vencimento ?? '')} — ${formatarMoeda(proximaParcela.valor)}`
-      : statusEmprestimo === 'quitado'
-          ? 'Aguardando nova negociação'
-          : 'Empréstimo quitado'}
-    </strong>
-  </div>
-
+  {/* CABEÇALHO COMPACTO */}
   <div
     style={{
-      display: 'flex',
-      gap: '10px',
-      alignItems: 'center',
+      ...loanTopStyle,
+      cursor: 'pointer',
+      minWidth: 0,
     }}
+    className="lash-loan-top"
+    onClick={() =>
+      setEmprestimoAbertoId(
+        aberto ? null : emprestimo.id
+      )
+    }
   >
-    <button
-      onClick={() => setDetalhesId(aberto ? null : emprestimo.id)}
-      style={secondaryButtonStyle}
-    >
-      {aberto ? 'Ocultar parcelas' : 'Ver parcelas'}
-    </button>
 
-    <button
-      onClick={() => editarEmprestimo(emprestimo)}
-      style={secondaryButtonStyle}
+    <div
+      style={{
+        ...clientIdentityStyle,
+        minWidth: 0,
+        flex: 1,
+      }}
     >
-      Editar
-    </button>
 
-    <button
-      onClick={() => excluirEmprestimo(emprestimo.id)}
-      style={dangerButtonStyle}
+      <div style={avatarStyle}>
+        {emprestimo.cliente?.nome?.charAt(0).toUpperCase() ?? '?'}
+      </div>
+
+      <div
+        style={{
+          minWidth: 0,
+          overflow: 'hidden',
+        }}
+      >
+
+        <h3
+          style={{
+            ...clientNameStyle,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {emprestimo.cliente?.nome ?? 'Cliente não encontrado'}
+        </h3>
+
+        <span style={mutedTextStyle}>
+          Criado em {formatarData(emprestimo.data_emprestimo)}
+        </span>
+
+      </div>
+
+    </div>
+
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        flexShrink: 0,
+      }}
     >
-      Excluir
-    </button>
+
+      <span
+        style={{
+          ...statusBadgeStyle,
+          ...statusStyle(statusEmprestimo),
+        }}
+      >
+        {nomeStatus(statusEmprestimo)}
+      </span>
+
+      {/* SETINHA */}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          setEmprestimoAbertoId(
+            aberto ? null : emprestimo.id
+          )
+        }}
+        style={{
+          width: '30px',
+          height: '30px',
+          padding: 0,
+          borderRadius: '8px',
+          border: '1px solid #28538B',
+          background: '#132641',
+          color: '#F8FAFC',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '15px',
+        }}
+        aria-label={
+          aberto
+            ? 'Recolher empréstimo'
+            : 'Expandir empréstimo'
+        }
+      >
+        {aberto ? '⌃' : '⌄'}
+      </button>
+
+    </div>
+
   </div>
-</div>
 
-                  {aberto && (
-                    <div style={installmentsWrapperStyle}>
-                      {parcelasDoEmprestimo.length === 0 ? (
-                        <div style={emptyInstallmentStyle}>
-                          Nenhuma parcela vinculada a este empréstimo.
-                        </div>
-                      ) : (
-                        parcelasDoEmprestimo.map((parcela) => (
-                          <div key={parcela.id} style={installmentStyle}>
-                            <div>
-                              <strong>Parcela {parcela.numero_parcela}</strong>
-                              <span style={installmentDateStyle}>
-                                Vencimento: {formatarData(parcela.data_vencimento ?? parcela.vencimento ?? '')}
-                              </span>
-                            </div>
 
-                            <strong>{formatarMoeda(parcela.valor)}</strong>
+  {/* DETALHES DO EMPRÉSTIMO */}
+  {aberto && (
+    <div>
 
-                            <span
-                              style={{
-                                ...smallBadgeStyle,
-                                ...installmentStatusStyle(parcela),
-                              }}
-                            >
-                              {nomeStatusParcela(parcela)}
-                            </span>
+      <div style={loanInfoGridStyle}>
 
-                            {parcela.status === 'pago' ||
-                            parcela.status === 'paga' ||
-                            parcela.status === 'renegociado' ? (
-                              <button
-                                onClick={() => reabrirParcela(parcela)}
-                                style={reopenButtonStyle}
-                              >
-                                {parcela.status === 'renegociado'
-                                  ? 'Reabrir parcela'
-                                  : 'Voltar para pendente'}
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => registrarPagamento(parcela)}
-                                style={payButtonStyle}
-                              >
-                                Registrar pagamento
-                              </button>
-                            )}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </article>
+        <InfoItem
+          titulo="Valor emprestado"
+          valor={formatarMoeda(emprestimo.valor_emprestado)}
+        />
+
+        <InfoItem
+          titulo="Juros"
+          valor={`${emprestimo.taxa_juros}%`}
+        />
+
+        <InfoItem
+          titulo="Valor total"
+          valor={formatarMoeda(emprestimo.valor_total)}
+        />
+
+        <InfoItem
+          titulo="Parcelas"
+          valor={`${parcelasPagas} de ${emprestimo.quantidade_parcelas}`}
+        />
+
+      </div>
+
+
+      {/* PROGRESSO */}
+      <div style={progressHeaderStyle}>
+        <span style={mutedTextStyle}>
+          Progresso do pagamento
+        </span>
+
+        <strong>
+          {Math.round(progresso)}%
+        </strong>
+      </div>
+
+      <div style={progressTrackStyle}>
+        <div
+          style={{
+            ...progressBarStyle,
+            width: `${Math.min(progresso, 100)}%`,
+          }}
+        />
+      </div>
+
+
+      {/* PRÓXIMA PARCELA */}
+      <div
+        className="lash-next-payment"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '12px',
+          marginTop: '14px',
+          flexWrap: 'wrap',
+        }}
+      >
+
+        <div
+          style={{
+            flex: 1,
+            minWidth: 0,
+          }}
+        >
+
+          <span style={previewLabelStyle}>
+            Próxima parcela
+          </span>
+
+          <strong
+            style={{
+              display: 'block',
+              marginTop: '4px',
+            }}
+          >
+            {proximaParcela
+              ? `${formatarData(
+                  proximaParcela.data_vencimento ??
+                    proximaParcela.vencimento ??
+                    ''
+                )} — ${formatarMoeda(proximaParcela.valor)}`
+              : statusEmprestimo === 'quitado'
+                ? 'Aguardando nova negociação'
+                : 'Empréstimo quitado'}
+          </strong>
+
+        </div>
+
+
+        {/* AÇÕES */}
+        <div
+          className="lash-actions-row"
+          style={{
+            display: 'flex',
+            gap: '8px',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
+
+          {/* ESTE BOTÃO AGORA CONTROLA SOMENTE AS PARCELAS */}
+          <button
+            type="button"
+            onClick={() =>
+              setDetalhesId(
+                parcelasAbertas ? null : emprestimo.id
+              )
+            }
+            style={secondaryButtonStyle}
+          >
+            {parcelasAbertas
+              ? 'Ocultar parcelas'
+              : 'Ver parcelas'}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => editarEmprestimo(emprestimo)}
+            style={secondaryButtonStyle}
+          >
+            Editar
+          </button>
+
+          <button
+            type="button"
+            onClick={() => excluirEmprestimo(emprestimo.id)}
+            style={dangerButtonStyle}
+          >
+            Excluir
+          </button>
+
+        </div>
+
+      </div>
+
+
+      {/* PARCELAS — SÓ APARECEM AO CLICAR EM VER PARCELAS */}
+      {parcelasAbertas && (
+        <div style={installmentsWrapperStyle}>
+
+          {parcelasDoEmprestimo.length === 0 ? (
+
+            <div style={emptyInstallmentStyle}>
+              Nenhuma parcela vinculada a este empréstimo.
+            </div>
+
+          ) : (
+
+            parcelasDoEmprestimo.map((parcela) => (
+
+              <div
+                key={parcela.id}
+                style={installmentStyle}
+                className="lash-installment"
+              >
+
+                <div
+                  style={{
+                    minWidth: 0,
+                  }}
+                >
+
+                  <strong>
+                    Parcela {parcela.numero_parcela}
+                  </strong>
+
+                  <span style={installmentDateStyle}>
+                    Vencimento:{' '}
+                    {formatarData(
+                      parcela.data_vencimento ??
+                        parcela.vencimento ??
+                        ''
+                    )}
+                  </span>
+
+                </div>
+
+
+                <strong>
+                  {formatarMoeda(parcela.valor)}
+                </strong>
+
+
+                <span
+                  style={{
+                    ...smallBadgeStyle,
+                    ...installmentStatusStyle(parcela),
+                  }}
+                >
+                  {nomeStatusParcela(parcela)}
+                </span>
+
+
+                {parcela.status === 'pago' ||
+                parcela.status === 'paga' ||
+                parcela.status === 'renegociado' ? (
+
+                  <button
+                    onClick={() => reabrirParcela(parcela)}
+                    style={reopenButtonStyle}
+                  >
+                    {parcela.status === 'renegociado'
+                      ? 'Reabrir parcela'
+                      : 'Voltar para pendente'}
+                  </button>
+
+                ) : (
+
+                  <button
+                    onClick={() => registrarPagamento(parcela)}
+                    style={payButtonStyle}
+                  >
+                    Registrar pagamento
+                  </button>
+
+                )}
+
+              </div>
+
+            ))
+
+          )}
+
+        </div>
+      )}
+
+    </div>
+  )}
+
+</article>
               )
             })}
           </div>
@@ -1342,7 +1611,7 @@ const subtitleStyle: React.CSSProperties = {
 
 const summaryGridStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))',
+  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
   gap: '12px',
   marginTop: '24px',
   marginBottom: '18px',
@@ -1579,6 +1848,9 @@ const loanCardStyle: React.CSSProperties = {
   border: '1px solid #1F3A5F',
   borderRadius: '17px',
   padding: '17px',
+  width: '100%',
+  boxSizing: 'border-box',
+overflow: 'visible',
 }
 
 const loanTopStyle: React.CSSProperties = {
@@ -1605,6 +1877,7 @@ const avatarStyle: React.CSSProperties = {
   color: '#60A5FA',
   fontWeight: 800,
   fontSize: '17px',
+  flexShrink: 0,
 }
 
 const clientNameStyle: React.CSSProperties = {
@@ -1624,6 +1897,7 @@ const statusBadgeStyle: React.CSSProperties = {
   borderRadius: '999px',
   fontSize: '11px',
   fontWeight: 700,
+  whiteSpace: 'nowrap',
 }
 
 const loanInfoGridStyle: React.CSSProperties = {
@@ -1689,13 +1963,16 @@ const installmentsWrapperStyle: React.CSSProperties = {
 
 const installmentStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'minmax(130px, 1fr) auto auto auto',
+  gridTemplateColumns: 'minmax(120px, 1fr) auto auto',
   alignItems: 'center',
-  gap: '12px',
-  padding: '10px 11px',
+  gap: '8px',
+  padding: '8px 10px',
   background: '#132641',
   border: '1px solid #1F3A5F',
-  borderRadius: '11px',
+  borderRadius: '9px',
+  width: '100%',
+  boxSizing: 'border-box',
+  minWidth: 0,
 }
 
 const installmentDateStyle: React.CSSProperties = {
@@ -1711,6 +1988,8 @@ const smallBadgeStyle: React.CSSProperties = {
   borderRadius: '999px',
   fontSize: '10px',
   fontWeight: 700,
+  whiteSpace: 'nowrap',
+  justifySelf: 'start',
 }
 
 const reopenButtonStyle: React.CSSProperties = {
@@ -1766,15 +2045,18 @@ const modalOverlayStyle: React.CSSProperties = {
 }
 
 const modalStyle: React.CSSProperties = {
-   position: 'relative',
+  position: 'relative',
   width: '100%',
   maxWidth: '1120px',
-  maxHeight: '95vh',
+  maxHeight: 'calc(100dvh - 32px)',
   overflowY: 'auto',
+  boxSizing: 'border-box',
+
   background: '#0D1B2E',
   border: '1px solid #1F3A5F',
   borderRadius: '18px',
   padding: '24px',
+
   boxShadow: '0 20px 60px rgba(0,0,0,.55)',
 }
 

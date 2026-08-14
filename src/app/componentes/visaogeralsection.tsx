@@ -47,9 +47,26 @@ const [parcelas, setParcelas] = useState<Parcela[]>([])
 const [emprestimos, setEmprestimos] = useState<Emprestimo[]>([])
 const [totalClientes, setTotalClientes] = useState(0)
 const [carregando, setCarregando] = useState(true)
+const [isMobile, setIsMobile] = useState(false)
 
 
 const [mesSelecionado, setMesSelecionado] = useState(new Date())
+
+
+
+useEffect(() => {
+  function handleResize() {
+    setIsMobile(window.innerWidth < 768)
+  }
+
+  handleResize()
+
+  window.addEventListener('resize', handleResize)
+
+  return () => {
+    window.removeEventListener('resize', handleResize)
+  }
+}, [])
 
   useEffect(() => {
     carregarDados()
@@ -333,6 +350,45 @@ const podeAvancar =
     return '#38bdf8'
   }
 
+const summaryGridResponsiveStyle: React.CSSProperties = {
+  ...summaryGridStyle,
+  gridTemplateColumns: isMobile
+    ? 'repeat(2, 1fr)'
+    : 'repeat(auto-fit, minmax(210px, 1fr))',
+  gap: isMobile ? '10px' : summaryGridStyle.gap,
+}
+
+const summaryCardResponsiveStyle: React.CSSProperties = {
+  ...summaryCardStyle,
+  minHeight: isMobile ? undefined : summaryCardStyle.minHeight,
+  height: isMobile ? '140px' : undefined,
+  padding: isMobile ? '13px' : summaryCardStyle.padding,
+  gap: isMobile ? '4px' : summaryCardStyle.gap,
+  justifyContent: 'center',
+  overflow: isMobile ? 'hidden' : undefined,
+}
+
+const summaryLabelResponsiveStyle: React.CSSProperties = {
+  ...summaryLabelStyle,
+  fontSize: isMobile ? '11px' : summaryLabelStyle.fontSize,
+}
+
+const summaryValueResponsiveStyle: React.CSSProperties = {
+  ...summaryValueStyle,
+  fontSize: isMobile ? '17px' : summaryValueStyle.fontSize,
+}
+
+const summaryDetailResponsiveStyle: React.CSSProperties = {
+  ...summaryDetailStyle,
+  fontSize: isMobile ? '10px' : summaryDetailStyle.fontSize,
+}
+
+const mainGridResponsiveStyle: React.CSSProperties = {
+  ...mainGridStyle,
+  gridTemplateColumns: isMobile
+    ? '1fr'
+    : 'minmax(0,1.45fr) minmax(280px,.75fr)',
+}
 return (
   <div style={pageContainerStyle}>
 
@@ -344,21 +400,12 @@ return (
       Acompanhe os principais indicadores da carteira.
     </p>
   </div>
-
-<button
-  type="button"
-  style={refreshButtonStyle}
-  onClick={carregarDados}
-  disabled={carregando}
->
-  {carregando ? "Atualizando..." : "Atualizar"}
-</button>
 </div>
 
- <div style={summaryGridStyle}>
-     <div style={summaryCardStyle}>
+<div style={summaryGridResponsiveStyle}>
 
- <span style={summaryLabelStyle}>
+  <div style={summaryCardResponsiveStyle}>
+ <span style={summaryLabelResponsiveStyle}>
   Lucro do mês
 </span>
 
@@ -367,7 +414,7 @@ return (
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    gap: 10,
+    gap: isMobile ? 6 : 10,
     marginBottom: 8,
   }}
 >
@@ -381,9 +428,9 @@ return (
   <span
     style={{
       color: "#94A3B8",
-      fontSize: 13,
+      fontSize: isMobile ? 11 : 13,
       fontWeight: 600,
-      minWidth: 120,
+      minWidth: isMobile ? 90 : 120,
       textAlign: "center",
     }}
   >
@@ -407,14 +454,14 @@ return (
 </div>
   <strong
     style={{
-      ...summaryValueStyle,
+      ...summaryValueResponsiveStyle,
       color: "#4ade80",
     }}
   >
     {formatarDinheiro(lucroNoMes)}
   </strong>
 
-  <span style={summaryDetailStyle}>
+  <span style={summaryDetailResponsiveStyle}>
     {parcelasPagasNoMes.length}{" "}
     {parcelasPagasNoMes.length === 1
       ? "pagamento"
@@ -423,49 +470,49 @@ return (
 
 </div>
 
-<div style={summaryCardStyle}>
-  <span style={summaryLabelStyle}>
+<div style={summaryCardResponsiveStyle}>
+  <span style={summaryLabelResponsiveStyle}>
     Total em aberto
   </span>
 
-  <strong style={summaryValueStyle}>
+  <strong style={summaryValueResponsiveStyle}>
     {formatarDinheiro(totalEmAberto)}
   </strong>
 
-  <span style={summaryDetailStyle}>
+  <span style={summaryDetailResponsiveStyle}>
     {parcelasPendentes.length} parcelas
   </span>
 </div>
 
-<div style={summaryCardStyle}>
-  <span style={summaryLabelStyle}>
+<div style={summaryCardResponsiveStyle}>
+  <span style={summaryLabelResponsiveStyle}>
     Em atraso
   </span>
 
   <strong
     style={{
-      ...summaryValueStyle,
+      ...summaryValueResponsiveStyle,
       color: "#ef4444",
     }}
   >
     {formatarDinheiro(totalEmAtraso)}
   </strong>
 
-  <span style={summaryDetailStyle}>
+  <span style={summaryDetailResponsiveStyle}>
     {parcelasAtrasadas.length} parcelas
   </span>
 </div>
 
-        <div style={summaryCardStyle}>
-          <span style={summaryLabelStyle}>Clientes cadastrados</span>
-          <strong style={summaryValueStyle}>{totalClientes}</strong>
-          <span style={summaryDetailStyle}>
+        <div style={summaryCardResponsiveStyle}>
+          <span style={summaryLabelResponsiveStyle}>Clientes cadastrados</span>
+          <strong style={summaryValueResponsiveStyle}>{totalClientes}</strong>
+          <span style={summaryDetailResponsiveStyle}>
             Total registrado no sistema
           </span>
         </div>
       </div>
 
-      <div style={mainGridStyle}>
+      <div style={mainGridResponsiveStyle}>
         <div style={panelStyle}>
           <div style={panelHeaderStyle}>
             <div>
@@ -530,7 +577,7 @@ return (
             </div>
           </div>
 
-          <div style={miniCardsGridStyle}>
+        <div style={miniCardsGridStyle}>
             <div style={miniCardStyle}>
               <span style={miniCardLabelStyle}>Total de parcelas</span>
               <strong style={miniCardValueStyle}>{parcelas.length}</strong>
@@ -719,16 +766,6 @@ const subtitleStyle: React.CSSProperties = {
   color: '#94A3B8',
   lineHeight: 1.6,
   margin: 0,
-}
-
-const refreshButtonStyle: React.CSSProperties = {
-  padding: '11px 16px',
-  borderRadius: '12px',
-  border: '1px solid #2563EB',
-  background: '#2563EB',
-  color: '#ffffff',
-  cursor: 'pointer',
-  fontWeight: 700,
 }
 
 const summaryGridStyle: React.CSSProperties = {

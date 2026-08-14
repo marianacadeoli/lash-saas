@@ -348,11 +348,11 @@ const clientesFiltrados = useMemo(() => {
 
   return (
     <div style={pageContainerStyle}>
-      <div style={topBarStyle}>
+      <div style={pageHeaderStyle}>
         <div>
           <h1 style={{ margin: 0, marginBottom: '8px' }}>Clientes</h1>
           <p style={subtitleStyle}>
-            Cadastre e organize os dados dos clientes.
+            Consulte, cadastre e organize os dados dos clientes.
           </p>
         </div>
 
@@ -706,23 +706,26 @@ const clientesFiltrados = useMemo(() => {
                   </span>
                 </div>
 
-                <div style={detailsRowStyle}>
-                  <div style={compactDetailStyle}>
-                    <span style={compactLabelStyle}>Endereço</span>
-                    <span style={compactTextStyle}>
-                      {montarEndereco(cliente)}
-                    </span>
-                  </div>
+              <div style={detailsRowStyle}>
 
-                  {cliente.observacoes && (
-                <div style={compactObservationStyle}>
-    <span style={compactLabelStyle}>Comportamento</span>
+  <div style={compactDetailStyle}>
+    <span style={compactLabelStyle}>Endereço</span>
 
     <span style={compactTextStyle}>
-      {cliente.observacoes}
+      {montarEndereco(cliente)}
     </span>
   </div>
-)}
+
+  {cliente.observacoes && (
+    <div style={compactObservationStyle}>
+      <span style={compactLabelStyle}>Comportamento</span>
+
+      <span style={compactTextStyle}>
+        {cliente.observacoes}
+      </span>
+    </div>
+  )}
+
                 </div>
               </div>
             ))}
@@ -735,7 +738,7 @@ const clientesFiltrados = useMemo(() => {
 
 const compactInfoRowStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(145px, 1fr))',
+  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
   gap: '8px',
   marginTop: '14px',
 }
@@ -747,6 +750,18 @@ const detailsRowStyle: React.CSSProperties = {
   marginTop: '8px',
 }
 
+const compactDetailStyle: React.CSSProperties = {
+  minWidth: 0,
+  padding: '10px 11px',
+  borderRadius: '11px',
+  border: '1px solid #1F3A5F',
+  background: '#0B1828',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '4px',
+  overflow: 'hidden',
+  boxSizing: 'border-box',
+}
 
 const pageContainerStyle: React.CSSProperties = {
   width: '100%',
@@ -754,11 +769,11 @@ const pageContainerStyle: React.CSSProperties = {
   margin: '0 auto',
 }
 
-const topBarStyle: React.CSSProperties = {
+const pageHeaderStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
-  gap: '16px',
   alignItems: 'flex-start',
+  gap: '16px',
   flexWrap: 'wrap',
 }
 
@@ -770,21 +785,21 @@ const subtitleStyle: React.CSSProperties = {
 
 const summaryGridStyle: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-  gap: '16px',
-  marginTop: '24px',
+  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+  gap: '12px',
+  marginTop: '20px',
 }
 
 const summaryCardStyle: React.CSSProperties = {
-  minHeight: '122px',
-  padding: '20px',
-  borderRadius: '18px',
+  minHeight: '96px',
+  padding: '15px 16px',
+  borderRadius: '16px',
   border: '1px solid #1F3A5F',
   background: 'linear-gradient(180deg,#11223D 0%, #0D1B2E 100%)',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
-  gap: '7px',
+  gap: '5px',
 }
 
 const summaryLabelStyle: React.CSSProperties = {
@@ -919,46 +934,84 @@ const buttonStyle: React.CSSProperties = {
 }
 
 const secondaryButtonStyle: React.CSSProperties = {
+  padding: '8px 10px',
+  borderRadius: '10px',
   border: '1px solid #1F3A5F',
-  borderRadius: '9px',
   background: '#132641',
   color: '#F8FAFC',
-  padding: '9px 11px',
   cursor: 'pointer',
+  fontWeight: 700,
+  fontSize: '12px',
 }
 
 const whatsButtonStyle: React.CSSProperties = {
-  border: '1px solid #16A34A',
-  borderRadius: '9px',
-  background: 'rgba(22,163,74,.15)',
-  color: '#86EFAC',
-  padding: '9px 11px',
+  padding: '8px 10px',
+  borderRadius: '10px',
+  border: 'none',
+  background: '#22c55e',
+  color: 'white',
   cursor: 'pointer',
+  fontWeight: 700,
+  fontSize: '12px',
 }
 
 const dangerButtonStyle: React.CSSProperties = {
-  border: '1px solid #DC2626',
-  borderRadius: '9px',
-  background: 'rgba(220,38,38,.15)',
-  color: '#FCA5A5',
-  padding: '9px 11px',
+  padding: '8px 10px',
+  borderRadius: '10px',
+  border: 'none',
+  background: '#dc2626',
+  color: 'white',
   cursor: 'pointer',
+  fontWeight: 700,
+  fontSize: '12px',
 }
 
-const clientCardStyle: React.CSSProperties = {
-   background: '#060c11',
-  borderRadius: '18px',
-  padding: '30px',
+const clientInfoGridStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr 1fr',
+  gap: '6px',
+  width: '100%',
+  boxSizing: 'border-box',
+};
+
+const clientInfoItemStyle: React.CSSProperties = {
+  background: '#0b1a2b',
   border: '1px solid #1c354b',
-}
+  borderRadius: '8px',
+  padding: '7px 8px',
+  minWidth: 0,
+  boxSizing: 'border-box',
+  overflow: 'hidden',
+};
+
+const clientInfoLabelStyle: React.CSSProperties = {
+  color: '#8494a8',
+  fontSize: '9px',
+  marginBottom: '3px',
+};
+
+const clientInfoValueStyle: React.CSSProperties = {
+  color: '#f8fafc',
+  fontSize: '11px',
+  fontWeight: 600,
+  lineHeight: '1.3',
+  overflowWrap: 'anywhere',
+};
 
 const clientHeaderStyle: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
-  alignItems: 'center',
-  gap: '14px',
+  alignItems: 'flex-start',
+  gap: '12px',
   flexWrap: 'wrap',
 }
+
+const clientsListStyle: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '1fr',
+  gap: '10px',
+  width: '100%',
+};
 
 const clientIdentityStyle: React.CSSProperties = {
   display: 'flex',
@@ -996,15 +1049,17 @@ const clientPhoneStyle: React.CSSProperties = {
 
 const compactInfoItemStyle: React.CSSProperties = {
   minWidth: 0,
-  padding: '10px 11px',
-  borderRadius: '11px',
+  padding: '9px 10px',
+  borderRadius: '10px',
   border: '1px solid #1F3A5F',
   background: '#0B1828',
   color: '#F8FAFC',
   display: 'flex',
   flexDirection: 'column',
-  gap: '4px',
-  fontSize: '13px',
+  gap: '3px',
+  fontSize: '12px',
+  overflow: 'hidden',
+  boxSizing: 'border-box',
 }
 
 const compactLabelStyle: React.CSSProperties = {
@@ -1013,26 +1068,17 @@ const compactLabelStyle: React.CSSProperties = {
   fontWeight: 600,
 }
 
-const compactDetailStyle: React.CSSProperties = {
-  padding: '10px 11px',
-  borderRadius: '11px',
-  border: '1px solid #1F3A5F',
-  background: '#0B1828',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '4px',
-  minWidth: 0,
-}
-
 const compactObservationStyle: React.CSSProperties = {
-  padding: '10px 11px',
-  borderRadius: '11px',
+  padding: '9px 10px',
+  borderRadius: '10px',
   border: '1px solid #1F3A5F',
   background: '#0B1828',
   display: 'flex',
   flexDirection: 'column',
   gap: '4px',
   minWidth: 0,
+  overflow: 'hidden',
+  boxSizing: 'border-box',
 }
 
 const compactTextStyle: React.CSSProperties = {
@@ -1042,10 +1088,20 @@ const compactTextStyle: React.CSSProperties = {
   overflowWrap: 'anywhere',
 }
 
+const clientCardStyle: React.CSSProperties = {
+  background: '#060C11',
+  borderRadius: '14px',
+  padding: '12px',
+  border: '1px solid #1C354B',
+  width: '100%',
+  boxSizing: 'border-box',
+  overflow: 'hidden',
+}
+
 const actionsStyle: React.CSSProperties = {
   display: 'flex',
-  gap: '7px',
-  flexWrap: 'wrap',
+  gap: '6px',
+  flexWrap: 'nowrap',
   alignItems: 'center',
 }
 
