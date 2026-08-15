@@ -135,9 +135,20 @@ const ticketMedio =
           }
 
           .lash-item {
-            grid-template-columns: 1fr !important;
-            row-gap: 10px !important;
-            padding: 16px !important;
+            grid-template-columns: auto 1fr auto !important;
+            grid-template-areas:
+              "avatar nome nome"
+              "recebido recebido parcela"
+              "pago pago pago"
+              "valor valor valor" !important;
+            row-gap: 8px !important;
+            column-gap: 10px !important;
+            padding: 14px !important;
+          }
+
+          .lash-parcela-col {
+            justify-self: end !important;
+            text-align: right !important;
           }
 
           .lash-divider {
@@ -208,7 +219,7 @@ const ticketMedio =
   </div>
 
   <div style={cardStyle}>
-    <span style={labelStyle}>Parcelas recebidas</span>
+    <span style={labelStyle}>Parcelas pagas</span>
     <strong style={numberStyle}>
       {parcelasFiltradas.length}
     </strong>
@@ -229,16 +240,16 @@ const ticketMedio =
       Nenhum recebimento encontrado nesse período.
           </p>
         ) : (
-<div style={{ display: 'grid', gap: '12px' }}>
+<div style={{ display: 'grid', gap: '10px' }}>
   {parcelasFiltradas.map((item) => (
   
         <div key={item.id} style={itemStyle} className="lash-item">
 
-  <div style={avatarStyle}>
+  <div style={{ ...avatarStyle, gridArea: 'avatar' }}>
     👤
   </div>
 
-  <div style={clientStyle}>
+  <div style={{ ...clientStyle, gridArea: 'nome' }}>
 <strong
   style={clientNameStyle}
   title={item.Clientes?.nome}
@@ -247,7 +258,7 @@ const ticketMedio =
 </strong>
   </div>
 
-  <div style={columnStyle}>
+  <div style={{ ...columnStyle, gridArea: 'recebido' }}>
     <span style={smallLabelStyle}>
       📅 Recebido em
     </span>
@@ -257,9 +268,12 @@ const ticketMedio =
     </strong>
   </div>
 
-  <div style={dividerStyle} className="lash-divider" />
+  <div style={{ ...dividerStyle, gridArea: 'div1' }} className="lash-divider" />
 
-  <div style={columnStyle}>
+  <div
+    style={{ ...columnStyle, gridArea: 'parcela' }}
+    className="lash-parcela-col"
+  >
     <span style={smallLabelStyle}>
       💳 Parcela
     </span>
@@ -270,13 +284,13 @@ const ticketMedio =
 </strong>
   </div>
 
-  <div style={dividerStyle} className="lash-divider" />
+  <div style={{ ...dividerStyle, gridArea: 'div2' }} className="lash-divider" />
 
-  <span style={paidBadgeStyle} className="lash-paid-badge">
+  <span style={{ ...paidBadgeStyle, gridArea: 'pago' }} className="lash-paid-badge">
     ✔ Pago
   </span>
 
-  <div style={valueBadgeStyle} className="lash-value-badge">
+  <div style={{ ...valueBadgeStyle, gridArea: 'valor' }} className="lash-value-badge">
     {formatarMoeda(item.valor)}
   </div>
 
@@ -301,27 +315,36 @@ const filtersStyle: React.CSSProperties = {
 }
 
 const cardsGridStyle: React.CSSProperties = {
-  marginTop: '24px',
+  marginTop: '20px',
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-  gap: '16px',
+  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+  gap: '12px',
 }
 
 const cardStyle: React.CSSProperties = {
-  background: '#0D1B2E',
+  minHeight: '96px',
+  padding: '15px 12px',
+  borderRadius: '16px',
   border: '1px solid #1F3A5F',
-  borderRadius: '18px',
-  padding: '18px',
+  background: 'linear-gradient(180deg,#11223D 0%, #0D1B2E 100%)',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  gap: '5px',
+  overflow: 'hidden',
 }
+
 const labelStyle: React.CSSProperties = {
    display: 'block',
   color: '#94A3B8',
-  marginBottom: '10px',
+  fontSize: '12px',
+  whiteSpace: 'nowrap',
 }
 
 const numberStyle: React.CSSProperties = {
-  fontSize: '24px',
+  fontSize: '14px',
   color: '#F8FAFC',
+  lineHeight: 1.25,
 }
 
 const sectionCardStyle: React.CSSProperties = {
@@ -335,13 +358,15 @@ const sectionCardStyle: React.CSSProperties = {
 const itemStyle: React.CSSProperties = {
   background: '#132641',
   border: '1px solid #1F3A5F',
-  borderRadius: '14px',
-  padding: '18px 22px',
+  borderRadius: '13px',
+  padding: '13px 16px',
   display: 'grid',
   gridTemplateColumns:
-    '48px 280px 170px 1px 130px 1px 90px 150px',
+    '40px 220px 150px 1px 110px 1px 76px 116px',
+  gridTemplateAreas:
+    '"avatar nome recebido div1 parcela div2 pago valor"',
   alignItems: 'center',
-  columnGap: '22px',
+  columnGap: '16px',
   width: '100%',
   boxSizing: 'border-box',
   overflow: 'hidden',
@@ -349,42 +374,42 @@ const itemStyle: React.CSSProperties = {
 
 const smallLabelStyle: React.CSSProperties = {
  color: '#94A3B8',
-  fontSize: '13px',
+  fontSize: '12px',
   display: 'block',
-  marginBottom: '6px',
+  marginBottom: '4px',
 }
 
 const paidBadgeStyle: React.CSSProperties = {
-  width: 90,
-  height: 38,
-  display: 'flex',
+  display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
+  padding: '6px 10px',
   background: 'rgba(46, 125, 50, 0.18)',
   color: '#81c784',
   border: '1px solid #2e7d32',
   borderRadius: '8px',
   fontWeight: 700,
-  fontSize: 14,
+  fontSize: 12,
+  whiteSpace: 'nowrap',
 }
 
 const valueBadgeStyle: React.CSSProperties = {
-  width: 140,
-  height: 52,
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
+  padding: '9px 12px',
   background: '#0D1B2E',
   color: '#F8FAFC',
   border: '1px solid #2563EB',
   borderRadius: '8px',
   fontWeight: 700,
-  fontSize: '18px',
+  fontSize: '14px',
+  whiteSpace: 'nowrap',
 }
 
 const avatarStyle: React.CSSProperties = {
-  width: 48,
-  height: 48,
+  width: 40,
+  height: 40,
   borderRadius: '50%',
   background: '#132641',
   border: '1px solid #28538B',
@@ -392,15 +417,18 @@ const avatarStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  fontSize: 20,
+  fontSize: 17,
+  flexShrink: 0,
 }
 
 const clientStyle: React.CSSProperties = {
   overflow: 'hidden',
+  display: 'flex',
+  alignItems: 'center',
 }
 
 const clientNameStyle: React.CSSProperties = {
-  fontSize: 18,
+  fontSize: 15,
   fontWeight: 600,
   color: '#F8FAFC',
   whiteSpace: 'nowrap',
@@ -410,7 +438,7 @@ const clientNameStyle: React.CSSProperties = {
 const columnStyle: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: '4px',
+  gap: '3px',
 }
 
 const dividerStyle: React.CSSProperties = {

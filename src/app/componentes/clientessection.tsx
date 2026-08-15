@@ -58,6 +58,7 @@ export default function ClientesSection() {
   const [editandoId, setEditandoId] = useState<number | null>(null)
   const [carregando, setCarregando] = useState(false)
   const [buscandoCep, setBuscandoCep] = useState(false)
+  const [clienteAbertoId, setClienteAbertoId] = useState<number | null>(null)
 
   useEffect(() => {
     carregarClientes()
@@ -664,9 +665,17 @@ const clientesFiltrados = useMemo(() => {
           <p style={subtitleStyle}>Nenhum cliente encontrado.</p>
         ) : (
           <div style={{ display: 'grid', gap: '12px' }}>
-            {clientesFiltrados.map((cliente) => (
+            {clientesFiltrados.map((cliente) => {
+              const aberto = clienteAbertoId === cliente.id
+
+              return (
               <div key={cliente.id} style={clientCardStyle}>
-                <div style={clientHeaderStyle}>
+                <div
+                  style={{ ...clientHeaderStyle, cursor: 'pointer' }}
+                  onClick={() =>
+                    setClienteAbertoId(aberto ? null : cliente.id)
+                  }
+                >
                   <div style={clientIdentityStyle}>
                     <div style={avatarStyle}>
                       {cliente.nome?.trim().charAt(0).toUpperCase() || 'C'}
@@ -678,75 +687,100 @@ const clientesFiltrados = useMemo(() => {
                     </div>
                   </div>
 
-                  <div style={actionsStyle}>
-                    <button
-                      style={whatsButtonStyle}
-                      onClick={() => abrirWhatsApp(cliente)}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setClienteAbertoId(aberto ? null : cliente.id)
+                    }}
+                    style={chevronButtonStyle}
+                    aria-label={aberto ? 'Recolher cliente' : 'Expandir cliente'}
+                    aria-expanded={aberto}
+                  >
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        lineHeight: 1,
+                        transition: 'transform 0.2s ease',
+                        transform: aberto ? 'rotate(180deg)' : 'rotate(0deg)',
+                      }}
                     >
-                      WhatsApp
-                    </button>
-
-                    <button
-                      style={secondaryButtonStyle}
-                      onClick={() => editarCliente(cliente)}
-                    >
-                      Editar
-                    </button>
-
-                    <button
-                      style={dangerButtonStyle}
-                      onClick={() => excluirCliente(cliente.id)}
-                    >
-                      Excluir
-                    </button>
-                  </div>
+                      ⌄
+                    </span>
+                  </button>
                 </div>
 
-                <div style={compactInfoRowStyle}>
-                  <span style={compactInfoItemStyle}>
-                    <span style={compactLabelStyle}>CPF</span>
-                    <strong>{cliente.cpf || 'Não informado'}</strong>
-                  </span>
+                {aberto && (
+                  <>
+                    <div style={actionsStyle}>
+                      <button
+                        style={whatsButtonStyle}
+                        onClick={() => abrirWhatsApp(cliente)}
+                      >
+                        WhatsApp
+                      </button>
 
-                  <span style={compactInfoItemStyle}>
-                    <span style={compactLabelStyle}>Cidade</span>
-                    <strong>{cliente.cidade || 'Não informada'}</strong>
-                  </span>
+                      <button
+                        style={secondaryButtonStyle}
+                        onClick={() => editarCliente(cliente)}
+                      >
+                        Editar
+                      </button>
 
-                  <span style={compactInfoItemStyle}>
-                    <span style={compactLabelStyle}>Profissão</span>
-                    <strong>{cliente.profissao || 'Não informada'}</strong>
-                  </span>
+                      <button
+                        style={dangerButtonStyle}
+                        onClick={() => excluirCliente(cliente.id)}
+                      >
+                        Excluir
+                      </button>
+                    </div>
 
-                  <span style={compactInfoItemStyle}>
-                    <span style={compactLabelStyle}>Trabalho</span>
-                    <strong>{cliente.local_trabalho || 'Não informado'}</strong>
-                  </span>
-                </div>
+                    <div style={compactInfoRowStyle}>
+                      <span style={compactInfoItemStyle}>
+                        <span style={compactLabelStyle}>CPF</span>
+                        <strong>{cliente.cpf || 'Não informado'}</strong>
+                      </span>
 
-              <div style={detailsRowStyle} className="lash-details-row">
+                      <span style={compactInfoItemStyle}>
+                        <span style={compactLabelStyle}>Cidade</span>
+                        <strong>{cliente.cidade || 'Não informada'}</strong>
+                      </span>
 
-  <div style={compactDetailStyle}>
-    <span style={compactLabelStyle}>Endereço</span>
+                      <span style={compactInfoItemStyle}>
+                        <span style={compactLabelStyle}>Profissão</span>
+                        <strong>{cliente.profissao || 'Não informada'}</strong>
+                      </span>
 
-    <span style={compactTextStyle}>
-      {montarEndereco(cliente)}
-    </span>
-  </div>
+                      <span style={compactInfoItemStyle}>
+                        <span style={compactLabelStyle}>Trabalho</span>
+                        <strong>{cliente.local_trabalho || 'Não informado'}</strong>
+                      </span>
+                    </div>
 
-  {cliente.observacoes && (
-    <div style={compactObservationStyle}>
-      <span style={compactLabelStyle}>Comportamento</span>
+                    <div style={detailsRowStyle} className="lash-details-row">
+                      <div style={compactDetailStyle}>
+                        <span style={compactLabelStyle}>Endereço</span>
 
-      <span style={compactTextStyle}>
-        {cliente.observacoes}
-      </span>
-    </div>
-  )}
+                        <span style={compactTextStyle}>
+                          {montarEndereco(cliente)}
+                        </span>
+                      </div>
 
-                </div>
+                      {cliente.observacoes && (
+                        <div style={compactObservationStyle}>
+                          <span style={compactLabelStyle}>Comportamento</span>
+
+                          <span style={compactTextStyle}>
+                            {cliente.observacoes}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>
@@ -1036,6 +1070,23 @@ const clientIdentityStyle: React.CSSProperties = {
   alignItems: 'center',
   gap: '11px',
   minWidth: 0,
+}
+
+const chevronButtonStyle: React.CSSProperties = {
+  width: '30px',
+  height: '30px',
+  padding: 0,
+  borderRadius: '8px',
+  border: '1px solid #28538B',
+  background: '#132641',
+  color: '#F8FAFC',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '15px',
+  lineHeight: 1,
+  flexShrink: 0,
 }
 
 const avatarStyle: React.CSSProperties = {

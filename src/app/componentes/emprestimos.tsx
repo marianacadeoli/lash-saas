@@ -1895,6 +1895,11 @@ const statusBadgeStyle: React.CSSProperties = {
   fontSize: '11px',
   fontWeight: 700,
   whiteSpace: 'nowrap',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minWidth: '82px',
+  textAlign: 'center',
 }
 
 const chevronButtonStyle: React.CSSProperties = {
