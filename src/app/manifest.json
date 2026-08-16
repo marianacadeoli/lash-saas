@@ -1,6 +1,6 @@
 {
-  "name": "Lash SaaS",
-  "short_name": "Lash SaaS",
+  "name": "Painel Emprest",
+  "short_name": "Painel Emprest",
   "description": "Gestão de clientes, empréstimos e recebimentos.",
   "start_url": "/dashboard",
   "display": "standalone",
