@@ -130,8 +130,16 @@ const ticketMedio =
             width: 100%;
           }
 
+          .lash-filters {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+          }
+
           .lash-filters input {
-            flex: 1 1 140px;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 13px !important;
           }
 
           .lash-item {

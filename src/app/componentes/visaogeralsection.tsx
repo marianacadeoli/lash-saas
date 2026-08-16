@@ -35,7 +35,6 @@ type SituacaoParcela =
   | 'atrasado'
   | 'vence_hoje'
   | 'pendente'
-  | 'renegociado'
   | 'cancelado'
 
 export default function VisaoGeralSection() {
@@ -173,7 +172,6 @@ if (emprestimosResponse.error) {
     const status = normalizarStatus(parcela.status)
 
     if (status === 'pago') return 'pago'
-    if (status === 'renegociado') return 'renegociado'
     if (status === 'cancelado') return 'cancelado'
     if (parcela.data_vencimento < hoje) return 'atrasado'
     if (parcela.data_vencimento === hoje) return 'vence_hoje'
@@ -298,7 +296,6 @@ const lucroNoMes = useMemo(() => {
     if (situacao === 'pago') return 'Pago'
     if (situacao === 'atrasado') return 'Atrasado'
     if (situacao === 'vence_hoje') return 'Vence hoje'
-    if (situacao === 'renegociado') return 'Renegociado'
     if (situacao === 'cancelado') return 'Cancelado'
 
     return 'Pendente'
@@ -344,7 +341,6 @@ const podeAvancar =
     if (situacao === 'pago') return '#22c55e'
     if (situacao === 'atrasado') return '#ef4444'
     if (situacao === 'vence_hoje') return '#eab308'
-    if (situacao === 'renegociado') return '#a855f7'
     if (situacao === 'cancelado') return '#71717a'
 
     return '#38bdf8'

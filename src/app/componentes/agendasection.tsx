@@ -29,7 +29,6 @@ type SituacaoParcela =
   | 'atrasado'
   | 'vence_hoje'
   | 'pendente'
-  | 'renegociado'
   | 'cancelado'
 
 export default function AgendaSection() {
@@ -142,7 +141,6 @@ const calendarGridStyle: React.CSSProperties = {
     const status = normalizarStatus(parcela.status)
 
     if (status === 'pago') return 'pago'
-    if (status === 'renegociado') return 'renegociado'
     if (status === 'cancelado') return 'cancelado'
 
     if (parcela.data_vencimento < hoje) {
@@ -192,7 +190,6 @@ const calendarGridStyle: React.CSSProperties = {
     }
 
     if (situacao === 'vence_hoje') return 'Vence hoje'
-    if (situacao === 'renegociado') return 'Renegociada'
     if (situacao === 'cancelado') return 'Cancelada'
 
     return `Vence em ${formatarData(parcela.data_vencimento)}`
@@ -202,7 +199,6 @@ const calendarGridStyle: React.CSSProperties = {
     if (situacao === 'pago') return '#22c55e'
     if (situacao === 'atrasado') return '#ef4444'
     if (situacao === 'vence_hoje') return '#eab308'
-    if (situacao === 'renegociado') return '#a855f7'
     if (situacao === 'cancelado') return '#71717a'
 
     return '#38bdf8'
@@ -212,7 +208,6 @@ const calendarGridStyle: React.CSSProperties = {
     if (situacao === 'pago') return 'rgba(34,197,94,0.12)'
     if (situacao === 'atrasado') return 'rgba(239,68,68,0.12)'
     if (situacao === 'vence_hoje') return 'rgba(234,179,8,0.12)'
-    if (situacao === 'renegociado') return 'rgba(168,85,247,0.12)'
     if (situacao === 'cancelado') return 'rgba(113,113,122,0.12)'
 
     return 'rgba(56,189,248,0.12)'
@@ -371,15 +366,7 @@ const calendarGridStyle: React.CSSProperties = {
         (status) => status === 'pago' || status === 'paga'
       )
 
-    const possuiRenegociada = statusParcelas.some(
-      (status) => status === 'renegociado'
-    )
-
-    const novoStatus = todasPagas
-      ? 'quitado'
-      : possuiRenegociada
-        ? 'renegociado'
-        : 'ativo'
+    const novoStatus = todasPagas ? 'quitado' : 'ativo'
 
     const { error: erroAtualizacao } = await supabase
       .from('Emprestimos')
@@ -484,41 +471,6 @@ const calendarGridStyle: React.CSSProperties = {
     if (error) {
       console.error('Erro ao desfazer pagamento:', error)
       alert('Não foi possível desfazer o pagamento.')
-      setProcessandoId(null)
-      return
-    }
-
-    await sincronizarStatusEmprestimo(
-      parcela.emprestimo_id,
-      userId
-    )
-    await carregarParcelas()
-    setProcessandoId(null)
-  }
-
-  async function marcarComoRenegociada(parcela: Parcela) {
-    const confirmou = confirm(
-      'Deseja marcar esta parcela como renegociada?'
-    )
-
-    if (!confirmou) return
-
-    const userId = await pegarUserId()
-    if (!userId) return
-
-    setProcessandoId(parcela.id)
-
-    const { error } = await supabase
-      .from('Parcelas')
-      .update({
-        status: 'renegociado',
-      })
-      .eq('id', parcela.id)
-      .eq('user_id', userId)
-
-    if (error) {
-      console.error('Erro ao renegociar parcela:', error)
-      alert('Não foi possível alterar a parcela.')
       setProcessandoId(null)
       return
     }

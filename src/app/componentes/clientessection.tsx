@@ -257,11 +257,78 @@ export default function ClientesSection() {
   }
 
   async function excluirCliente(id: number) {
-    const confirmou = confirm('Tem certeza que deseja excluir este cliente?')
-    if (!confirmou) return
-
     const userId = await pegarUserId()
     if (!userId) return
+
+    const { count: quantidadeEmprestimos, error: erroContarEmprestimos } =
+      await supabase
+        .from('Emprestimos')
+        .select('*', { count: 'exact', head: true })
+        .eq('cliente_id', id)
+        .eq('user_id', userId)
+
+    if (erroContarEmprestimos) {
+      console.log('ERRO AO VERIFICAR EMPRÉSTIMOS DO CLIENTE:', erroContarEmprestimos)
+      alert('Não foi possível verificar os empréstimos deste cliente.')
+      return
+    }
+
+    const totalEmprestimos = quantidadeEmprestimos ?? 0
+
+    const mensagemConfirmacao =
+      totalEmprestimos > 0
+        ? `Este cliente tem ${totalEmprestimos} ${
+            totalEmprestimos === 1 ? 'empréstimo' : 'empréstimos'
+          } cadastrado(s) (incluindo o histórico de parcelas). Excluir o cliente vai apagar tudo isso junto. Deseja continuar?`
+        : 'Tem certeza que deseja excluir este cliente?'
+
+    const confirmou = confirm(mensagemConfirmacao)
+    if (!confirmou) return
+
+    if (totalEmprestimos > 0) {
+      const { data: emprestimosDoCliente, error: erroBuscarEmprestimos } =
+        await supabase
+          .from('Emprestimos')
+          .select('id')
+          .eq('cliente_id', id)
+          .eq('user_id', userId)
+
+      if (erroBuscarEmprestimos) {
+        console.log('ERRO AO BUSCAR EMPRÉSTIMOS DO CLIENTE:', erroBuscarEmprestimos)
+        alert('Não foi possível buscar os empréstimos deste cliente.')
+        return
+      }
+
+      const idsEmprestimos = (emprestimosDoCliente ?? []).map(
+        (emprestimo) => emprestimo.id
+      )
+
+      if (idsEmprestimos.length > 0) {
+        const { error: erroExcluirParcelas } = await supabase
+          .from('Parcelas')
+          .delete()
+          .in('emprestimo_id', idsEmprestimos)
+          .eq('user_id', userId)
+
+        if (erroExcluirParcelas) {
+          console.log('ERRO AO EXCLUIR PARCELAS DO CLIENTE:', erroExcluirParcelas)
+          alert('Não foi possível excluir as parcelas deste cliente.')
+          return
+        }
+      }
+
+      const { error: erroExcluirEmprestimos } = await supabase
+        .from('Emprestimos')
+        .delete()
+        .eq('cliente_id', id)
+        .eq('user_id', userId)
+
+      if (erroExcluirEmprestimos) {
+        console.log('ERRO AO EXCLUIR EMPRÉSTIMOS DO CLIENTE:', erroExcluirEmprestimos)
+        alert('Não foi possível excluir os empréstimos deste cliente.')
+        return
+      }
+    }
 
     await supabase
       .from('Agendamentos')
@@ -364,6 +431,10 @@ const clientesFiltrados = useMemo(() => {
           .lash-details-row {
             grid-template-columns: 1fr !important;
           }
+
+          .lash-sort-select {
+            width: 100%;
+          }
         }
       `}</style>
 
@@ -427,6 +498,7 @@ const clientesFiltrados = useMemo(() => {
 
     <select
   style={ordenacaoSelectStyle}
+  className="lash-sort-select"
   value={ordenacao}
   onChange={(e) => setOrdenacao(e.target.value)}
 >
@@ -589,35 +661,44 @@ const clientesFiltrados = useMemo(() => {
 <div style={{ height: '14px' }} />
 
 <div style={gridStyle}>
-  <input
-    style={inputStyle}
-    placeholder="Profissão"
-    value={profissao}
-    onChange={(e) => setProfissao(e.target.value)}
-  />
+  <div>
+    <label style={labelStyle}>Profissão</label>
+    <input
+      style={inputStyle}
+      placeholder="Ex.: Cabeleireiro(a)"
+      value={profissao}
+      onChange={(e) => setProfissao(e.target.value)}
+    />
+  </div>
 
-  <input
-    style={inputStyle}
-    placeholder="Local de trabalho"
-    value={localTrabalho}
-    onChange={(e) => setLocalTrabalho(e.target.value)}
-  />
+  <div>
+    <label style={labelStyle}>Local de trabalho</label>
+    <input
+      style={inputStyle}
+      placeholder="Ex.: Salão Beleza Pura"
+      value={localTrabalho}
+      onChange={(e) => setLocalTrabalho(e.target.value)}
+    />
+  </div>
 
-  <select
-    style={inputStyle}
-    value={observacoes}
-    onChange={(e) => setObservacoes(e.target.value)}
-  >
-    <option value="">Comportamento do cliente</option>
-    <option value="Cliente novo">🆕 Cliente novo</option>
-    <option value="Paga corretamente">✅ Paga corretamente</option>
-    <option value="Às vezes atrasa">🟡 Às vezes atrasa</option>
-    <option value="Atrasa recorrentemente">🟠 Atrasa recorrentemente</option>
-    <option value="Em observação">👀 Em observação</option>
-    <option value="Negociação em andamento">🤝 Negociação em andamento</option>
-    <option value="Cobrança judicial">⚖️ Cobrança judicial</option>
-    <option value="Não emprestar novamente">⛔ Não emprestar novamente</option>
-  </select>
+  <div>
+    <label style={labelStyle}>Comportamento do cliente</label>
+    <select
+      style={inputStyle}
+      value={observacoes}
+      onChange={(e) => setObservacoes(e.target.value)}
+    >
+      <option value="">Selecione</option>
+      <option value="Cliente novo">🆕 Cliente novo</option>
+      <option value="Paga corretamente">✅ Paga corretamente</option>
+      <option value="Às vezes atrasa">🟡 Às vezes atrasa</option>
+      <option value="Atrasa recorrentemente">🟠 Atrasa recorrentemente</option>
+      <option value="Em observação">👀 Em observação</option>
+      <option value="Negociação em andamento">🤝 Negociação em andamento</option>
+      <option value="Cobrança judicial">⚖️ Cobrança judicial</option>
+      <option value="Não emprestar novamente">⛔ Não emprestar novamente</option>
+    </select>
+  </div>
 </div>
 
 <div

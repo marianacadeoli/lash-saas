@@ -19,7 +19,7 @@ type Emprestimo = {
   quantidade_parcelas: number
   data_emprestimo: string
   primeiro_vencimento: string
-  status: 'ativo' | 'quitado' | 'atrasado' | 'renegociado'
+  status: 'ativo' | 'quitado' | 'atrasado'
   observacoes: string | null
   user_id: string
   created_at?: string
@@ -32,9 +32,8 @@ type Parcela = {
   cliente_id?: number
   numero_parcela: number
   valor: number
-  vencimento?: string | null
-  data_vencimento?: string | null
-  status: 'pendente' | 'pago' | 'paga' | 'atrasada' | 'renegociado'
+  data_vencimento: string
+  status: 'pendente' | 'pago' | 'paga' | 'atrasada'
   data_pagamento: string | null
 }
 
@@ -208,15 +207,7 @@ export default function EmprestimosSection() {
 
       setClientes(listaClientes)
       setEmprestimos(listaEmprestimos as Emprestimo[])
-      const parcelasNormalizadas = (parcelasResposta.data ?? []).map(
-        (parcela) => ({
-          ...parcela,
-          vencimento:
-            parcela.data_vencimento ?? parcela.vencimento ?? null,
-        })
-      )
-
-      setParcelas(parcelasNormalizadas as Parcela[])
+      setParcelas((parcelasResposta.data as Parcela[]) ?? [])
     } catch (error) {
       const mensagem =
         error instanceof Error ? error.message : 'Erro desconhecido'
@@ -334,7 +325,7 @@ function limparFormulario() {
     let novoEmprestimoId: number | null = null
 
     try {
-      const payload = {
+      const payloadBase = {
         cliente_id: Number(form.clienteId),
         valor_emprestado: valorEmprestado,
         taxa_juros: taxaJuros,
@@ -343,65 +334,172 @@ function limparFormulario() {
         data_emprestimo: form.dataEmprestimo,
         primeiro_vencimento: form.primeiroVencimento,
         observacoes: form.observacoes.trim() || null,
-        status: 'ativo',
         user_id: userId,
       }
 
       if (editandoId) {
-        const { error } = await supabase
+        // Busca as parcelas já existentes ANTES de mexer em qualquer coisa,
+        // para nunca apagar o histórico de uma parcela já paga.
+        const { data: parcelasExistentes, error: erroBuscarParcelas } =
+          await supabase
+            .from('Parcelas')
+            .select('*')
+            .eq('emprestimo_id', editandoId)
+            .eq('user_id', userId)
+
+        if (erroBuscarParcelas) {
+          throw new Error(
+            mostrarErroSupabase(
+              'Busca das parcelas existentes',
+              erroBuscarParcelas
+            )
+          )
+        }
+
+        const listaExistente = parcelasExistentes ?? []
+
+        const numerosProtegidos = new Set(
+          listaExistente
+            .filter(
+              (parcela) =>
+                parcela.status === 'pago' || parcela.status === 'paga'
+            )
+            .map((parcela) => parcela.numero_parcela)
+        )
+
+        const maiorNumeroProtegido =
+          numerosProtegidos.size > 0 ? Math.max(...numerosProtegidos) : 0
+
+        if (quantidadeParcelas < maiorNumeroProtegido) {
+          alert(
+            `Este empréstimo já tem a parcela ${maiorNumeroProtegido} paga. Não é possível reduzir para menos de ${maiorNumeroProtegido} parcelas.`
+          )
+          setSalvando(false)
+          return
+        }
+
+        const { error: erroAtualizarEmprestimo } = await supabase
           .from('Emprestimos')
-          .update(payload)
+          .update(payloadBase)
           .eq('id', editandoId)
           .eq('user_id', userId)
 
-        if (error) {
+        if (erroAtualizarEmprestimo) {
           throw new Error(
-            mostrarErroSupabase('Atualização de Emprestimos', error)
+            mostrarErroSupabase(
+              'Atualização de Emprestimos',
+              erroAtualizarEmprestimo
+            )
           )
         }
 
-        const { error: erroExcluirParcelas } = await supabase
+        const mapaExistente = new Map(
+          listaExistente.map((parcela) => [parcela.numero_parcela, parcela])
+        )
+
+        for (let indice = 0; indice < datasParcelas.length; indice++) {
+          const numeroParcela = indice + 1
+          const dataParcela = datasParcelas[indice]
+
+          if (numerosProtegidos.has(numeroParcela)) {
+            // Parcela já paga: não mexe em nada dela.
+            continue
+          }
+
+          const existente = mapaExistente.get(numeroParcela)
+
+          if (existente) {
+            const { error: erroAtualizarParcela } = await supabase
+              .from('Parcelas')
+              .update({
+                valor: Number(valorParcela.toFixed(2)),
+                data_vencimento: dataParcela,
+              })
+              .eq('id', existente.id)
+              .eq('user_id', userId)
+
+            if (erroAtualizarParcela) {
+              throw new Error(
+                mostrarErroSupabase(
+                  'Atualização da parcela',
+                  erroAtualizarParcela
+                )
+              )
+            }
+          } else {
+            const { error: erroCriarParcela } = await supabase
+              .from('Parcelas')
+              .insert({
+                emprestimo_id: editandoId,
+                cliente_id: Number(form.clienteId),
+                numero_parcela: numeroParcela,
+                valor: Number(valorParcela.toFixed(2)),
+                data_vencimento: dataParcela,
+                status: 'pendente',
+                data_pagamento: null,
+                user_id: userId,
+              })
+
+            if (erroCriarParcela) {
+              throw new Error(
+                mostrarErroSupabase('Criação da parcela', erroCriarParcela)
+              )
+            }
+          }
+        }
+
+        const idsParaExcluir = listaExistente
+          .filter(
+            (parcela) =>
+              parcela.numero_parcela > quantidadeParcelas &&
+              !numerosProtegidos.has(parcela.numero_parcela)
+          )
+          .map((parcela) => parcela.id)
+
+        if (idsParaExcluir.length > 0) {
+          const { error: erroExcluirExtras } = await supabase
+            .from('Parcelas')
+            .delete()
+            .in('id', idsParaExcluir)
+            .eq('user_id', userId)
+
+          if (erroExcluirExtras) {
+            throw new Error(
+              mostrarErroSupabase(
+                'Remoção de parcelas extras',
+                erroExcluirExtras
+              )
+            )
+          }
+        }
+
+        // Ressincroniza o status do empréstimo com base no estado real das parcelas
+        const { data: parcelasAtuais } = await supabase
           .from('Parcelas')
-          .delete()
+          .select('status')
           .eq('emprestimo_id', editandoId)
           .eq('user_id', userId)
 
-        if (erroExcluirParcelas) {
-          throw new Error(
-            mostrarErroSupabase(
-              'Atualização das Parcelas',
-              erroExcluirParcelas
-            )
-          )
-        }
-
-        const parcelasAtualizadas = datasParcelas.map(
-          (dataParcela, indice) => ({
-            emprestimo_id: editandoId,
-            cliente_id: Number(form.clienteId),
-            numero_parcela: indice + 1,
-            valor: Number(valorParcela.toFixed(2)),
-            vencimento: dataParcela,
-            data_vencimento: dataParcela,
-            status: 'pendente',
-            data_pagamento: null,
-            user_id: userId,
-          })
+        const statusParcelasAtuais = (parcelasAtuais ?? []).map((item) =>
+          (item.status ?? '').trim().toLowerCase()
         )
 
-        const { error: erroInserirParcelas } = await supabase
-          .from('Parcelas')
-          .insert(parcelasAtualizadas)
-
-        if (erroInserirParcelas) {
-          throw new Error(
-            mostrarErroSupabase(
-              'Recriação das Parcelas',
-              erroInserirParcelas
-            )
+        const todasPagasAgora =
+          statusParcelasAtuais.length > 0 &&
+          statusParcelasAtuais.every(
+            (status) => status === 'pago' || status === 'paga'
           )
-        }
+
+        const novoStatusEmprestimo = todasPagasAgora ? 'quitado' : 'ativo'
+
+        await supabase
+          .from('Emprestimos')
+          .update({ status: novoStatusEmprestimo })
+          .eq('id', editandoId)
+          .eq('user_id', userId)
       } else {
+        const payload = { ...payloadBase, status: 'ativo' }
+
         const { data: novoEmprestimo, error: erroEmprestimo } = await supabase
           .from('Emprestimos')
           .insert(payload)
@@ -422,7 +520,6 @@ function limparFormulario() {
             cliente_id: Number(form.clienteId),
             numero_parcela: indice + 1,
             valor: Number(valorParcela.toFixed(2)),
-            vencimento: dataParcela,
             data_vencimento: dataParcela,
             status: 'pendente',
             data_pagamento: null,
@@ -485,10 +582,7 @@ function editarEmprestimo(emprestimo: Emprestimo) {
   setDatasParcelas(
     parcelasDoEmprestimo.length > 0
       ? parcelasDoEmprestimo.map(
-          (parcela) =>
-            parcela.data_vencimento ??
-            parcela.vencimento ??
-            ''
+          (parcela) => parcela.data_vencimento ?? ''
         )
       : gerarDatasMensais(
           emprestimo.primeiro_vencimento,
@@ -635,18 +729,49 @@ function editarEmprestimo(emprestimo: Emprestimo) {
     }
   }
 
+  function calcularStatusEmprestimo(
+    emprestimo: Emprestimo,
+    todasParcelas: Parcela[]
+  ): Emprestimo['status'] {
+    const parcelasDoEmprestimo = todasParcelas.filter(
+      (parcela) => parcela.emprestimo_id === emprestimo.id
+    )
+
+    const possuiParcelaAtrasada = parcelasDoEmprestimo.some((parcela) => {
+      const vencimento = parcela.data_vencimento
+
+      return (
+        parcela.status !== 'pago' &&
+        parcela.status !== 'paga' &&
+        new Date(`${vencimento}T23:59:59`) < new Date()
+      )
+    })
+
+    const todasPagas =
+      parcelasDoEmprestimo.length > 0 &&
+      parcelasDoEmprestimo.every(
+        (parcela) => parcela.status === 'pago' || parcela.status === 'paga'
+      )
+
+    if (todasPagas) return 'quitado'
+    if (possuiParcelaAtrasada) return 'atrasado'
+    return 'ativo'
+  }
+
   const emprestimosFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase()
 
     return emprestimos.filter((emprestimo) => {
       const nomeCliente = emprestimo.cliente?.nome?.toLowerCase() ?? ''
       const combinaBusca = nomeCliente.includes(termo)
+
+      const statusReal = calcularStatusEmprestimo(emprestimo, parcelas)
       const combinaStatus =
-        filtroStatus === 'todos' || emprestimo.status === filtroStatus
+        filtroStatus === 'todos' || statusReal === filtroStatus
 
       return combinaBusca && combinaStatus
     })
-  }, [emprestimos, busca, filtroStatus])
+  }, [emprestimos, parcelas, busca, filtroStatus])
 
   const resumo = useMemo(() => {
     const totalEmprestado = emprestimos.reduce(
@@ -656,10 +781,7 @@ function editarEmprestimo(emprestimo: Emprestimo) {
 
     const totalAReceber = parcelas
       .filter(
-        (parcela) =>
-          parcela.status !== 'pago' &&
-          parcela.status !== 'paga' &&
-          parcela.status !== 'renegociado'
+        (parcela) => parcela.status !== 'pago' && parcela.status !== 'paga'
       )
       .reduce((total, parcela) => total + Number(parcela.valor), 0)
 
@@ -671,8 +793,7 @@ function editarEmprestimo(emprestimo: Emprestimo) {
       return (
         parcela.status !== 'pago' &&
         parcela.status !== 'paga' &&
-        parcela.status !== 'renegociado' &&
-        new Date(`${parcela.data_vencimento ?? parcela.vencimento}T23:59:59`) < new Date()
+        new Date(`${parcela.data_vencimento}T23:59:59`) < new Date()
       )
     }).length
 
@@ -1052,45 +1173,14 @@ style={{
                 (parcela) => parcela.emprestimo_id === emprestimo.id
               )
 
-const possuiParcelaAtrasada = parcelasDoEmprestimo.some((parcela) => {
-  const vencimento =
-    parcela.data_vencimento ?? parcela.vencimento
-
-  return (
-    parcela.status !== 'pago' &&
-    parcela.status !== 'paga' &&
-    parcela.status !== 'renegociado' &&
-    new Date(`${vencimento}T23:59:59`) < new Date()
-  )
-})
-
-const todasPagas =
-  parcelasDoEmprestimo.length > 0 &&
-  parcelasDoEmprestimo.every(
-    (parcela) =>
-      parcela.status === 'pago' ||
-      parcela.status === 'paga' 
-  )
-
-const statusEmprestimo: Emprestimo['status'] =
-  todasPagas
-    ? 'quitado'
-    : possuiParcelaAtrasada
-      ? 'atrasado'
-      : 'ativo'
+const statusEmprestimo = calcularStatusEmprestimo(emprestimo, parcelas)
 
               const parcelasResolvidas = parcelasDoEmprestimo.filter(
                 (parcela) =>
-                  parcela.status === 'pago' ||
-                  parcela.status === 'paga' ||
-                  parcela.status === 'renegociado'
+                  parcela.status === 'pago' || parcela.status === 'paga'
               ).length
 
-              const parcelasPagas = parcelasDoEmprestimo.filter(
-                (parcela) =>
-                  parcela.status === 'pago' ||
-                  parcela.status === 'paga'
-              ).length
+              const parcelasPagas = parcelasResolvidas
 
               const progresso =
                 emprestimo.quantidade_parcelas > 0
@@ -1101,9 +1191,7 @@ const statusEmprestimo: Emprestimo['status'] =
 
               const proximaParcela = parcelasDoEmprestimo.find(
                 (parcela) =>
-                  parcela.status !== 'pago' &&
-                  parcela.status !== 'paga' &&
-                  parcela.status !== 'renegociado'
+                  parcela.status !== 'pago' && parcela.status !== 'paga'
               )
 
              const aberto = emprestimoAbertoId === emprestimo.id
@@ -1299,9 +1387,7 @@ const parcelasAbertas = detalhesId === emprestimo.id
           >
             {proximaParcela
               ? `${formatarData(
-                  proximaParcela.data_vencimento ??
-                    proximaParcela.vencimento ??
-                    ''
+                  proximaParcela.data_vencimento ?? ''
                 )} — ${formatarMoeda(proximaParcela.valor)}`
               : statusEmprestimo === 'quitado'
                 ? 'Aguardando nova negociação'
@@ -1390,11 +1476,7 @@ const parcelasAbertas = detalhesId === emprestimo.id
 
                   <span style={installmentDateStyle}>
                     Vencimento:{' '}
-                    {formatarData(
-                      parcela.data_vencimento ??
-                        parcela.vencimento ??
-                        ''
-                    )}
+                    {formatarData(parcela.data_vencimento ?? '')}
                   </span>
 
                 </div>
@@ -1415,17 +1497,13 @@ const parcelasAbertas = detalhesId === emprestimo.id
                 </span>
 
 
-                {parcela.status === 'pago' ||
-                parcela.status === 'paga' ||
-                parcela.status === 'renegociado' ? (
+                {parcela.status === 'pago' || parcela.status === 'paga' ? (
 
                   <button
                     onClick={() => reabrirParcela(parcela)}
                     style={reopenButtonStyle}
                   >
-                    {parcela.status === 'renegociado'
-                      ? 'Reabrir parcela'
-                      : 'Voltar para pendente'}
+                    Voltar para pendente
                   </button>
 
                 ) : (
@@ -1503,7 +1581,6 @@ function nomeStatus(status: Emprestimo['status']) {
     ativo: 'Ativo',
     quitado: 'Quitado',
     atrasado: 'Atrasado',
-    renegociado: 'Renegociado',
   }
 
   return nomes[status]
@@ -1526,11 +1603,6 @@ function statusStyle(status: Emprestimo['status']) {
       borderColor: '#ba4b55',
       color: '#ffc1c6',
     },
-    renegociado: {
-      background: '#3c284b',
-      borderColor: '#8d59a7',
-      color: '#e9c3ff',
-    },
   }
 
   return estilos[status]
@@ -1541,25 +1613,13 @@ function nomeStatusParcela(parcela: Parcela) {
     return 'Pago'
   }
 
-  if (parcela.status === 'renegociado') {
-    return 'Renegociada'
-  }
-
   const atrasada =
-    new Date(`${parcela.data_vencimento ?? parcela.vencimento}T23:59:59`) < new Date()
+    new Date(`${parcela.data_vencimento}T23:59:59`) < new Date()
 
   return atrasada ? 'Atrasada' : 'Pendente'
 }
 
 function installmentStatusStyle(parcela: Parcela) {
-  if (parcela.status === 'renegociado') {
-    return {
-      background: '#3c284b',
-      borderColor: '#8d59a7',
-      color: '#e9c3ff',
-    }
-  }
-
   if (parcela.status === 'pago' || parcela.status === 'paga') {
     return {
       background: '#173d2b',
@@ -1569,7 +1629,7 @@ function installmentStatusStyle(parcela: Parcela) {
   }
 
   const atrasada =
-    new Date(`${parcela.data_vencimento ?? parcela.vencimento}T23:59:59`) < new Date()
+    new Date(`${parcela.data_vencimento}T23:59:59`) < new Date()
 
   if (atrasada) {
     return {
