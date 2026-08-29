@@ -7,9 +7,6 @@ type PerfilNegocio = {
   id: string
   nome_negocio: string | null
   logo_url: string | null
-  plano: string | null
-  status_assinatura: string | null
-  renovacao: string | null
 }
 
 type Assinatura = {
@@ -35,6 +32,7 @@ export default function ConfigSection({
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [enviandoFoto, setEnviandoFoto] = useState(false)
+  const [removendoFoto, setRemovendoFoto] = useState(false)
 
   useEffect(() => {
     carregarDados()
@@ -130,13 +128,6 @@ export default function ConfigSection({
         }
 
         await carregarDados()
-        const { data } = await supabase
-          .from('Configuracoes')
-          .select('logo_url')
-          .eq('user_id', userId)
-          .single()
-
-        console.log('Logo salva:', data)
         alert('Foto enviada com sucesso!')
       }
     } catch (err: any) {
@@ -145,6 +136,33 @@ export default function ConfigSection({
     } finally {
       setEnviandoFoto(false)
     }
+  }
+
+  // Remove a foto de verdade: limpa o campo no banco, não só o estado local
+  async function removerFoto() {
+    const userId = await pegarUserId()
+    if (!userId) return
+
+    const confirmou = confirm('Remover a foto/logomarca do negócio?')
+    if (!confirmou) return
+
+    setRemovendoFoto(true)
+
+    const { error } = await supabase
+      .from('Configuracoes')
+      .update({ logo_url: null })
+      .eq('user_id', userId)
+
+    if (error) {
+      console.error(error)
+      alert('Não foi possível remover a foto.')
+      setRemovendoFoto(false)
+      return
+    }
+
+    setLogoUrl('')
+    setPerfil((prev) => (prev ? { ...prev, logo_url: null } : prev))
+    setRemovendoFoto(false)
   }
 
   async function salvarPerfil(e: React.FormEvent) {
@@ -177,50 +195,210 @@ export default function ConfigSection({
     setSalvando(false)
   }
 
-function formatarData(dataIso: string | null) {
-  if (!dataIso) return '—'
+async function cancelarAssinatura() {
+  const userId = await pegarUserId()
 
-  return new Date(dataIso).toLocaleDateString('pt-BR')
+  if (!userId) {
+    alert('Você precisa estar logado para cancelar a assinatura.')
+    return
+  }
+
+  const confirmou = confirm(
+    'Deseja cancelar sua assinatura? Você continuará tendo acesso ao Painel Emprest até o fim do período atual.'
+  )
+
+  if (!confirmou) return
+
+  const { data: assinaturaAtual, error: buscaError } = await supabase
+    .from('subscriptions')
+    .select('status, trial_ends_at, current_period_end, cancel_at_period_end')
+    .eq('user_id', userId)
+    .single()
+
+  if (buscaError) {
+    console.error(buscaError)
+    alert('Não foi possível verificar sua assinatura.')
+    return
+  }
+
+  if (assinaturaAtual?.cancel_at_period_end) {
+    alert('Sua assinatura já está marcada para cancelamento.')
+    return
+  }
+
+  const { error } = await supabase
+    .from('subscriptions')
+    .update({
+      cancel_at_period_end: true,
+    })
+    .eq('user_id', userId)
+
+  if (error) {
+    console.error(error)
+    alert('Não foi possível cancelar sua assinatura.')
+    return
+  }
+
+  const dataFim =
+    assinaturaAtual?.current_period_end ||
+    assinaturaAtual?.trial_ends_at
+
+  if (dataFim) {
+    const dataFormatada = new Date(dataFim).toLocaleDateString('pt-BR')
+
+    alert(
+      `Assinatura cancelada com sucesso.\n\nVocê continuará tendo acesso até ${dataFormatada}.`
+    )
+  } else {
+    alert(
+      'Assinatura cancelada com sucesso. O acesso continuará disponível até o fim do período atual.'
+    )
+  }
 }
+
+  function excluirConta() {
+    alert(
+      'A exclusão de conta ainda não está disponível por aqui. Entre em contato pelo suporte para solicitar a exclusão por enquanto.'
+    )
+  }
+
+  function formatarData(dataIso: string | null) {
+    if (!dataIso) return '—'
+
+    return new Date(dataIso).toLocaleDateString('pt-BR')
+  }
 
   function formatarPlano(plano: string | null) {
     if (!plano) return 'Gratuito'
     return plano.charAt(0).toUpperCase() + plano.slice(1)
   }
 
-  function formatarStatus(status: string | null) {
-    const st = status?.trim().toLowerCase()
-    if (st === 'ativo' || st === 'active') return 'Ativo'
-    if (st === 'pendente') return 'Pendente'
-    if (st === 'cancelado') return 'Cancelado'
-    return 'Inativo'
+function formatarStatus(status: string | null) {
+  const st = status?.trim().toLowerCase()
+
+  if (st === 'trialing') return 'Teste grátis'
+  if (st === 'ativo' || st === 'active') return 'Ativo'
+  if (st === 'trial') return 'Teste grátis'
+  if (st === 'pendente' || st === 'past_due') return 'Pendente'
+  if (st === 'cancelado' || st === 'canceled') return 'Cancelado'
+
+  return 'Inativo'
+}
+function corStatus(status: string | null) {
+  const st = status?.trim().toLowerCase()
+
+  if (
+    st === 'ativo' ||
+    st === 'active' ||
+    st === 'trial' ||
+    st === 'trialing'
+  ) {
+    return '#22c55e'
   }
 
-  function corStatus(status: string | null) {
-    const st = status?.trim().toLowerCase()
-    if (st === 'ativo' || st === 'active') return '#22c55e'
-    if (st === 'pendente') return '#eab308'
-    return '#ef4444'
+  if (st === 'pendente' || st === 'past_due') {
+    return '#eab308'
   }
 
-  function fundoStatus(status: string | null) {
-    const st = status?.trim().toLowerCase()
-    if (st === 'ativo' || st === 'active') return 'rgba(34,197,94,0.12)'
-    if (st === 'pendente') return 'rgba(234,179,8,0.12)'
-    return 'rgba(239,68,68,0.12)'
-  }
+  return '#ef4444'
+}
 
   // Inicial para o avatar placeholder caso não tenha foto
   const inicialEmpresa = nomeNegocio
     ? nomeNegocio.charAt(0).toUpperCase()
     : 'E'
 
+  const statusAtual = assinatura?.status ?? null
+  const statusNormalizado = statusAtual?.trim().toLowerCase()
+const contaAtiva =
+  statusNormalizado === 'ativo' ||
+  statusNormalizado === 'active' ||
+  statusNormalizado === 'trialing' ||
+  statusNormalizado === 'trial'
+
   return (
-    <div style={pageContainerStyle}>
+    <div style={pageContainerStyle} className="lash-page-container">
+      {/* Regras de responsividade para mobile */}
+      <style>{`
+        @media (max-width: 640px) {
+          .lash-config-header {
+            flex-direction: column;
+            align-items: stretch !important;
+          }
+
+          .lash-config-header button {
+            width: 100%;
+          }
+
+          .lash-summary-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+            gap: 8px !important;
+          }
+
+          .lash-card {
+            padding: 14px !important;
+            border-radius: 18px !important;
+          }
+
+          .lash-form-header {
+            flex-direction: column;
+            align-items: stretch !important;
+          }
+
+          .lash-form-header button {
+            width: 100%;
+          }
+
+          .lash-business-info {
+            flex-direction: column;
+            align-items: center !important;
+            text-align: center;
+          }
+
+          .lash-business-info h2 {
+            font-size: 22px !important;
+          }
+
+          .lash-photo-section {
+            flex-direction: column;
+            align-items: center !important;
+            text-align: center;
+          }
+
+          .lash-photo-actions {
+            align-items: center !important;
+          }
+
+          .lash-photo-actions > div {
+            justify-content: center !important;
+          }
+
+          .lash-form-actions {
+            flex-direction: column-reverse;
+          }
+
+          .lash-form-actions button {
+            width: 100%;
+          }
+
+          .lash-danger-actions button,
+          .lash-subscription-actions button {
+            width: 100%;
+          }
+
+          .lash-input {
+            font-size: 16px !important;
+          }
+        }
+
+      `}</style>
+
       {/* Cabeçalho da Página */}
-      <div style={pageHeaderStyle}>
+      <div style={pageHeaderStyle} className="lash-config-header">
         <div>
-          <h1 style={{ margin: 0, marginBottom: '8px' }}>Configurações</h1>
+          <h1 style={{ margin: 0, marginBottom: '8px' }}>
+            Configurações
+          </h1>
           <p style={subtitleStyle}>
             Gerencie as informações da sua empresa e detalhes da sua assinatura.
           </p>
@@ -237,14 +415,16 @@ function formatarData(dataIso: string | null) {
       </div>
 
       {/* Cards de Resumo da Assinatura */}
-      <div style={summaryGridStyle}>
+      <div style={summaryGridStyle} className="lash-summary-grid">
         <div style={summaryCardStyle}>
-   <span style={summaryLabelStyle}>Plano Atual</span>
+          <span style={summaryLabelStyle}>Plano Atual</span>
 
-<strong style={summaryValueStyle}>
-  {formatarPlano(assinatura?.plan ?? null)}
-</strong>
-          <span style={summaryDetailStyle}>Assinatura Ativa</span>
+          <strong style={summaryValueStyle} className="lash-summary-value">
+            {formatarPlano(assinatura?.plan ?? null)}
+          </strong>
+          <span style={summaryDetailStyle}>
+            {contaAtiva ? 'Assinatura ativa' : 'Verifique a assinatura'}
+          </span>
         </div>
 
         <div style={summaryCardStyle}>
@@ -252,51 +432,65 @@ function formatarData(dataIso: string | null) {
           <strong
             style={{
               ...summaryValueStyle,
-              color: corStatus(perfil?.status_assinatura ?? null),
+              color: corStatus(statusAtual),
             }}
+            className="lash-summary-value"
           >
-        {formatarStatus(perfil?.status_assinatura ?? null)}
+            {formatarStatus(statusAtual)}
           </strong>
           <span style={summaryDetailStyle}>
-            {perfil?.status_assinatura === 'ativo'
-              ? 'Acesso total liberado'
-              : 'Verifique a assinatura'}
+            {contaAtiva ? 'Acesso total liberado' : 'Verifique a assinatura'}
           </span>
         </div>
 
         <div style={summaryCardStyle}>
-      <span style={summaryLabelStyle}>Próxima Renovação</span>
+          <span style={summaryLabelStyle}>Renovação</span>
 
-<strong style={summaryValueStyle}>
-  {formatarData(assinatura?.current_period_end ?? null)}
-</strong>
+          <strong style={summaryValueStyle} className="lash-summary-value">
+            {formatarData(assinatura?.current_period_end ?? null)}
+          </strong>
 
-<span style={summaryDetailStyle}>
-  Cobrança automática
-</span>
+          <span style={summaryDetailStyle}>Cobrança automática</span>
         </div>
       </div>
 
-
-
-
       {/* Formulário do Perfil */}
-      <div style={formCardStyle}>
-        <div style={formHeaderStyle}>
+      <div style={formCardStyle} className="lash-card">
+        <div style={formHeaderStyle} className="lash-form-header">
           <div>
             <h2 style={{ margin: 0 }}>Dados do Negócio</h2>
-            <p style={{ ...subtitleStyle, marginBottom: 0 }}>
-        
-            </p>
           </div>
 
           {!editando && (
             <button
               type="button"
-              style={secondaryButtonStyle}
+              style={editIconButtonStyle}
               onClick={() => setEditando(true)}
+              aria-label="Editar dados do negócio"
+              title="Editar"
             >
-              Editar
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 20H21"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+                <path
+                  d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5Z"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </button>
           )}
         </div>
@@ -304,18 +498,12 @@ function formatarData(dataIso: string | null) {
         {carregando ? (
           <div style={emptyStateStyle}>Carregando perfil...</div>
         ) : !editando ? (
-          <div style={businessInfoStyle}>
+          <div style={businessInfoStyle} className="lash-business-info">
             <div style={avatarContainerStyle}>
               {logoUrl ? (
-                <img
-                  src={logoUrl}
-                  alt="Logo"
-                  style={avatarImageStyle}
-                />
+                <img src={logoUrl} alt="Logo" style={avatarImageStyle} />
               ) : (
-                <div style={avatarPlaceholderStyle}>
-                  {inicialEmpresa}
-                </div>
+                <div style={avatarPlaceholderStyle}>{inicialEmpresa}</div>
               )}
             </div>
 
@@ -336,7 +524,7 @@ function formatarData(dataIso: string | null) {
         ) : (
           <form onSubmit={salvarPerfil} style={formStyle}>
             {/* Bloco de Exibição e Alteração da Foto */}
-            <div style={photoSectionStyle}>
+            <div style={photoSectionStyle} className="lash-photo-section">
               <div style={avatarContainerStyle}>
                 {logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -350,7 +538,7 @@ function formatarData(dataIso: string | null) {
                 )}
               </div>
 
-              <div style={photoActionsStyle}>
+              <div style={photoActionsStyle} className="lash-photo-actions">
                 <span style={labelStyle}>Foto / Logomarca</span>
                 <p style={{ ...subtitleStyle, fontSize: '13px', margin: 0 }}>
                   Formatos aceitos: JPG, PNG ou WEBP.
@@ -364,7 +552,7 @@ function formatarData(dataIso: string | null) {
                   style={{ display: 'none' }}
                 />
 
-                <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                <div style={{ display: 'flex', gap: '10px', marginTop: '6px', flexWrap: 'wrap' }}>
                   <button
                     type="button"
                     style={secondaryButtonStyle}
@@ -378,9 +566,10 @@ function formatarData(dataIso: string | null) {
                     <button
                       type="button"
                       style={removeButtonStyle}
-                      onClick={() => setLogoUrl('')}
+                      onClick={removerFoto}
+                      disabled={removendoFoto}
                     >
-                      Remover foto
+                      {removendoFoto ? 'Removendo...' : 'Remover foto'}
                     </button>
                   )}
                 </div>
@@ -398,6 +587,7 @@ function formatarData(dataIso: string | null) {
                 value={nomeNegocio}
                 onChange={(e) => setNomeNegocio(e.target.value)}
                 style={inputStyle}
+                className="lash-input"
               />
             </div>
 
@@ -408,6 +598,7 @@ function formatarData(dataIso: string | null) {
                 gap: '10px',
                 marginTop: '10px',
               }}
+              className="lash-form-actions"
             >
               <button
                 type="button"
@@ -431,63 +622,62 @@ function formatarData(dataIso: string | null) {
           </form>
         )}
       </div>
-<div style={formCardStyle}>
-  <h2 style={{ marginTop: 0 }}>Assinatura</h2>
 
-  <p style={subtitleStyle}>
-    Gerencie sua assinatura e as cobranças do seu plano.
-  </p>
+      <div style={formCardStyle} className="lash-card">
+        <h2 style={{ marginTop: 0 }}>Assinatura</h2>
 
-  <div
-    style={{
-      display: 'flex',
-      gap: '12px',
-      marginTop: '20px',
-      flexWrap: 'wrap',
-    }}
-  >
-    <button style={secondaryButtonStyle}>
-      Gerenciar assinatura
-    </button>
+        <p style={subtitleStyle}>
+          Gerencie sua assinatura e as cobranças do seu plano.
+        </p>
 
-    <button style={removeButtonStyle}>
-      Cancelar assinatura
-    </button>
-  </div>
-</div>
+        <div
+          style={{
+            display: 'flex',
+            marginTop: '20px',
+          }}
+          className="lash-subscription-actions"
+        >
+          <button style={removeButtonStyle} onClick={cancelarAssinatura}>
+            Cancelar assinatura
+          </button>
+        </div>
+      </div>
 
-<div
-  style={{
-    ...formCardStyle,
-    border: '1px solid rgba(239,68,68,.25)',
-  }}
->
-  <h2
-    style={{
-      marginTop: 0,
-      color: '#F87171',
-    }}
-  >
-    Zona de Perigo
-  </h2>
+      <div
+        style={{
+          ...formCardStyle,
+          border: '1px solid rgba(239,68,68,.25)',
+        }}
+        className="lash-card"
+      >
+        <h2
+          style={{
+            marginTop: 0,
+            color: '#F87171',
+          }}
+        >
+          Zona de Perigo
+        </h2>
 
-  <p style={subtitleStyle}>
-    Excluir sua conta removerá permanentemente todos os seus dados.
-    Esta ação não poderá ser desfeita.
-  </p>
+        <p style={subtitleStyle}>
+          Excluir sua conta removerá permanentemente todos os seus dados.
+          Esta ação não poderá ser desfeita.
+        </p>
 
-  <button
-    style={{
-      ...removeButtonStyle,
-      marginTop: '10px',
-    }}
-  >
-    Excluir conta
-  </button>
-</div>
-
-</div>
-)
+        <div className="lash-danger-actions" style={{ display: 'flex' }}>
+          <button
+            style={{
+              ...removeButtonStyle,
+              marginTop: '10px',
+            }}
+            onClick={excluirConta}
+          >
+            Excluir conta
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 /* ==========================================================================
@@ -509,13 +699,13 @@ const pageHeaderStyle: React.CSSProperties = {
 }
 
 const subtitleStyle: React.CSSProperties = {
- color: '#CBD5E1',
+  color: '#94A3B8',
   lineHeight: 1.6,
   marginTop: 0,
 }
 
 const refreshButtonStyle: React.CSSProperties = {
- padding: '11px 16px',
+  padding: '11px 16px',
   borderRadius: '12px',
   border: '1px solid #2563EB',
   background: '#2563EB',
@@ -525,43 +715,48 @@ const refreshButtonStyle: React.CSSProperties = {
 }
 
 const summaryGridStyle: React.CSSProperties = {
+  marginTop: '20px',
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-  gap: '16px',
-  marginTop: '24px',
+  gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+  gap: '12px',
 }
 
 const summaryCardStyle: React.CSSProperties = {
- minHeight: '125px',
-  padding: '20px',
-  borderRadius: '18px',
+  minHeight: '96px',
+  padding: '15px 12px',
+  borderRadius: '16px',
   border: '1px solid #1F3A5F',
-  background: '#0D1B2E',
+  background:
+    'linear-gradient(180deg,#11223D 0%, #0D1B2E 100%)',
   display: 'flex',
   flexDirection: 'column',
   justifyContent: 'center',
-  gap: '7px',
+  gap: '5px',
+  overflow: 'hidden',
 }
 
 const summaryLabelStyle: React.CSSProperties = {
+  display: 'block',
   color: '#94A3B8',
-  fontSize: '14px',
+  fontSize: '12px',
+  whiteSpace: 'nowrap',
 }
 
 const summaryValueStyle: React.CSSProperties = {
+  fontSize: '14px',
   color: '#F8FAFC',
-  fontSize: '30px',
-  lineHeight: 1,
+  lineHeight: 1.25,
 }
 
 const summaryDetailStyle: React.CSSProperties = {
   color: '#CBD5E1',
-  fontSize: '14px',
+  fontSize: '12px',
   fontWeight: 700,
 }
 
 const formCardStyle: React.CSSProperties = {
- marginTop: '24px',
+  position: 'relative',
+  marginTop: '24px',
   padding: '22px',
   borderRadius: '20px',
   border: '1px solid #1F3A5F',
@@ -570,9 +765,7 @@ const formCardStyle: React.CSSProperties = {
 
 const formHeaderStyle: React.CSSProperties = {
   display: 'flex',
-  justifyContent: 'space-between',
   alignItems: 'flex-start',
-  gap: '16px',
   marginBottom: '20px',
 }
 
@@ -583,7 +776,7 @@ const formStyle: React.CSSProperties = {
 }
 
 const photoSectionStyle: React.CSSProperties = {
- display: 'flex',
+  display: 'flex',
   alignItems: 'center',
   gap: '20px',
   paddingBottom: '16px',
@@ -608,7 +801,7 @@ const avatarImageStyle: React.CSSProperties = {
 }
 
 const avatarPlaceholderStyle: React.CSSProperties = {
- width: '100%',
+  width: '100%',
   height: '100%',
   display: 'flex',
   alignItems: 'center',
@@ -636,8 +829,9 @@ const labelStyle: React.CSSProperties = {
   fontSize: '14px',
   fontWeight: 600,
 }
+
 const inputStyle: React.CSSProperties = {
- width: '100%',
+  width: '100%',
   padding: '12px 16px',
   borderRadius: '12px',
   border: '1px solid #1F3A5F',
@@ -648,59 +842,8 @@ const inputStyle: React.CSSProperties = {
   boxSizing: 'border-box',
 }
 
-const listCardStyle: React.CSSProperties = {
-  marginTop: '24px',
-  padding: '22px',
-  borderRadius: '20px',
-  border: '1px solid #2a2a2a',
-  background: '#101010',
-}
-
-const listHeaderStyle: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'flex-start',
-  gap: '16px',
-  marginBottom: '18px',
-}
-
-const infoGridStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-  gap: '14px',
-}
-
-const infoBoxStyle: React.CSSProperties = {
-  padding: '14px',
-  borderRadius: '13px',
-  background: '#151515',
-  border: '1px solid #292929',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: '6px',
-}
-
-const infoLabelStyle: React.CSSProperties = {
-  color: '#8f8f97',
-  fontSize: '12px',
-}
-
-const infoValueStyle: React.CSSProperties = {
-  color: '#ffffff',
-  fontSize: '14px',
-  wordBreak: 'break-all',
-}
-
-const statusBadgeStyle: React.CSSProperties = {
-  padding: '5px 10px',
-  borderRadius: '999px',
-  border: '1px solid',
-  fontSize: '12px',
-  fontWeight: 800,
-}
-
 const emptyStateStyle: React.CSSProperties = {
- minHeight: '140px',
+  minHeight: '140px',
   borderRadius: '16px',
   border: '1px dashed #28538B',
   color: '#94A3B8',
@@ -721,8 +864,26 @@ const primaryButtonStyle: React.CSSProperties = {
   cursor: 'pointer',
 }
 
+const editIconButtonStyle: React.CSSProperties = {
+  position: 'absolute',
+  top: '16px',
+  right: '16px',
+  width: '34px',
+  height: '34px',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: '1px solid #1F3A5F',
+  borderRadius: '9px',
+  background: '#132641',
+  color: '#94A3B8',
+  cursor: 'pointer',
+  padding: 0,
+  flexShrink: 0,
+}
+
 const secondaryButtonStyle: React.CSSProperties = {
-  border: '1px solid #28538B',
+  border: '1px solid #1F3A5F',
   borderRadius: '8px',
   background: '#132641',
   color: '#F8FAFC',

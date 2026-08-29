@@ -29,10 +29,13 @@ export default function SubscribePage() {
         .eq('user_id', session.user.id)
         .maybeSingle()
 
-      if (assinatura?.status === 'active') {
-        router.replace('/dashboard')
-        return
-      }
+if (
+  assinatura?.status === 'active' ||
+  assinatura?.status === 'trialing'
+) {
+  router.replace('/dashboard')
+  return
+}
 
       setCarregandoPagina(false)
     }
@@ -121,7 +124,7 @@ export default function SubscribePage() {
         >
           <h2 style={{ marginTop: 0 }}>Plano Basic</h2>
           <p style={{ fontSize: '28px', fontWeight: 800, margin: '10px 0' }}>
-            R$ 29,90
+            R$ 49,90
             <span style={{ fontSize: '16px', fontWeight: 400 }}>/mês</span>
           </p>
 

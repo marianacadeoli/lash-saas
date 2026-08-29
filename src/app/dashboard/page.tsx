@@ -68,10 +68,14 @@ export default function DashboardPage() {
         .eq('user_id', userId)
         .maybeSingle()
 
-      if (!assinaturaData || assinaturaData.status !== 'active') {
-        router.replace('/subscribe')
-        return
-      }
+if (
+  !assinaturaData ||
+  (assinaturaData.status !== 'active' &&
+    assinaturaData.status !== 'trialing')
+) {
+  router.replace('/subscribe')
+  return
+}
 
       const { data: configData } = await supabase
         .from('Configuracoes')
@@ -205,8 +209,12 @@ color: ativo ? '#F8FAFC' : '#CBD5E1',
             </p>
 
             <p style={planTextStyle}>
-              <strong>Status:</strong>{' '}
-              {assinatura?.status === 'active' ? 'Ativo' : assinatura?.status || '-'}
+<strong>Status:</strong>{' '}
+{assinatura?.status === 'trialing'
+  ? 'Teste grátis'
+  : assinatura?.status === 'active'
+    ? 'Ativo'
+    : assinatura?.status || '-'}
             </p>
 
             <p style={planTextStyle}>

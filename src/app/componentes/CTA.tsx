@@ -15,10 +15,10 @@ export default function CTA() {
             carteira de empréstimos?
           </h2>
 
-          <p>
-            Teste gratuitamente por 7 dias e tenha controle total dos seus
-            clientes, empréstimos e recebimentos.
-          </p>
+<p>
+  Teste gratuitamente por 3 dias e tenha controle total dos seus
+  clientes, empréstimos e recebimentos.
+</p>
 
         </div>
 

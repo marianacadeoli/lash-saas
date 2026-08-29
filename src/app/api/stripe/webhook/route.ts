@@ -10,47 +10,87 @@ export async function POST(req: NextRequest) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!stripeSecretKey) {
-      return NextResponse.json({ error: 'STRIPE_SECRET_KEY não configurada.' }, { status: 500 })
+      return NextResponse.json(
+        { error: 'STRIPE_SECRET_KEY não configurada.' },
+        { status: 500 }
+      )
     }
 
     if (!stripeWebhookSecret) {
-      return NextResponse.json({ error: 'STRIPE_WEBHOOK_SECRET não configurada.' }, { status: 500 })
+      return NextResponse.json(
+        { error: 'STRIPE_WEBHOOK_SECRET não configurada.' },
+        { status: 500 }
+      )
     }
 
     if (!supabaseUrl) {
-      return NextResponse.json({ error: 'NEXT_PUBLIC_SUPABASE_URL não configurada.' }, { status: 500 })
+      return NextResponse.json(
+        { error: 'NEXT_PUBLIC_SUPABASE_URL não configurada.' },
+        { status: 500 }
+      )
     }
 
     if (!supabaseServiceKey) {
-      return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY não configurada.' }, { status: 500 })
+      return NextResponse.json(
+        { error: 'SUPABASE_SERVICE_ROLE_KEY não configurada.' },
+        { status: 500 }
+      )
     }
 
     const stripe = new Stripe(stripeSecretKey)
-    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    const supabase = createClient(
+      supabaseUrl,
+      supabaseServiceKey
+    )
 
     const body = await req.text()
     const signature = req.headers.get('stripe-signature')
 
     if (!signature) {
-      return NextResponse.json({ error: 'Assinatura ausente.' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Assinatura ausente.' },
+        { status: 400 }
+      )
     }
 
     let event: Stripe.Event
 
     try {
-      event = stripe.webhooks.constructEvent(body, signature, stripeWebhookSecret)
+      event = stripe.webhooks.constructEvent(
+        body,
+        signature,
+        stripeWebhookSecret
+      )
     } catch (error) {
       console.error('ERRO WEBHOOK SIGNATURE:', error)
-      return NextResponse.json({ error: 'Webhook inválido.' }, { status: 400 })
+
+      return NextResponse.json(
+        { error: 'Webhook inválido.' },
+        { status: 400 }
+      )
     }
 
-    if (event.type === 'checkout.session.completed') {
-      const session = event.data.object as Stripe.Checkout.Session
+    // ============================================================
+    // CHECKOUT CONCLUÍDO
+    // ============================================================
 
-      const userId = session.metadata?.user_id || session.client_reference_id
-      const customerId = typeof session.customer === 'string' ? session.customer : null
+    if (event.type === 'checkout.session.completed') {
+      const session =
+        event.data.object as Stripe.Checkout.Session
+
+      const userId =
+        session.metadata?.user_id ||
+        session.client_reference_id
+
+      const customerId =
+        typeof session.customer === 'string'
+          ? session.customer
+          : null
+
       const subscriptionId =
-        typeof session.subscription === 'string' ? session.subscription : null
+        typeof session.subscription === 'string'
+          ? session.subscription
+          : null
 
       if (!userId || !subscriptionId) {
         return NextResponse.json(
@@ -59,70 +99,204 @@ export async function POST(req: NextRequest) {
         )
       }
 
-      const subscription: any = await stripe.subscriptions.retrieve(subscriptionId, {
-        expand: ['items.data.price'],
-      })
+      const subscription: any =
+        await stripe.subscriptions.retrieve(
+          subscriptionId,
+          {
+            expand: ['items.data.price'],
+          }
+        )
 
-      const periodEndTimestamp =
-        subscription.current_period_end ||
-        subscription.items?.data?.[0]?.current_period_end ||
-        null
+      await salvarAssinatura(
+        supabase,
+        subscription,
+        userId,
+        customerId
+      )
+    }
 
-      const currentPeriodEnd = periodEndTimestamp
-        ? new Date(periodEndTimestamp * 1000).toISOString()
-        : null
+    // ============================================================
+    // ASSINATURA CRIADA OU ATUALIZADA
+    // ============================================================
 
-      const payload = {
-        user_id: userId,
-        status: subscription.status || 'active',
-        plan: 'basic',
-        stripe_customer_id: customerId,
-        stripe_subscription_id: subscriptionId,
-        current_period_end: currentPeriodEnd,
+    if (
+      event.type === 'customer.subscription.created' ||
+      event.type === 'customer.subscription.updated'
+    ) {
+      const subscription =
+        event.data.object as any
+
+      const userId =
+        subscription.metadata?.user_id
+
+      if (userId) {
+        const customerId =
+          typeof subscription.customer === 'string'
+            ? subscription.customer
+            : null
+
+        await salvarAssinatura(
+          supabase,
+          subscription,
+          userId,
+          customerId
+        )
       }
+    }
 
-      const { data: existingSubscription, error: selectError } = await supabase
-        .from('subscriptions')
-        .select('id')
-        .eq('user_id', userId)
-        .maybeSingle()
+    // ============================================================
+    // ASSINATURA CANCELADA
+    // ============================================================
 
-      if (selectError) {
-        console.error('ERRO SELECT SUPABASE:', selectError)
-        return NextResponse.json({ error: selectError.message }, { status: 500 })
-      }
+    if (event.type === 'customer.subscription.deleted') {
+      const subscription =
+        event.data.object as any
 
-      if (existingSubscription?.id) {
-        const { error: updateError } = await supabase
+      const userId =
+        subscription.metadata?.user_id
+
+      if (userId) {
+        const { error } = await supabase
           .from('subscriptions')
-          .update(payload)
-          .eq('id', existingSubscription.id)
+          .update({
+            status: 'canceled',
+          })
+          .eq('user_id', userId)
 
-        if (updateError) {
-          console.error('ERRO UPDATE SUPABASE:', updateError)
-          return NextResponse.json({ error: updateError.message }, { status: 500 })
-        }
-      } else {
-        const { error: insertError } = await supabase
-          .from('subscriptions')
-          .insert(payload)
+        if (error) {
+          console.error(
+            'ERRO AO ATUALIZAR CANCELAMENTO:',
+            error
+          )
 
-        if (insertError) {
-          console.error('ERRO INSERT SUPABASE:', insertError)
-          return NextResponse.json({ error: insertError.message }, { status: 500 })
+          return NextResponse.json(
+            { error: error.message },
+            { status: 500 }
+          )
         }
       }
     }
 
-    return NextResponse.json({ received: true })
+    return NextResponse.json({
+      received: true,
+    })
   } catch (error) {
     console.error('ERRO GERAL WEBHOOK:', error)
 
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : 'Erro interno no webhook.',
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Erro interno no webhook.',
       },
       { status: 500 }
+    )
+  }
+}
+
+// ================================================================
+// SALVAR ASSINATURA
+// ================================================================
+
+async function salvarAssinatura(
+  supabase: any,
+  subscription: any,
+  userId: string,
+  customerId: string | null
+) {
+  const trialEndsAt = subscription.trial_end
+    ? new Date(
+        subscription.trial_end * 1000
+      ).toISOString()
+    : null
+
+  const periodEndTimestamp =
+    subscription.items?.data?.[0]?.current_period_end ||
+    null
+
+  const currentPeriodEnd =
+    periodEndTimestamp
+      ? new Date(
+          periodEndTimestamp * 1000
+        ).toISOString()
+      : null
+
+  const payload = {
+    user_id: userId,
+
+    status: subscription.status || 'active',
+
+    plan: 'basic',
+
+    trial_ends_at: trialEndsAt,
+
+    current_period_end: currentPeriodEnd,
+
+    stripe_customer_id: customerId,
+
+    stripe_subscription_id: subscription.id,
+  }
+
+  console.log(
+    'SALVANDO ASSINATURA:',
+    payload
+  )
+
+  const {
+    data: existingSubscription,
+    error: selectError,
+  } = await supabase
+    .from('subscriptions')
+    .select('id')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (selectError) {
+    console.error(
+      'ERRO SELECT SUPABASE:',
+      selectError
+    )
+
+    return
+  }
+
+  if (existingSubscription?.id) {
+    const { error } = await supabase
+      .from('subscriptions')
+      .update(payload)
+      .eq('id', existingSubscription.id)
+
+    if (error) {
+      console.error(
+        'ERRO UPDATE SUPABASE:',
+        error
+      )
+
+      return
+    }
+
+    console.log(
+      'ASSINATURA ATUALIZADA:',
+      userId
+    )
+  } else {
+    const { error } = await supabase
+      .from('subscriptions')
+      .insert(payload)
+
+    if (error) {
+      console.error(
+        'ERRO INSERT SUPABASE:',
+        error
+      )
+
+      return
+    }
+
+    console.log(
+      'ASSINATURA CRIADA:',
+      userId
     )
   }
 }

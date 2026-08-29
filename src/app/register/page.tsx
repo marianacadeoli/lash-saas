@@ -2,24 +2,18 @@
 
 import { FormEvent, useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import './register.css'
 
 export default function RegisterPage() {
 
-    const router = useRouter()
     const supabase = createClient()
 
-    const [step, setStep] = useState(1)
-
-    // Etapa 1
     const [email, setEmail] = useState('')
     const [confirmarEmail, setConfirmarEmail] = useState('')
     const [senha, setSenha] = useState('')
     const [confirmarSenha, setConfirmarSenha] = useState('')
 
-    // Etapa 2
     const [tipoCadastro, setTipoCadastro] = useState('pf')
     const [nome, setNome] = useState('')
     const [cpf, setCpf] = useState('')
@@ -58,20 +52,20 @@ export default function RegisterPage() {
 
             setCarregando(true)
 
-            const { error } = await supabase.auth.signUp({
+            const { data, error } = await supabase.auth.signUp({
 
                 email,
                 password: senha,
 
                 options: {
 
-                    data: {
+                    emailRedirectTo: `${window.location.origin}/login`,
 
+                    data: {
                         nome,
                         telefone,
                         cpf,
                         tipoCadastro
-
                     }
 
                 }
@@ -79,19 +73,17 @@ export default function RegisterPage() {
             })
 
             if (error) {
-
                 setErro(error.message)
                 return
-
             }
 
-            setSucesso('Conta criada com sucesso!')
+            if (data.user) {
 
-            setTimeout(() => {
+                setSucesso(
+                    'Cadastro realizado! Enviamos um link de confirmação para seu e-mail. Confirme seu e-mail antes de fazer login.'
+                )
 
-                router.push('/login')
-
-            }, 2000)
+            }
 
         } finally {
 
@@ -118,143 +110,168 @@ export default function RegisterPage() {
                 <h1>Criar Conta</h1>
 
                 <span className="registerBadge">
-
-                    Teste grátis por 7 dias — sem cobrança agora
-
+                    Teste grátis por 3 dias — sem cobrança agora
                 </span>
 
-<form className="registerForm" onSubmit={handleRegister}>
+                <form
+                    className="registerForm"
+                    onSubmit={handleRegister}
+                >
 
-    <div className="inputGroup">
-        <label>Nome Completo *</label>
+                    <div className="inputGroup">
 
-        <input
-            type="text"
-            placeholder="Ex: João da Silva"
-            value={nome}
-            onChange={(e)=>setNome(e.target.value)}
-        />
-    </div>
+                        <label>Nome Completo *</label>
 
-    <div className="inputGroup">
-        <label>E-mail *</label>
+                        <input
+                            type="text"
+                            placeholder="Ex: João da Silva"
+                            value={nome}
+                            onChange={(e) => setNome(e.target.value)}
+                            required
+                        />
 
-        <input
-            type="email"
-            placeholder="exemplo@email.com"
-            value={email}
-            onChange={(e)=>setEmail(e.target.value)}
-        />
-    </div>
+                    </div>
 
-    <div className="inputGroup">
-        <label>Confirmar E-mail *</label>
+                    <div className="inputGroup">
 
-        <input
-            type="email"
-            placeholder="Repita seu e-mail"
-            value={confirmarEmail}
-            onChange={(e)=>setConfirmarEmail(e.target.value)}
-        />
-    </div>
+                        <label>E-mail *</label>
 
-    <div className="inputGroup">
-        <label>CPF *</label>
+                        <input
+                            type="email"
+                            placeholder="exemplo@email.com"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
 
-        <input
-            type="text"
-            placeholder="000.000.000-00"
-            value={cpf}
-            onChange={(e)=>setCpf(e.target.value)}
-        />
-    </div>
+                    </div>
 
-    <div className="inputGroup">
-        <label>Senha *</label>
+                    <div className="inputGroup">
 
-        <input
-            type="password"
-            placeholder="••••••••"
-            value={senha}
-            onChange={(e)=>setSenha(e.target.value)}
-        />
-    </div>
+                        <label>Confirmar E-mail *</label>
 
-    <div className="inputGroup">
-        <label>Confirmar Senha *</label>
+                        <input
+                            type="email"
+                            placeholder="Repita seu e-mail"
+                            value={confirmarEmail}
+                            onChange={(e) => setConfirmarEmail(e.target.value)}
+                            required
+                        />
 
-        <input
-            type="password"
-            placeholder="Repita a senha"
-            value={confirmarSenha}
-            onChange={(e)=>setConfirmarSenha(e.target.value)}
-        />
-    </div>
+                    </div>
 
-    <label className="checkbox">
+                    <div className="inputGroup">
 
-        <input
-            type="checkbox"
-            checked={aceitouLgpd}
-            onChange={(e)=>setAceitouLgpd(e.target.checked)}
-        />
+                        <label>CPF *</label>
 
-        Li e aceito a Política de Privacidade (LGPD)
+                        <input
+                            type="text"
+                            placeholder="000.000.000-00"
+                            value={cpf}
+                            onChange={(e) => setCpf(e.target.value)}
+                            required
+                        />
 
-    </label>
+                    </div>
 
-    <label className="checkbox">
+                    <div className="inputGroup">
 
-        <input
-            type="checkbox"
-            checked={aceitouTermos}
-            onChange={(e)=>setAceitouTermos(e.target.checked)}
-        />
+                        <label>Senha *</label>
 
-        Li e aceito os Termos de Uso
+                        <input
+                            type="password"
+                            placeholder="••••••••"
+                            value={senha}
+                            onChange={(e) => setSenha(e.target.value)}
+                            required
+                        />
 
-    </label>
+                    </div>
 
-    {erro && (
-        <div className="errorBox">
-            {erro}
-        </div>
-    )}
+                    <div className="inputGroup">
 
-    {sucesso && (
-        <div className="successBox">
-            {sucesso}
-        </div>
-    )}
+                        <label>Confirmar Senha *</label>
 
-    <button
-        type="submit"
-        className="registerButton"
-        disabled={carregando}
-    >
-        {carregando
-            ? 'Criando conta...'
-            : 'Criar conta gratuitamente'}
-    </button>
+                        <input
+                            type="password"
+                            placeholder="Repita a senha"
+                            value={confirmarSenha}
+                            onChange={(e) => setConfirmarSenha(e.target.value)}
+                            required
+                        />
 
-</form>
+                    </div>
 
-<div className="registerFooter">
+                    <label className="checkbox">
 
-    <span>
-        Já possui uma conta?
-    </span>
+                        <input
+                            type="checkbox"
+                            checked={aceitouLgpd}
+                            onChange={(e) => setAceitouLgpd(e.target.checked)}
+                        />
 
-    <Link href="/login">
-        Entrar
-    </Link>
+                        Li e aceito a Política de Privacidade (LGPD)
 
-</div>
+                    </label>
 
-</div>
+                    <label className="checkbox">
 
-</main>
+                        <input
+                            type="checkbox"
+                            checked={aceitouTermos}
+                            onChange={(e) => setAceitouTermos(e.target.checked)}
+                        />
 
-)
+                        Li e aceito os Termos de Uso
+
+                    </label>
+
+                    {erro && (
+
+                        <div className="errorBox">
+                            {erro}
+                        </div>
+
+                    )}
+
+                    {sucesso && (
+
+                        <div className="successBox">
+                            {sucesso}
+                        </div>
+
+                    )}
+
+                    <button
+                        type="submit"
+                        className="registerButton"
+                        disabled={carregando}
+                    >
+
+                        {carregando
+                            ? 'Criando conta...'
+                            : 'Criar conta gratuitamente'}
+
+                    </button>
+
+                </form>
+
+                <div className="registerFooter">
+
+                    <span>
+                        Já possui uma conta?
+                    </span>
+
+                    <Link href="/login">
+                        Entrar
+                    </Link>
+
+                </div>
+
+            </div>
+
+        </main>
+
+    )
 
 }

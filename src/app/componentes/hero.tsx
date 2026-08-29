@@ -132,7 +132,7 @@ export default function Hero() {
 </div>
 
           <div className="infos">
-            <span>✓ 7 dias grátis</span>
+            <span>✓ 3 dias grátis</span>
             <span>✓ Sem cartão</span>
             <span>✓ Dados seguros</span>
           </div>

@@ -203,19 +203,25 @@ const ticketMedio =
 </div>
 
 <div style={filtersStyle} className="lash-filters">
-  <input
-    type="date"
-    value={dataInicial}
-    onChange={(e) => setDataInicial(e.target.value)}
-    style={{ ...inputStyle, flex: '1 1 160px' }}
-  />
+  <div style={dateFieldWrapperStyle}>
+    <span style={dateIconStyle} aria-hidden="true">📅</span>
+    <input
+      type="date"
+      value={dataInicial}
+      onChange={(e) => setDataInicial(e.target.value)}
+      style={{ ...inputStyle, ...dateInputStyle, flex: '1 1 160px' }}
+    />
+  </div>
 
-  <input
-    type="date"
-    value={dataFinal}
-    onChange={(e) => setDataFinal(e.target.value)}
-    style={{ ...inputStyle, flex: '1 1 160px' }}
-  />
+  <div style={dateFieldWrapperStyle}>
+    <span style={dateIconStyle} aria-hidden="true">📅</span>
+    <input
+      type="date"
+      value={dataFinal}
+      onChange={(e) => setDataFinal(e.target.value)}
+      style={{ ...inputStyle, ...dateInputStyle, flex: '1 1 160px' }}
+    />
+  </div>
 </div>
 
    <div style={cardsGridStyle}>
@@ -241,7 +247,7 @@ const ticketMedio =
   </div>
 </div>
       <div style={sectionCardStyle}>
-        <h2 style={{ marginTop: 0 }}> Histórico de recebimentos </h2>
+        <h2 style={{ margin: '0 0 18px' }}>Histórico de recebimentos</h2>
 
        {parcelasFiltradas.length === 0 ? (
           <p style={subtitleStyle}>
@@ -322,6 +328,28 @@ const filtersStyle: React.CSSProperties = {
   marginTop: '20px',
 }
 
+const dateFieldWrapperStyle: React.CSSProperties = {
+  position: 'relative',
+  flex: '1 1 160px',
+  display: 'flex',
+  alignItems: 'center',
+}
+
+const dateIconStyle: React.CSSProperties = {
+  position: 'absolute',
+  left: '12px',
+  top: '50%',
+  transform: 'translateY(-50%)',
+  fontSize: '14px',
+  pointerEvents: 'none',
+  zIndex: 1,
+}
+
+const dateInputStyle: React.CSSProperties = {
+  width: '100%',
+  paddingLeft: '34px',
+}
+
 const cardsGridStyle: React.CSSProperties = {
   marginTop: '20px',
   display: 'grid',
@@ -370,7 +398,7 @@ const itemStyle: React.CSSProperties = {
   padding: '13px 16px',
   display: 'grid',
   gridTemplateColumns:
-    '40px 220px 150px 1px 110px 1px 76px 116px',
+    '44px minmax(160px, 1.6fr) minmax(140px, 1fr) 1px minmax(90px, 0.8fr) 1px minmax(90px, 0.7fr) minmax(120px, 1fr)',
   gridTemplateAreas:
     '"avatar nome recebido div1 parcela div2 pago valor"',
   alignItems: 'center',

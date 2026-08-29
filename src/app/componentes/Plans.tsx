@@ -25,7 +25,7 @@ export default function Plans() {
         </p>
 
         <div className="plansBenefits">
-          <div>✓ 7 dias grátis</div>
+          <div>✓ 3 dias grátis</div>
           <div>✓ Sem fidelidade</div>
           <div>✓ Clientes ilimitados</div>
           <div>✓ Empréstimos ilimitados</div>
@@ -68,7 +68,7 @@ export default function Plans() {
         </button>
 
         <small className="planFooter">
-          Sem cartão • 7 dias grátis • Cancele quando quiser
+          Sem cartão • 3 dias grátis • Cancele quando quiser
         </small>
 
       </div>

@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 import './login.css'
 
 export default function LoginPage() {
+
   const router = useRouter()
   const supabase = createClient()
 
@@ -17,12 +18,13 @@ export default function LoginPage() {
   const [erro, setErro] = useState('')
 
   async function handleLogin(e: FormEvent) {
+
     e.preventDefault()
 
     setErro('')
     setCarregando(true)
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password: senha,
     })
@@ -30,8 +32,23 @@ export default function LoginPage() {
     setCarregando(false)
 
     if (error) {
+
       setErro(error.message)
       return
+
+    }
+
+    // Verifica se o e-mail foi confirmado
+    if (!data.user.email_confirmed_at) {
+
+      await supabase.auth.signOut()
+
+      setErro(
+        'Seu e-mail ainda não foi confirmado. Verifique sua caixa de entrada e clique no link de confirmação antes de entrar.'
+      )
+
+      return
+
     }
 
     router.push('/dashboard')
@@ -43,13 +60,13 @@ export default function LoginPage() {
 
       <div className="loginCard">
 
-<img
-  src="/logo.png"
-  alt="PainelEmprest"
-  width={240}
-  height={60}
-  className="loginLogo"
-/>
+        <img
+          src="/logo.png"
+          alt="PainelEmprest"
+          width={240}
+          height={60}
+          className="loginLogo"
+        />
 
         <span className="loginBadge">
           Bem-vindo de volta
@@ -103,6 +120,7 @@ export default function LoginPage() {
           )}
 
           <button
+            type="submit"
             className="loginButton"
             disabled={carregando}
           >

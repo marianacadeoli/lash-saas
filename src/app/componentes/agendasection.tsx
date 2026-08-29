@@ -41,6 +41,7 @@ export default function AgendaSection() {
   const [mesAtual, setMesAtual] = useState(() => new Date())
   const [carregando, setCarregando] = useState(true)
   const [processandoId, setProcessandoId] = useState<number | null>(null)
+  const [parcelaAbertaId, setParcelaAbertaId] = useState<number | null>(null)
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
@@ -802,96 +803,134 @@ const calendarGridStyle: React.CSSProperties = {
               const situacao = descobrirSituacao(parcela)
               const processando = processandoId === parcela.id
               const cliente = pegarCliente(parcela)
+              const aberto = parcelaAbertaId === parcela.id
 
               return (
                 <div
                   key={parcela.id}
                   style={installmentCardStyle}
                 >
-                  <div style={installmentMainStyle}>
-                    <div style={installmentHeaderStyle}>
-                      <div>
-                        <strong style={clientNameStyle}>
-                          {cliente?.nome || 'Cliente não encontrado'}
-                        </strong>
+                  <div
+                    style={{ cursor: 'pointer' }}
+                    onClick={() =>
+                      setParcelaAbertaId(aberto ? null : parcela.id)
+                    }
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '12px',
+                      }}
+                    >
+                      <strong style={{ ...clientNameStyle, minWidth: 0 }}>
+                        {cliente?.nome || 'Cliente não encontrado'}
+                      </strong>
 
-                        <p style={phoneStyle}>
-                          {cliente?.telefone ||
-                            'Telefone não informado'}
-                        </p>
-                      </div>
-
-                      <span
-                        style={{
-                          ...statusBadgeStyle,
-                          color: corSituacao(situacao),
-                          background: fundoSituacao(situacao),
-                          borderColor: corSituacao(situacao),
-                        }}
-                      >
-                        {descricaoSituacao(parcela)}
-                      </span>
-                    </div>
-
-                    <div style={installmentInfoGridStyle}>
-                      <div style={infoBoxStyle}>
-                        <span style={infoLabelStyle}>Parcela</span>
-
-                        <strong style={infoValueStyle}>
-                          Nº {parcela.numero_parcela}
-                        </strong>
-                      </div>
-
-                      <div style={infoBoxStyle}>
-                        <span style={infoLabelStyle}>Valor</span>
-
-                        <strong style={infoValueStyle}>
-                          {formatarDinheiro(parcela.valor)}
-                        </strong>
-                      </div>
-
-                      <div style={infoBoxStyle}>
-                        <span style={infoLabelStyle}>
-                          Vencimento
-                        </span>
-
-                        <strong style={infoValueStyle}>
-                          {formatarData(parcela.data_vencimento)}
-                        </strong>
-                      </div>
-
-                      <div style={infoBoxStyle}>
-                        <span style={infoLabelStyle}>
-                          Pagamento
-                        </span>
-
-                        <strong style={infoValueStyle}>
-                          {formatarData(parcela.data_pagamento)}
-                        </strong>
-                      </div>
-                    </div>
-
-                    {parcela.observacoes && (
-                      <p style={observationStyle}>
-                        <strong>Observação:</strong>{' '}
-                        {parcela.observacoes}
-                      </p>
-                    )}
-                  </div>
-
-                  <div style={actionsStyle}>
-                    {situacao !== 'cancelado' && (
                       <button
                         type="button"
-                        style={messageButtonStyle}
-                        onClick={() => abrirLembreteWhatsApp(parcela)}
-                        title="Enviar lembrete pelo WhatsApp"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setParcelaAbertaId(aberto ? null : parcela.id)
+                        }}
+                        style={chevronButtonStyle}
+                        aria-label={aberto ? 'Recolher parcela' : 'Expandir parcela'}
+                        aria-expanded={aberto}
                       >
-                        <span aria-hidden="true">💬</span>
-                        Lembrete
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            lineHeight: 1,
+                            transition: 'transform 0.2s ease',
+                            transform: aberto ? 'rotate(180deg)' : 'rotate(0deg)',
+                          }}
+                        >
+                          ⌄
+                        </span>
                       </button>
-                    )}
+                    </div>
+
+                    <p style={phoneStyle}>
+                      {cliente?.telefone || 'Telefone não informado'}
+                    </p>
+
+                    <span
+                      style={{
+                        ...statusBadgeStyle,
+                        marginTop: '10px',
+                        display: 'inline-flex',
+                        color: corSituacao(situacao),
+                        background: fundoSituacao(situacao),
+                        borderColor: corSituacao(situacao),
+                      }}
+                    >
+                      {descricaoSituacao(parcela)}
+                    </span>
                   </div>
+
+                  {aberto && (
+                    <div style={installmentMainStyle}>
+                      <div style={installmentInfoGridStyle}>
+                        <div style={infoBoxStyle}>
+                          <span style={infoLabelStyle}>Parcela</span>
+
+                          <strong style={infoValueStyle}>
+                            Nº {parcela.numero_parcela}
+                          </strong>
+                        </div>
+
+                        <div style={infoBoxStyle}>
+                          <span style={infoLabelStyle}>Valor</span>
+
+                          <strong style={infoValueStyle}>
+                            {formatarDinheiro(parcela.valor)}
+                          </strong>
+                        </div>
+
+                        <div style={infoBoxStyle}>
+                          <span style={infoLabelStyle}>
+                            Vencimento
+                          </span>
+
+                          <strong style={infoValueStyle}>
+                            {formatarData(parcela.data_vencimento)}
+                          </strong>
+                        </div>
+
+                        <div style={infoBoxStyle}>
+                          <span style={infoLabelStyle}>
+                            Pagamento
+                          </span>
+
+                          <strong style={infoValueStyle}>
+                            {formatarData(parcela.data_pagamento)}
+                          </strong>
+                        </div>
+                      </div>
+
+                      {parcela.observacoes && (
+                        <p style={observationStyle}>
+                          <strong>Observação:</strong>{' '}
+                          {parcela.observacoes}
+                        </p>
+                      )}
+
+                      {(situacao === 'vence_hoje' || situacao === 'atrasado') && (
+                        <div style={actionsStyle}>
+                          <button
+                            type="button"
+                            style={messageButtonStyle}
+                            onClick={() => abrirLembreteWhatsApp(parcela)}
+                            title="Enviar lembrete pelo WhatsApp"
+                          >
+                            <span aria-hidden="true">💬</span>
+                            Lembrete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             })}
@@ -1121,18 +1160,16 @@ const installmentListStyle: React.CSSProperties = {
 }
 
 const installmentCardStyle: React.CSSProperties = {
-  padding: '20px',
+  padding: '18px',
   borderRadius: '18px',
   border: '1px solid #1F3A5F',
   background: '#132641',
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  gap: '20px',
-  flexWrap: 'wrap',
 }
 
 const installmentMainStyle: React.CSSProperties = {
+  marginTop: '16px',
+  paddingTop: '16px',
+  borderTop: '1px solid #1F3A5F',
   flex: '1 1 650px',
 }
 
@@ -1142,6 +1179,23 @@ const installmentHeaderStyle: React.CSSProperties = {
   alignItems: 'flex-start',
   gap: '14px',
   flexWrap: 'wrap',
+}
+
+const chevronButtonStyle: React.CSSProperties = {
+  width: '30px',
+  height: '30px',
+  padding: 0,
+  borderRadius: '8px',
+  border: '1px solid #28538B',
+  background: '#132641',
+  color: '#F8FAFC',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '15px',
+  lineHeight: 1,
+  flexShrink: 0,
 }
 
 const clientNameStyle: React.CSSProperties = {
@@ -1203,6 +1257,7 @@ const actionsStyle: React.CSSProperties = {
   display: 'flex',
   gap: '9px',
   flexWrap: 'wrap',
+  marginTop: '14px',
 }
 
 const primaryButtonStyle: React.CSSProperties = {
