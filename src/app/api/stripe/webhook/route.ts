@@ -4,12 +4,18 @@ import { createClient } from '@supabase/supabase-js'
 
 export async function POST(req: NextRequest) {
   try {
+    // ============================================================
+    // VARIÁVEIS DE AMBIENTE
+    // ============================================================
+
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY
     const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
     if (!stripeSecretKey) {
+      console.error('ERRO: STRIPE_SECRET_KEY não configurada.')
+
       return NextResponse.json(
         { error: 'STRIPE_SECRET_KEY não configurada.' },
         { status: 500 }
@@ -17,6 +23,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (!stripeWebhookSecret) {
+      console.error('ERRO: STRIPE_WEBHOOK_SECRET não configurada.')
+
       return NextResponse.json(
         { error: 'STRIPE_WEBHOOK_SECRET não configurada.' },
         { status: 500 }
@@ -24,6 +32,8 @@ export async function POST(req: NextRequest) {
     }
 
     if (!supabaseUrl) {
+      console.error('ERRO: NEXT_PUBLIC_SUPABASE_URL não configurada.')
+
       return NextResponse.json(
         { error: 'NEXT_PUBLIC_SUPABASE_URL não configurada.' },
         { status: 500 }
@@ -31,27 +41,44 @@ export async function POST(req: NextRequest) {
     }
 
     if (!supabaseServiceKey) {
+      console.error('ERRO: SUPABASE_SERVICE_ROLE_KEY não configurada.')
+
       return NextResponse.json(
         { error: 'SUPABASE_SERVICE_ROLE_KEY não configurada.' },
         { status: 500 }
       )
     }
 
+    // ============================================================
+    // CLIENTES
+    // ============================================================
+
     const stripe = new Stripe(stripeSecretKey)
+
     const supabase = createClient(
       supabaseUrl,
       supabaseServiceKey
     )
 
+    // ============================================================
+    // LER WEBHOOK
+    // ============================================================
+
     const body = await req.text()
     const signature = req.headers.get('stripe-signature')
 
     if (!signature) {
+      console.error('ERRO: Stripe-Signature ausente.')
+
       return NextResponse.json(
         { error: 'Assinatura ausente.' },
         { status: 400 }
       )
     }
+
+    // ============================================================
+    // VALIDAR ASSINATURA
+    // ============================================================
 
     let event: Stripe.Event
 
@@ -62,13 +89,24 @@ export async function POST(req: NextRequest) {
         stripeWebhookSecret
       )
     } catch (error) {
-      console.error('ERRO WEBHOOK SIGNATURE:', error)
+      console.error(
+        'ERRO WEBHOOK SIGNATURE:',
+        error instanceof Error
+          ? error.message
+          : error
+      )
 
       return NextResponse.json(
         { error: 'Webhook inválido.' },
         { status: 400 }
       )
     }
+
+    console.log(
+      'WEBHOOK RECEBIDO:',
+      event.type,
+      event.id
+    )
 
     // ============================================================
     // CHECKOUT CONCLUÍDO
@@ -80,7 +118,8 @@ export async function POST(req: NextRequest) {
 
       const userId =
         session.metadata?.user_id ||
-        session.client_reference_id
+        session.client_reference_id ||
+        null
 
       const customerId =
         typeof session.customer === 'string'
@@ -92,20 +131,83 @@ export async function POST(req: NextRequest) {
           ? session.subscription
           : null
 
-      if (!userId || !subscriptionId) {
+      console.log(
+        'CHECKOUT:',
+        {
+          sessionId: session.id,
+          userId,
+          customerId,
+          subscriptionId,
+          mode: session.mode,
+          status: session.status,
+        }
+      )
+
+      // ------------------------------------------------------------
+      // TESTE DA STRIPE CLI
+      //
+      // O evento checkout.session.completed gerado pelo
+      // stripe trigger pode não possuir uma assinatura real.
+      //
+      // Nesse caso, não tentamos buscar a assinatura.
+      // ------------------------------------------------------------
+
+      if (!subscriptionId) {
+        console.log(
+          'CHECKOUT SEM ASSINATURA: evento recebido corretamente.'
+        )
+
+        return NextResponse.json({
+          received: true,
+          message:
+            'Checkout recebido sem assinatura associada.',
+        })
+      }
+
+      // ------------------------------------------------------------
+      // USER ID
+      // ------------------------------------------------------------
+
+      if (!userId) {
+        console.error(
+          'CHECKOUT SEM USER ID:',
+          session.id
+        )
+
         return NextResponse.json(
-          { error: 'Dados incompletos no webhook.' },
+          {
+            error:
+              'Checkout recebido sem user_id.',
+          },
           { status: 400 }
         )
       }
 
-      const subscription: any =
+      // ------------------------------------------------------------
+      // BUSCAR ASSINATURA NO STRIPE
+      // ------------------------------------------------------------
+
+      console.log(
+        'BUSCANDO ASSINATURA:',
+        subscriptionId
+      )
+
+      const subscription =
         await stripe.subscriptions.retrieve(
           subscriptionId,
           {
             expand: ['items.data.price'],
           }
         )
+
+      console.log(
+        'ASSINATURA ENCONTRADA:',
+        subscription.id
+      )
+
+      // ------------------------------------------------------------
+      // SALVAR NO SUPABASE
+      // ------------------------------------------------------------
 
       await salvarAssinatura(
         supabase,
@@ -124,36 +226,63 @@ export async function POST(req: NextRequest) {
       event.type === 'customer.subscription.updated'
     ) {
       const subscription =
-        event.data.object as any
+        event.data.object as Stripe.Subscription
 
       const userId =
         subscription.metadata?.user_id
 
-      if (userId) {
-        const customerId =
-          typeof subscription.customer === 'string'
-            ? subscription.customer
-            : null
-
-        await salvarAssinatura(
-          supabase,
-          subscription,
+      console.log(
+        'ASSINATURA EVENTO:',
+        {
+          type: event.type,
+          subscriptionId: subscription.id,
           userId,
-          customerId
+        }
+      )
+
+      if (!userId) {
+        console.log(
+          'ASSINATURA SEM USER ID. Evento ignorado.'
         )
+
+        return NextResponse.json({
+          received: true,
+        })
       }
+
+      const customerId =
+        typeof subscription.customer === 'string'
+          ? subscription.customer
+          : null
+
+      await salvarAssinatura(
+        supabase,
+        subscription,
+        userId,
+        customerId
+      )
     }
 
     // ============================================================
     // ASSINATURA CANCELADA
     // ============================================================
 
-    if (event.type === 'customer.subscription.deleted') {
+    if (
+      event.type === 'customer.subscription.deleted'
+    ) {
       const subscription =
-        event.data.object as any
+        event.data.object as Stripe.Subscription
 
       const userId =
         subscription.metadata?.user_id
+
+      console.log(
+        'ASSINATURA CANCELADA:',
+        {
+          subscriptionId: subscription.id,
+          userId,
+        }
+      )
 
       if (userId) {
         const { error } = await supabase
@@ -174,14 +303,33 @@ export async function POST(req: NextRequest) {
             { status: 500 }
           )
         }
+
+        console.log(
+          'CANCELAMENTO SALVO:',
+          userId
+        )
       }
     }
+
+    // ============================================================
+    // FINAL
+    // ============================================================
+
+    console.log(
+      'WEBHOOK PROCESSADO COM SUCESSO:',
+      event.type
+    )
 
     return NextResponse.json({
       received: true,
     })
   } catch (error) {
-    console.error('ERRO GERAL WEBHOOK:', error)
+    console.error(
+      'ERRO GERAL WEBHOOK:',
+      error instanceof Error
+        ? error.message
+        : error
+    )
 
     return NextResponse.json(
       {
@@ -201,86 +349,131 @@ export async function POST(req: NextRequest) {
 
 async function salvarAssinatura(
   supabase: any,
-  subscription: any,
+  subscription: Stripe.Subscription,
   userId: string,
   customerId: string | null
 ) {
-  const trialEndsAt = subscription.trial_end
-    ? new Date(
-        subscription.trial_end * 1000
-      ).toISOString()
-    : null
+  try {
+    // ============================================================
+    // DATAS
+    // ============================================================
 
-  const periodEndTimestamp =
-    subscription.items?.data?.[0]?.current_period_end ||
-    null
-
-  const currentPeriodEnd =
-    periodEndTimestamp
+    const trialEndsAt = subscription.trial_end
       ? new Date(
-          periodEndTimestamp * 1000
+          subscription.trial_end * 1000
         ).toISOString()
       : null
 
-  const payload = {
-    user_id: userId,
+    const periodEndTimestamp =
+      subscription.items?.data?.[0]
+        ?.current_period_end || null
 
-    status: subscription.status || 'active',
+    const currentPeriodEnd =
+      periodEndTimestamp
+        ? new Date(
+            periodEndTimestamp * 1000
+          ).toISOString()
+        : null
 
-    plan: 'basic',
+    // ============================================================
+    // DADOS DA ASSINATURA
+    // ============================================================
 
-    trial_ends_at: trialEndsAt,
+    const payload = {
+      user_id: userId,
 
-    current_period_end: currentPeriodEnd,
+      status:
+        subscription.status || 'active',
 
-    stripe_customer_id: customerId,
+      plan: 'basic',
 
-    stripe_subscription_id: subscription.id,
-  }
+      trial_ends_at:
+        trialEndsAt,
 
-  console.log(
-    'SALVANDO ASSINATURA:',
-    payload
-  )
+      current_period_end:
+        currentPeriodEnd,
 
-  const {
-    data: existingSubscription,
-    error: selectError,
-  } = await supabase
-    .from('subscriptions')
-    .select('id')
-    .eq('user_id', userId)
-    .maybeSingle()
+      stripe_customer_id:
+        customerId,
 
-  if (selectError) {
-    console.error(
-      'ERRO SELECT SUPABASE:',
-      selectError
+      stripe_subscription_id:
+        subscription.id,
+    }
+
+    console.log(
+      'SALVANDO ASSINATURA:',
+      payload
     )
 
-    return
-  }
+    // ============================================================
+    // VERIFICAR SE JÁ EXISTE
+    // ============================================================
 
-  if (existingSubscription?.id) {
-    const { error } = await supabase
+    const {
+      data: existingSubscription,
+      error: selectError,
+    } = await supabase
       .from('subscriptions')
-      .update(payload)
-      .eq('id', existingSubscription.id)
+      .select('id')
+      .eq('user_id', userId)
+      .maybeSingle()
 
-    if (error) {
+    if (selectError) {
       console.error(
-        'ERRO UPDATE SUPABASE:',
-        error
+        'ERRO SELECT SUPABASE:',
+        selectError
+      )
+
+      throw new Error(
+        `Erro ao consultar assinatura: ${selectError.message}`
+      )
+    }
+
+    // ============================================================
+    // ATUALIZAR
+    // ============================================================
+
+    if (existingSubscription?.id) {
+      console.log(
+        'ATUALIZANDO ASSINATURA:',
+        existingSubscription.id
+      )
+
+      const { error } = await supabase
+        .from('subscriptions')
+        .update(payload)
+        .eq(
+          'id',
+          existingSubscription.id
+        )
+
+      if (error) {
+        console.error(
+          'ERRO UPDATE SUPABASE:',
+          error
+        )
+
+        throw new Error(
+          `Erro ao atualizar assinatura: ${error.message}`
+        )
+      }
+
+      console.log(
+        'ASSINATURA ATUALIZADA:',
+        userId
       )
 
       return
     }
 
+    // ============================================================
+    // CRIAR
+    // ============================================================
+
     console.log(
-      'ASSINATURA ATUALIZADA:',
-      userId
+      'CRIANDO NOVA ASSINATURA'
     )
-  } else {
+
     const { error } = await supabase
       .from('subscriptions')
       .insert(payload)
@@ -291,12 +484,23 @@ async function salvarAssinatura(
         error
       )
 
-      return
+      throw new Error(
+        `Erro ao criar assinatura: ${error.message}`
+      )
     }
 
     console.log(
       'ASSINATURA CRIADA:',
       userId
     )
+  } catch (error) {
+    console.error(
+      'ERRO SALVAR ASSINATURA:',
+      error instanceof Error
+        ? error.message
+        : error
+    )
+
+    throw error
   }
 }
