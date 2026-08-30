@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import styles from './page.module.css'
 
 export default function SubscribePage() {
   const router = useRouter()
@@ -29,13 +30,13 @@ export default function SubscribePage() {
         .eq('user_id', session.user.id)
         .maybeSingle()
 
-if (
-  assinatura?.status === 'active' ||
-  assinatura?.status === 'trialing'
-) {
-  router.replace('/dashboard')
-  return
-}
+      if (
+        assinatura?.status === 'active' ||
+        assinatura?.status === 'trialing'
+      ) {
+        router.replace('/dashboard')
+        return
+      }
 
       setCarregandoPagina(false)
     }
@@ -69,108 +70,158 @@ if (
 
   if (carregandoPagina) {
     return (
-      <main
-        style={{
-          minHeight: '100vh',
-          background: '#050816',
-          color: '#fff',
-          display: 'grid',
-          placeItems: 'center',
-          fontFamily: 'Arial, sans-serif',
-        }}
-      >
-        Carregando...
+      <main className={styles.subscribePage}>
+        <div className={styles.loading}>
+          Carregando...
+        </div>
       </main>
     )
   }
 
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #050816 0%, #111827 35%, #3b0764 100%)',
-        color: '#fff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
-        fontFamily: 'Arial, sans-serif',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '500px',
-          background: 'rgba(10,10,18,0.88)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          borderRadius: '24px',
-          padding: '32px',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.35)',
-        }}
-      >
-        <h1 style={{ marginTop: 0 }}>Assinar plano</h1>
-        <p style={{ color: 'rgba(255,255,255,0.72)' }}>
-          Continue usando o sistema com acesso completo.
-        </p>
+    <main className={styles.subscribePage}>
 
-        <div
-          style={{
-            marginTop: '20px',
-            padding: '20px',
-            borderRadius: '16px',
-            background: '#111827',
-            border: '1px solid rgba(255,255,255,0.08)',
-          }}
-        >
-          <h2 style={{ marginTop: 0 }}>Plano Basic</h2>
-          <p style={{ fontSize: '28px', fontWeight: 800, margin: '10px 0' }}>
-            R$ 49,90
-            <span style={{ fontSize: '16px', fontWeight: 400 }}>/mês</span>
-          </p>
+      <div className={styles.subscribeCard}>
 
-          <ul style={{ lineHeight: 1.8, paddingLeft: '18px' }}>
-            <li>Agenda de atendimentos</li>
-            <li>Cadastro de serviços</li>
-            <li>Lembretes por WhatsApp</li>
-            <li>Controle básico do faturamento</li>
-          </ul>
+        {/* LOGO */}
+
+        <img
+          src="/logo.png"
+          alt="PainelEmprest"
+          className={styles.subscribeLogo}
+        />
+
+        {/* BADGE */}
+
+        <div className={styles.subscribeBadgeWrapper}>
+          <span className={styles.subscribeBadge}>
+            3 DIAS GRÁTIS
+          </span>
         </div>
 
+        {/* TÍTULO */}
+
+        <h1 className={styles.subscribeTitle}>
+          Gerencie seus empréstimos
+          <br />
+          de forma simples
+        </h1>
+
+        {/* SUBTÍTULO */}
+
+        <p className={styles.subscribeSubtitle}>
+          Controle clientes, empréstimos, parcelas e recebimentos em um só lugar.
+        </p>
+
+        {/* PLANO */}
+
+        <div className={styles.planCard}>
+
+          <div className={styles.planHeader}>
+
+            <div>
+              <div className={styles.planLabel}>
+                PLANO
+              </div>
+
+              <h2 className={styles.planName}>
+                Basic
+              </h2>
+            </div>
+
+            <div className={styles.planPrice}>
+
+              <strong className={styles.price}>
+                R$ 49,90
+              </strong>
+
+              <span className={styles.pricePeriod}>
+                /mês
+              </span>
+
+            </div>
+
+          </div>
+
+          <div className={styles.divider} />
+
+          {/* BENEFÍCIOS */}
+
+          <div className={styles.benefits}>
+
+            <div className={styles.benefit}>
+              <span className={styles.check}>✓</span>
+              Cadastro de clientes
+            </div>
+
+            <div className={styles.benefit}>
+              <span className={styles.check}>✓</span>
+              Controle de empréstimos
+            </div>
+
+            <div className={styles.benefit}>
+              <span className={styles.check}>✓</span>
+              Acompanhamento de parcelas
+            </div>
+
+            <div className={styles.benefit}>
+              <span className={styles.check}>✓</span>
+              Registro de recebimentos
+            </div>
+
+            <div className={styles.benefit}>
+              <span className={styles.check}>✓</span>
+              Visão geral financeira
+            </div>
+
+          </div>
+
+        </div>
+
+        {/* TESTE GRÁTIS */}
+
+        <div className={styles.trialBox}>
+
+          <div className={styles.trialTitle}>
+            Seu teste começa agora
+          </div>
+
+          <div className={styles.trialText}>
+            Use o PainelEmprest gratuitamente por 3 dias.
+            A cobrança de R$ 49,90/mês acontece somente após
+            o período de teste.
+          </div>
+
+        </div>
+
+        {/* ERRO */}
+
         {erro && (
-          <div
-            style={{
-              marginTop: '16px',
-              background: 'rgba(220,38,38,0.12)',
-              border: '1px solid rgba(220,38,38,0.35)',
-              color: '#fca5a5',
-              padding: '12px 14px',
-              borderRadius: '14px',
-              fontSize: '14px',
-            }}
-          >
+          <div className={styles.errorBox}>
             {erro}
           </div>
         )}
 
+        {/* BOTÃO */}
+
         <button
           onClick={handleCheckout}
           disabled={carregando}
-          style={{
-            width: '100%',
-            marginTop: '20px',
-            padding: '15px 16px',
-            background: '#a3e635',
-            color: '#111827',
-            border: 'none',
-            borderRadius: '14px',
-            fontWeight: 800,
-            fontSize: '16px',
-            cursor: 'pointer',
-          }}
+          className={styles.subscribeButton}
         >
-          {carregando ? 'Redirecionando...' : 'Assinar agora'}
+          {carregando
+            ? 'Redirecionando...'
+            : 'Começar teste grátis'}
         </button>
+
+        {/* RODAPÉ */}
+
+        <p className={styles.subscribeFooter}>
+          Você poderá cancelar quando quiser.
+        </p>
+
       </div>
+
     </main>
   )
 }
