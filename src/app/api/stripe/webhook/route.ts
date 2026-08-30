@@ -80,6 +80,14 @@ export async function POST(req: NextRequest) {
     // VALIDAR ASSINATURA
     // ============================================================
 
+console.log('DEBUG WEBHOOK:', {
+  hasSecret: !!stripeWebhookSecret,
+  secretLength: stripeWebhookSecret?.length,
+  secretPrefix: stripeWebhookSecret?.slice(0, 6),
+  hasSignature: !!signature,
+  signatureLength: signature?.length,
+})
+
     let event: Stripe.Event
 
     try {
